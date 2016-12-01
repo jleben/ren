@@ -72,12 +72,15 @@ private:
 template <typename T>
 class array_region
 {
-    T * m_data;
+    T * m_data = nullptr;
     vector<int> m_data_size;
     vector<int> m_region_offset;
     vector<int> m_region_size;
 
 public:
+    array_region()
+    {}
+
     array_region(array<T> & a, const vector<int> & offset, const vector<int> & size):
         m_data(a.data()),
         m_data_size(a.size()),
@@ -85,14 +88,16 @@ public:
         m_region_size(size)
     {}
 
+    bool is_valid() { return m_data != nullptr; }
+
     class iterator
     {
-        T * m_data;
-        vector<int> m_size;
+        T * m_data = nullptr;
+        vector<int> m_start;
+        vector<int> m_end;
         vector<int> m_stride;
-        int m_index;
-        bool m_valid = true;
         vector<int> m_location;
+        int m_index;
 
     public:
 #if 0
@@ -114,25 +119,34 @@ public:
         };
 #endif
 
-        iterator(T * data, const vector<int> & size, const vector<int> & stride, int start):
+        iterator(T * data,
+                 const vector<int> & start,
+                 const vector<int> & end,
+                 const vector<int> & stride,
+                 int start_index):
             m_data(data),
-            m_size(size),
+            m_start(start),
+            m_end(end),
             m_stride(stride),
-            m_index(start),
-            m_location(size.size(), 0)
-        {}
+            m_location(start),
+            m_index(start_index)
+        {
+        }
 
-        iterator(): m_valid(false) {}
+        iterator() {}
 
         bool operator==(const iterator & other) const
         {
-            if (m_valid && other.m_valid)
+            if (m_data != other.m_data)
+                return false;
+
+            if (m_data)
             {
                 return m_index == other.m_index;
             }
             else
             {
-                return m_valid == other.m_valid;
+                return true;
             }
         }
 
@@ -143,12 +157,7 @@ public:
 
         bool is_valid() const
         {
-            return m_valid;
-        }
-
-        const vector<int> & size() const
-        {
-            return m_size;
+            return m_data != nullptr;
         }
 
         const vector<int> & location() const
@@ -165,20 +174,21 @@ public:
 
         void operator++()
         {
-            int n_dim = m_size.size();
+            int n_dim = m_end.size();
             int d;
             for(d = n_dim - 1; d >= 0; --d)
             {
                 ++m_location[d];
-                if (m_location[d] < m_size[d])
+                if (m_location[d] < m_end[d])
                 {
                     m_index += m_stride[d];
                     break;
                 }
-                m_location[d] = 0;
+                m_location[d] = m_start[d];
             }
             // FIXME: Optimize:
-            m_valid = d >= 0;
+            if (d < 0)
+                m_data = nullptr; // Invalidate.
         }
 
         iterator & operator*()
@@ -210,6 +220,17 @@ public:
             cout << "stride " << d << " = " << flat_strides[d] << endl;
         }
 
+        auto & start = m_region_offset;
+        vector<int> end = m_region_offset;
+        for (int d = 0; d < m_region_size.size(); ++d)
+            end[d] += m_region_size[d];
+
+        return iterator(m_data,
+                        start,
+                        end,
+                        flat_strides,
+                        flat_index(m_region_offset, m_data_size));
+#if 0
         vector<int> it_size;
         vector<int> it_stride;
         for (int d = 0; d < n_dim; ++d)
@@ -225,6 +246,7 @@ public:
                         it_size,
                         it_stride,
                         flat_index(m_region_offset, m_data_size));
+#endif
     }
 
     iterator end()
