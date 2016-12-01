@@ -88,7 +88,7 @@ public:
         m_region_size(size)
     {}
 
-    bool is_valid() { return m_data != nullptr; }
+    bool is_valid() const { return m_data != nullptr; }
 
     class iterator
     {
@@ -150,7 +150,7 @@ public:
             }
         }
 
-        bool operator!=(const iterator & other)
+        bool operator!=(const iterator & other) const
         {
             return !(*this == other);
         }
@@ -167,12 +167,12 @@ public:
 
         int index() const { return m_index; }
 
-        T & value()
+        T & value() const
         {
             return m_data[m_index];
         }
 
-        void operator++()
+        iterator & operator++()
         {
             int n_dim = m_end.size();
             int d;
@@ -189,6 +189,13 @@ public:
             // FIXME: Optimize:
             if (d < 0)
                 m_data = nullptr; // Invalidate.
+
+            return *this;
+        }
+
+        bool operator<(const iterator & other) const
+        {
+            return value() < other.value();
         }
 
         iterator & operator*()
@@ -217,7 +224,7 @@ public:
             dim_stride = dim_stride + subspace_size * (m_size[d] - size[d]);
             stride.push_back(dim_stride);
             */
-            cout << "stride " << d << " = " << flat_strides[d] << endl;
+            //cout << "stride " << d << " = " << flat_strides[d] << endl;
         }
 
         auto & start = m_region_offset;
