@@ -4,6 +4,7 @@ add_executable(test-array test_array.cpp)
 set(test_plot_src
   test_plot.cpp
   ../plot/line_plot.cpp
+  ../plot/heat_map.cpp
   ../plot/plot_view.cpp
 )
 
