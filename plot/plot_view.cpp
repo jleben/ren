@@ -26,11 +26,13 @@ void PlotView::updateViewMap()
 {
     auto size = this->size();
 
-    QTransform map;
-    map.translate(0, size.height());
-    map.scale(size.width(), size.height());
+    int margin = 10;
 
-    m_view_map = map * m_plot_map;
+    QTransform map;
+    map.translate(margin, size.height() - margin);
+    map.scale(size.width() - 2 * margin, - (size.height() - 2 * margin));
+
+    m_view_map = m_plot_map * map;
 }
 
 void PlotView::updatePlotMap()
