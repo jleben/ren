@@ -72,19 +72,19 @@ void PlotView::updatePlotMap()
 #endif
     QPointF extent = total_range.max - total_range.min;
     QPointF offset = total_range.min;
-
-    //qDebug() << "offset:" << offset;
-    //qDebug() << "extent:" << extent;
-
+#if 0
+    qDebug() << "offset:" << offset;
+    qDebug() << "extent:" << extent;
+#endif
     double x_scale = extent.x() == 0 ? 1 : 1.0 / extent.x();
     double y_scale = extent.y() == 0 ? 1 : 1.0 / extent.y();
-
-    //qDebug() << "x scale:" << x_scale;
-    //qDebug() << "y scale:" << y_scale;
-
+#if 0
+    qDebug() << "x scale:" << x_scale;
+    qDebug() << "y scale:" << y_scale;
+#endif
     QTransform transform;
     transform.scale(x_scale, y_scale);
-    transform.translate(offset.x(), -offset.y());
+    transform.translate(-offset.x(), -offset.y());
 
     m_plot_map = transform;
 }
