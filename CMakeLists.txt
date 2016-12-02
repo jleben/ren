@@ -11,4 +11,7 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Qt5Widgets REQUIRED)
 
+include_directories("/usr/include/hdf5/serial")
+link_directories("/usr/lib/x86_64-linux-gnu/hdf5/serial")
+
 add_subdirectory(test)
