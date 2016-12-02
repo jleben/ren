@@ -121,6 +121,7 @@ void LinePlot::plot(QPainter * painter,  const QTransform & transform)
 
     painter->setPen(m_pen);
     painter->setBrush(Qt::NoBrush);
+    painter->setRenderHint(QPainter::Antialiasing, true);
 
     QPainterPath path;
     bool first = true;
