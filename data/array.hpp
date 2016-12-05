@@ -41,6 +41,8 @@ public:
     using index_t = vector<int>;
     using size_t = vector<int>;
 
+    array() {}
+
     array(size_t size):
         m_size(size),
         m_data(flat_size(size))
