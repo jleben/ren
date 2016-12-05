@@ -16,8 +16,8 @@ LinePlot::LinePlot(QObject * parent):
 void LinePlot::setData(data_type * data)
 {
     m_data = data;
-    auto size = data->size();
-    if (size.empty())
+
+    if (!m_data || m_data->size().empty())
     {
         m_dim = -1;
         m_start = 0;
@@ -25,28 +25,44 @@ void LinePlot::setData(data_type * data)
     }
     else
     {
+        auto size = data->size();
+
         m_dim = 0;
         m_start = 0;
         m_end = size[0];
     }
 
     update_selected_region();
+
+    emit rangeChanged();
+    emit contentChanged();
 }
 
 void LinePlot::setDimension(int dim)
 {
+    if (!m_data)
+        return;
+
     auto size = m_data->size();
+
     if (dim < 0 || dim >= size.size())
         return;
+
     m_dim = dim;
     m_start = 0;
     m_end = size[dim];
 
     update_selected_region();
+
+    emit rangeChanged();
+    emit contentChanged();
 }
 
 void LinePlot::setRange(int start, int end)
 {
+    if (!m_data)
+        return;
+
     auto size = m_data->size();
 
     if (size.empty())
@@ -74,10 +90,26 @@ void LinePlot::setRange(int start, int end)
     m_end = end;
 
     update_selected_region();
+
+    emit rangeChanged();
+    emit contentChanged();
+}
+
+void LinePlot::setPen(const QPen & pen)
+{
+    m_pen = pen;
+
+    emit contentChanged();
 }
 
 void LinePlot::update_selected_region()
 {
+    if (!m_data)
+    {
+        m_data_region = data_region_type();
+        return;
+    }
+
     auto data_size = m_data->size();
     auto n_dim = data_size.size();
     vector<int> offset(n_dim, 0);
@@ -102,13 +134,13 @@ Plot::Range LinePlot::range()
     Range range;
     range.min = QPointF(m_start, min_value);
     range.max = QPointF(m_end-1, max_value);
-
+#if 0
     cout << "Plot range: "
          << range.min.x() << " - " << range.max.x()
          << " -> "
          << range.min.y() << " - " << range.max.y()
          << endl;
-
+#endif
     return range;
 }
 

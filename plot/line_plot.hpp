@@ -21,6 +21,7 @@ public:
     virtual bool isEmpty() const override { return !m_data_region.is_valid(); }
     virtual Range range() override;
     virtual void plot(QPainter *,  const QTransform &) override;
+
 private:
     void update_selected_region();
     data_type * m_data = nullptr;

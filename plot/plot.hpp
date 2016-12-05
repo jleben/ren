@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <QObject>
@@ -8,6 +7,8 @@ namespace datavis {
 
 class Plot : public QObject
 {
+    Q_OBJECT
+
 public:
     struct Range
     {
@@ -19,6 +20,10 @@ public:
     virtual bool isEmpty() const = 0;
     virtual Range range() = 0;
     virtual void plot(QPainter *, const QTransform &) = 0;
+
+signals:
+    void rangeChanged();
+    void contentChanged();
 };
 
 }

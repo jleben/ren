@@ -16,10 +16,51 @@ PlotView::PlotView(QWidget * parent):
 
 void PlotView::addPlot(Plot * plot)
 {
+    if (!plot)
+        return;
+
     m_plots.push_back(plot);
+
+    connect(plot, &Plot::rangeChanged,
+            this, &PlotView::onPlotRangeChanged);
+    connect(plot, &Plot::contentChanged,
+            this, &PlotView::onPlotContentChanged);
 
     updatePlotMap();
     updateViewMap();
+
+    update();
+}
+
+void PlotView::removePlot(Plot * plot)
+{
+    if (!plot)
+        return;
+
+    auto handle = std::find(m_plots.begin(), m_plots.end(), plot);
+    if (handle != m_plots.end())
+    {
+        disconnect(plot, 0, this, 0);
+        m_plots.erase(handle);
+    }
+
+    updatePlotMap();
+    updateViewMap();
+
+    update();
+}
+
+void PlotView::onPlotRangeChanged()
+{
+    updatePlotMap();
+    updateViewMap();
+
+    update();
+}
+
+void PlotView::onPlotContentChanged()
+{
+    update();
 }
 
 void PlotView::updateViewMap()

@@ -5,6 +5,7 @@ add_executable(test-hdf5 test_hdf5.cpp)
 target_link_libraries(test-hdf5 -lhdf5_cpp -lhdf5)
 
 set(plot_src
+  ../plot/plot.hpp
   ../plot/line_plot.cpp
   ../plot/heat_map.cpp
   ../plot/plot_view.cpp

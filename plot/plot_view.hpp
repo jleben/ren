@@ -14,12 +14,15 @@ public:
     PlotView(QWidget * parent = 0);
 
     void addPlot(Plot*);
+    void removePlot(Plot*);
 
     virtual void resizeEvent(QResizeEvent*) override;
     virtual void paintEvent(QPaintEvent*) override;
 
 private:
-    void onRangeChanged();
+    void onPlotRangeChanged();
+    void onPlotContentChanged();
+
     void updateViewMap();
     void updatePlotMap();
 
