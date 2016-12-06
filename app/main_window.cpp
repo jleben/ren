@@ -1,7 +1,6 @@
 #include "main_window.hpp"
 #include "settings_view.hpp"
 #include "data_source.hpp"
-#include "line_plot_settings.hpp"
 #include "line_plot_settings_view.hpp"
 #include "../plot/plot_view.hpp"
 #include "../plot/line_plot.hpp"
@@ -30,10 +29,7 @@ MainWindow::MainWindow(QWidget * parent):
 
     setCentralWidget(content_view);
 
-    m_line_plot_settings = new LinePlotSettings(this);
-
     m_line_plot_settings_view = new LinePlotSettingsView;
-    m_line_plot_settings_view->setSettings(m_line_plot_settings);
 
     m_settings_view->setPlotSettingsView(m_line_plot_settings_view);
 
@@ -65,11 +61,11 @@ void MainWindow::openData()
 
 void MainWindow::openDataFile(const QString & file_path)
 {
+    m_line_plot_settings_view->setPlot(nullptr);
+
     m_plot_view->removePlot(m_line_plot);
     delete m_line_plot;
     m_line_plot = nullptr;
-
-    m_line_plot_settings->setDataSource(nullptr);
 
     delete m_data_source;
     m_data_source = nullptr;
@@ -80,15 +76,12 @@ void MainWindow::openDataFile(const QString & file_path)
         qCritical() << "Failed to open file: " << file_path;
     }
 
-    m_line_plot_settings->setDataSource(m_data_source);
-
     m_line_plot = new LinePlot;
-    m_line_plot->setData(m_data_source->data());
+    m_line_plot->setDataSource(m_data_source);
+
+    m_line_plot_settings_view->setPlot(m_line_plot);
 
     m_plot_view->addPlot(m_line_plot);
-
-    connect(m_line_plot_settings, &LinePlotSettings::dimensionXChanged,
-            m_line_plot, &LinePlot::setDimension);
 }
 
 

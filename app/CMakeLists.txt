@@ -11,7 +11,6 @@ set(app_src
   color_box.cpp
   data_source.cpp
   settings_view.cpp
-  line_plot_settings.cpp
   line_plot_settings_view.cpp
   main_window.cpp
   ${plot_src}

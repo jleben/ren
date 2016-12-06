@@ -5,14 +5,14 @@
 
 namespace datavis {
 
-class LinePlotSettings;
+class LinePlot;
 class ColorBox;
 
 class LinePlotSettingsView : public QWidget
 {
 public:
     LinePlotSettingsView(QWidget * parent = 0);
-    void setSettings(LinePlotSettings *);
+    void setPlot(LinePlot *);
 
 private:
     void updateAll();
@@ -21,7 +21,7 @@ private:
     void onDimXEdited();
     void onColorChanged();
 
-    LinePlotSettings * m_settings = nullptr;
+    LinePlot * m_plot = nullptr;
     QSpinBox * m_dim_x;
     ColorBox * m_color;
 };

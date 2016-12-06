@@ -16,7 +16,6 @@ class DataSource;
 class PlotView;
 class SettingsView;
 class LinePlot;
-class LinePlotSettings;
 class LinePlotSettingsView;
 
 class MainWindow : public QMainWindow
@@ -34,7 +33,6 @@ private:
     SettingsView * m_settings_view = nullptr;
     PlotView * m_plot_view = nullptr;
     LinePlot * m_line_plot = nullptr;
-    LinePlotSettings * m_line_plot_settings = nullptr;
     LinePlotSettingsView * m_line_plot_settings_view = nullptr;
 };
 

@@ -1,4 +1,5 @@
 #include "line_plot.hpp"
+#include "../app/data_source.hpp"
 
 #include <QPainter>
 #include <QPainterPath>
@@ -13,11 +14,11 @@ LinePlot::LinePlot(QObject * parent):
     Plot(parent)
 {}
 
-void LinePlot::setData(data_type * data)
+void LinePlot::setDataSource(DataSource * source)
 {
-    m_data = data;
+    m_data_source = source;
 
-    if (!m_data || m_data->size().empty())
+    if (!source || source->data()->size().empty())
     {
         m_dim = -1;
         m_start = 0;
@@ -25,7 +26,7 @@ void LinePlot::setData(data_type * data)
     }
     else
     {
-        auto size = data->size();
+        auto size = source->data()->size();
 
         m_dim = 0;
         m_start = 0;
@@ -34,16 +35,17 @@ void LinePlot::setData(data_type * data)
 
     update_selected_region();
 
+    emit sourceChanged();
     emit rangeChanged();
     emit contentChanged();
 }
 
 void LinePlot::setDimension(int dim)
 {
-    if (!m_data)
+    if (!m_data_source)
         return;
 
-    auto size = m_data->size();
+    auto size = m_data_source->data()->size();
 
     if (dim < 0 || dim >= size.size())
         return;
@@ -60,10 +62,10 @@ void LinePlot::setDimension(int dim)
 
 void LinePlot::setRange(int start, int end)
 {
-    if (!m_data)
+    if (!m_data_source)
         return;
 
-    auto size = m_data->size();
+    auto size = m_data_source->data()->size();
 
     if (size.empty())
         return;
@@ -91,32 +93,34 @@ void LinePlot::setRange(int start, int end)
 
     update_selected_region();
 
+    emit dimensionChanged();
     emit rangeChanged();
     emit contentChanged();
 }
 
-void LinePlot::setPen(const QPen & pen)
+void LinePlot::setColor(const QColor & color)
 {
-    m_pen = pen;
+    m_color = color;
 
+    emit colorChanged();
     emit contentChanged();
 }
 
 void LinePlot::update_selected_region()
 {
-    if (!m_data)
+    if (!m_data_source)
     {
         m_data_region = data_region_type();
         return;
     }
 
-    auto data_size = m_data->size();
+    auto data_size = m_data_source->data()->size();
     auto n_dim = data_size.size();
     vector<int> offset(n_dim, 0);
     vector<int> size(n_dim, 1);
     offset[m_dim] = m_start;
     size[m_dim] = m_end - m_start;
-    m_data_region = get_region(*m_data, offset, size);
+    m_data_region = get_region(*m_data_source->data(), offset, size);
 }
 
 Plot::Range LinePlot::range()
@@ -151,7 +155,7 @@ void LinePlot::plot(QPainter * painter,  const QTransform & transform)
 
     painter->save();
 
-    painter->setPen(m_pen);
+    painter->setPen(m_color);
     painter->setBrush(Qt::NoBrush);
     painter->setRenderHint(QPainter::Antialiasing, true);
 
