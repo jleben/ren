@@ -89,17 +89,23 @@ void LinePlot::setDimension(int dim)
     auto size = m_data_source->data()->size();
 
     if (dim < 0 || dim >= size.size())
-    {
-        cerr << "Invalid dimension: " << dim << endl;
-        return;
-    }
+        dim = -1;
 
     if (m_selector_dim == dim)
         m_selector_dim = -1;
 
     m_dim = dim;
-    m_start = 0;
-    m_end = size[dim];
+
+    if (dim >= 0)
+    {
+        m_start = 0;
+        m_end = size[dim];
+    }
+    else
+    {
+        m_start = 0;
+        m_end = 0;
+    }
 
     update_selected_region();
 
@@ -126,18 +132,17 @@ void LinePlot::setSelectorDim(int new_dim)
 
     auto n_data_dim = m_data_source->data()->size().size();
 
-    if (new_dim < 0 || new_dim >= n_data_dim)
-    {
-        cerr << "Invalid dimension: " << new_dim << endl;
-        return;
-    }
-
     if (new_dim == m_dim)
     {
         m_dim = -1;
     }
 
+    if (new_dim < 0 || new_dim >= n_data_dim)
+        new_dim = -1;
+
     m_selector_dim = new_dim;
+
+    update_selected_region();
 
     emit dimensionChanged();
     emit selectorDimChanged();
@@ -219,6 +224,12 @@ void LinePlot::findEntireValueRange()
 void LinePlot::update_selected_region()
 {
     if (!m_data_source)
+    {
+        m_data_region = data_region_type();
+        return;
+    }
+
+    if (m_dim < 0)
     {
         m_data_region = data_region_type();
         return;
