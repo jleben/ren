@@ -50,7 +50,9 @@ signals:
 
 private:
     void onSelectorValueChanged();
+    void findEntireValueRange();
     void update_selected_region();
+
     DataSource * m_data_source = nullptr;
     Selector * m_selector = nullptr;
     data_region_type m_data_region;
@@ -60,6 +62,8 @@ private:
     int m_end = 0;
 
     QColor m_color { Qt::black };
+
+    Range m_value_range;
 };
 
 }

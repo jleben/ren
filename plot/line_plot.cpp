@@ -47,6 +47,8 @@ void LinePlot::setDataSource(DataSource * source)
         m_end = size[m_dim];
     }
 
+    findEntireValueRange();
+
     update_selected_region();
 
     emit sourceChanged();
@@ -75,7 +77,7 @@ void LinePlot::setSelector(Selector * selector)
 
     update_selected_region();
 
-    emit yRangeChanged();
+    //emit yRangeChanged();
     emit contentChanged();
 }
 
@@ -104,7 +106,7 @@ void LinePlot::setDimension(int dim)
     emit dimensionChanged();
     emit selectorDimChanged();
     emit xRangeChanged();
-    emit yRangeChanged();
+    //emit yRangeChanged();
     emit selectorRangeChanged();
     emit contentChanged();
 }
@@ -140,7 +142,7 @@ void LinePlot::setSelectorDim(int new_dim)
     emit dimensionChanged();
     emit selectorDimChanged();
     emit xRangeChanged();
-    emit yRangeChanged();
+    //emit yRangeChanged();
     emit selectorRangeChanged();
     emit contentChanged();
 }
@@ -179,7 +181,7 @@ void LinePlot::setRange(int start, int end)
     update_selected_region();
 
     emit xRangeChanged();
-    emit yRangeChanged();
+    //emit yRangeChanged();
     emit contentChanged();
 }
 
@@ -195,8 +197,23 @@ void LinePlot::onSelectorValueChanged()
 {
     update_selected_region();
 
-    emit yRangeChanged();
+    //emit yRangeChanged();
     emit contentChanged();
+}
+
+
+void LinePlot::findEntireValueRange()
+{
+    if (!m_data_source)
+        m_value_range = Range(0,0);
+
+    auto region = get_all(*m_data_source->data());
+
+    auto min_it = std::min_element(region.begin(), region.end());
+    auto max_it = std::max_element(region.begin(), region.end());
+
+    m_value_range.min = min_it.value();
+    m_value_range.max = max_it.value();
 }
 
 void LinePlot::update_selected_region()
@@ -216,8 +233,8 @@ void LinePlot::update_selected_region()
     {
         assert(m_selector_dim < n_dim);
         int value = m_selector->value();
-        qDebug() << "Selector value:" << value;
-        qDebug() << "Data size: " << data_size[m_selector_dim];
+        //qDebug() << "Selector value:" << value;
+        //qDebug() << "Data size: " << data_size[m_selector_dim];
         if (value >= 0 && value < data_size[m_selector_dim])
         {
             offset[m_selector_dim] = value;
@@ -248,6 +265,8 @@ Plot::Range LinePlot::xRange()
 
 Plot::Range LinePlot::yRange()
 {
+    return m_value_range;
+#if 0
     if (!m_data_region.is_valid())
     {
         return Range();
@@ -259,6 +278,7 @@ Plot::Range LinePlot::yRange()
     double max_value = max_it.value();
 
     return Range { min_value, max_value };
+#endif
 }
 
 Plot::Range LinePlot::selectorRange()
