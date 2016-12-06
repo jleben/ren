@@ -15,16 +15,21 @@ namespace datavis {
 LinePlotSettingsView::LinePlotSettingsView(QWidget * parent):
     QWidget(parent)
 {
-    m_dim_x = new QSpinBox;
+    m_x_dim = new QComboBox;
+    m_selector_dim = new QComboBox;
+    m_selector_dim->setModel(m_x_dim->model());
 
     m_color = new ColorBox;
 
     auto form = new QFormLayout(this);
-    form->addRow(new QLabel("X dim:"), m_dim_x);
+    form->addRow(new QLabel("X dim:"), m_x_dim);
+    form->addRow(new QLabel("Selector dim:"), m_selector_dim);
     form->addRow(new QLabel("Color:"), m_color);
 
-    connect(m_dim_x, &QSpinBox::editingFinished,
-            this, &LinePlotSettingsView::onDimXEdited);
+    connect(m_x_dim, static_cast<void(QComboBox::*)(int)>(&QComboBox::activated),
+            this, &LinePlotSettingsView::onXDimEdited);
+    connect(m_selector_dim, static_cast<void(QComboBox::*)(int)>(&QComboBox::activated),
+            this, &LinePlotSettingsView::onSelectorDimEdited);
 }
 
 void LinePlotSettingsView::setPlot(LinePlot * plot)
@@ -41,7 +46,9 @@ void LinePlotSettingsView::setPlot(LinePlot * plot)
         connect(m_plot, &LinePlot::sourceChanged,
                 this, &LinePlotSettingsView::onSourceChanged);
         connect(m_plot, &LinePlot::dimensionChanged,
-                this, &LinePlotSettingsView::onDimXChanged);
+                this, &LinePlotSettingsView::onXDimChanged);
+        connect(m_plot, &LinePlot::selectorDimChanged,
+                this, &LinePlotSettingsView::onSelectorDimChanged);
         connect(m_plot, &LinePlot::colorChanged,
                 this, &LinePlotSettingsView::onColorChanged);
     }
@@ -51,47 +58,83 @@ void LinePlotSettingsView::setPlot(LinePlot * plot)
 
 void LinePlotSettingsView::updateAll()
 {
-    auto source = m_plot ? m_plot->dataSource() : nullptr;
-    auto data = source ? source->data() : nullptr;
+    updateDimensionList();
 
-    int max_dim = data ? data->size().size() - 1 : 0;
-    //qDebug() << "Max dimension: " << max_dim << endl;
+    if (!m_plot)
+        return;
 
-    m_dim_x->setRange(0, max_dim);
-    m_dim_x->setValue(m_plot ? m_plot->dimension() : 0);
+    m_x_dim->setCurrentIndex(m_plot->dimension() + 1);
+
+    m_selector_dim->setCurrentIndex(m_plot->selectorDim() + 1);
 
     m_color->setColor(m_plot ? m_plot->color() : QColor(Qt::black));
 }
 
+void LinePlotSettingsView::updateDimensionList()
+{
+    m_x_dim->clear();
+
+    if (!m_plot)
+        return;
+
+    if (!m_plot->dataSource())
+        return;
+
+    auto n_dim = m_plot->dataSource()->data()->size().size();
+
+    m_x_dim->clear();
+    m_x_dim->addItem("None", int(-1));
+    for (int i = 0; i < n_dim; ++i)
+        m_x_dim->addItem(QString::number(i), i);
+}
+
 void LinePlotSettingsView::onSourceChanged()
 {
+    updateDimensionList();
+
     assert(m_plot);
 
-    auto source = m_plot->dataSource();
-    auto data = source ? source->data() : nullptr;
+    m_x_dim->setCurrentIndex(m_plot->dimension() + 1);
 
-    int max_dim = data ? data->size().size() - 1 : 0;
-    m_dim_x->setRange(0, max_dim);
+    m_selector_dim->setCurrentIndex(m_plot->selectorDim() + 1);
 }
 
-void LinePlotSettingsView::onDimXChanged()
+void LinePlotSettingsView::onXDimChanged()
 {
     assert(m_plot);
-    m_dim_x->setValue(m_plot->dimension());
+    m_x_dim->setCurrentIndex(m_plot->dimension() + 1);
 }
 
-void LinePlotSettingsView::onDimXEdited()
+void LinePlotSettingsView::onXDimEdited()
 {
     if (!m_plot)
         return;
 
-    int dim = m_dim_x->value();
+    int dim = m_x_dim->currentData().toInt();
+
     m_plot->setDimension(dim);
+}
+
+void LinePlotSettingsView::onSelectorDimChanged()
+{
+    assert(m_plot);
+    m_selector_dim->setCurrentIndex(m_plot->selectorDim() + 1);
+}
+
+void LinePlotSettingsView::onSelectorDimEdited()
+{
+    if (!m_plot)
+        return;
+
+    int dim = m_selector_dim->currentData().toInt();
+
+    m_plot->setSelectorDim(dim);
 }
 
 void LinePlotSettingsView::onColorChanged()
 {
     assert(m_plot);
+
     m_color->setColor(m_plot->color());
 }
 

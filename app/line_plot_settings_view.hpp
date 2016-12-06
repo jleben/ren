@@ -2,6 +2,7 @@
 
 #include <QWidget>
 #include <QSpinBox>
+#include <QComboBox>
 
 namespace datavis {
 
@@ -16,13 +17,17 @@ public:
 
 private:
     void updateAll();
+    void updateDimensionList();
     void onSourceChanged();
-    void onDimXChanged();
-    void onDimXEdited();
+    void onXDimChanged();
+    void onXDimEdited();
+    void onSelectorDimChanged();
+    void onSelectorDimEdited();
     void onColorChanged();
 
     LinePlot * m_plot = nullptr;
-    QSpinBox * m_dim_x;
+    QComboBox * m_x_dim;
+    QComboBox * m_selector_dim;
     ColorBox * m_color;
 };
 
