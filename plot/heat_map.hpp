@@ -17,12 +17,18 @@ public:
 
     HeatMap(QObject * parent = 0);
 
+    virtual void setSelector(Selector *) {}
+
     void setData(data_type * data);
     void setDimensions(const vector_t & dim);
     void setRange(const vector_t & start, const vector_t & size);
 
     virtual bool isEmpty() const override { return !m_data_region.is_valid(); }
-    virtual Range range() override;
+
+    virtual Range xRange() override;
+    virtual Range yRange() override;
+    virtual Range selectorRange() override;
+
     virtual void plot(QPainter *,  const QTransform &) override;
 
 private:

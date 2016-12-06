@@ -1,6 +1,9 @@
 #include "plot_view.hpp"
 #include "plot.hpp"
+#include "selector.hpp"
 
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QPainter>
 #include <QDebug>
 #include <algorithm>
@@ -12,24 +15,46 @@ namespace datavis {
 
 PlotView::PlotView(QWidget * parent):
     QWidget(parent)
-{}
+{
+    m_canvas = new PlotCanvas;
+    m_selector = new Selector;
+    m_selector_slider = new QSlider;
+    m_selector_slider->setOrientation(Qt::Horizontal);
+
+    auto layout = new QVBoxLayout(this);
+    layout->addWidget(m_canvas);
+    layout->addWidget(m_selector_slider);
+
+    connect(m_selector, &Selector::valueChanged,
+            m_selector_slider, &QSlider::setValue);
+    connect(m_selector_slider, &QSlider::valueChanged,
+            m_selector, &Selector::setValue);
+}
 
 void PlotView::addPlot(Plot * plot)
 {
     if (!plot)
         return;
 
-    m_plots.push_back(plot);
+    plot->setSelector(m_selector);
 
-    connect(plot, &Plot::rangeChanged,
+    m_canvas->m_plots.push_back(plot);
+
+    connect(plot, &Plot::xRangeChanged,
             this, &PlotView::onPlotRangeChanged);
+    connect(plot, &Plot::yRangeChanged,
+            this, &PlotView::onPlotRangeChanged);
+    connect(plot, &Plot::selectorRangeChanged,
+            this, &PlotView::onPlotSelectorRangeChanged);
     connect(plot, &Plot::contentChanged,
             this, &PlotView::onPlotContentChanged);
 
-    updatePlotMap();
-    updateViewMap();
+    updateSelectorRange();
 
-    update();
+    m_canvas->updatePlotMap();
+    m_canvas->updateViewMap();
+
+    m_canvas->update();
 }
 
 void PlotView::removePlot(Plot * plot)
@@ -37,33 +62,66 @@ void PlotView::removePlot(Plot * plot)
     if (!plot)
         return;
 
-    auto handle = std::find(m_plots.begin(), m_plots.end(), plot);
-    if (handle != m_plots.end())
+    auto & plots = m_canvas->m_plots;
+
+    auto handle = std::find(plots.begin(), plots.end(), plot);
+    if (handle != plots.end())
     {
+        plot->setSelector(nullptr);
         disconnect(plot, 0, this, 0);
-        m_plots.erase(handle);
+        m_canvas->m_plots.erase(handle);
     }
 
-    updatePlotMap();
-    updateViewMap();
+    m_canvas->updatePlotMap();
+    m_canvas->updateViewMap();
 
-    update();
+    m_canvas->update();
 }
 
 void PlotView::onPlotRangeChanged()
 {
-    updatePlotMap();
-    updateViewMap();
+    m_canvas->updatePlotMap();
+    m_canvas->updateViewMap();
+    m_canvas->update();
+}
 
-    update();
+void PlotView::onPlotSelectorRangeChanged()
+{
+    updateSelectorRange();
 }
 
 void PlotView::onPlotContentChanged()
 {
-    update();
+    m_canvas->update();
 }
 
-void PlotView::updateViewMap()
+void PlotView::updateSelectorRange()
+{
+    double min;
+    double max;
+    bool first = true;
+    for (auto plot : m_canvas->m_plots)
+    {
+        auto range = plot->selectorRange();
+        if (first)
+        {
+            min = range.min;
+            max = range.max;
+        }
+        else
+        {
+            min = std::min(min, range.min);
+            max = std::max(max, range.max);
+        }
+        first = false;
+    }
+
+    qDebug() << "Plot selector range:" << min << "," << max;
+
+    m_selector_slider->setRange(min, max);
+}
+
+void PlotCanvas::updateViewMap()
 {
     auto size = this->size();
 
@@ -76,9 +134,10 @@ void PlotView::updateViewMap()
     m_view_map = m_plot_map * map;
 }
 
-void PlotView::updatePlotMap()
+void PlotCanvas::updatePlotMap()
 {
-    Plot::Range total_range;
+    Plot::Range total_x_range;
+    Plot::Range total_y_range;
 
     {
         bool first = true;
@@ -87,19 +146,21 @@ void PlotView::updatePlotMap()
             if (plot->isEmpty())
                 continue;
 
-            auto range = plot->range();
+            auto x_range = plot->xRange();
+            auto y_range = plot->yRange();
 
             if (first)
-                total_range = range;
+            {
+                total_x_range = x_range;
+                total_y_range = y_range;
+            }
             else
             {
-                double min_x = min(total_range.min.x(), range.min.x());
-                double min_y = min(total_range.min.y(), range.min.y());
-                double max_x = max(total_range.max.x(), range.max.x());
-                double max_y = max(total_range.max.y(), range.max.y());
+                total_x_range.min = min(total_x_range.min, x_range.min);
+                total_x_range.max = max(total_x_range.max, x_range.max);
 
-                total_range.min = QPointF(min_x, min_y);
-                total_range.max = QPointF(max_x, max_y);
+                total_y_range.min = min(total_y_range.min, y_range.min);
+                total_y_range.max = max(total_y_range.max, y_range.max);
             }
             first = false;
         }
@@ -111,8 +172,12 @@ void PlotView::updatePlotMap()
          << "(" << total_range.min.y() << "," << total_range.max.y() << ")"
          << endl;
 #endif
-    QPointF extent = total_range.max - total_range.min;
-    QPointF offset = total_range.min;
+    QPointF max(total_x_range.max, total_y_range.max);
+    QPointF min(total_x_range.min, total_y_range.min);
+
+    QPointF offset = min;
+    QPointF extent = max - min;
+
 #if 0
     qDebug() << "offset:" << offset;
     qDebug() << "extent:" << extent;
@@ -130,12 +195,12 @@ void PlotView::updatePlotMap()
     m_plot_map = transform;
 }
 
-void PlotView::resizeEvent(QResizeEvent*)
+void PlotCanvas::resizeEvent(QResizeEvent*)
 {
     updateViewMap();
 }
 
-void PlotView::paintEvent(QPaintEvent* event)
+void PlotCanvas::paintEvent(QPaintEvent* event)
 {
     QPainter painter(this);
 

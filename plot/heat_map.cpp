@@ -102,7 +102,7 @@ void HeatMap::update_value_range()
     m_value_range.second = max_it.value();
 }
 
-Plot::Range HeatMap::range()
+Plot::Range HeatMap::xRange()
 {
     if (!m_data_region.is_valid())
     {
@@ -110,16 +110,27 @@ Plot::Range HeatMap::range()
     }
 
     double margin = 0.5;
+    double x_min = m_start[0] - margin;
+    double x_max = m_start[0] + m_size[0] - 1 + margin;
+    return Range(x_min, x_max);
+}
 
-    Range range;
-    range.min = QPointF
-            (m_start[0] - margin,
-            m_start[1] - margin);
-    range.max = QPointF
-            (m_start[0] + m_size[0] - 1 + margin,
-            m_start[1] + m_size[1] - 1 + margin);
+Plot::Range HeatMap::yRange()
+{
+    if (!m_data_region.is_valid())
+    {
+        return Range();
+    }
 
-    return range;
+    double margin = 0.5;
+    double y_min = m_start[1] - margin;
+    double y_max = m_start[1] + m_size[1] - 1 + margin;
+    return Range(y_min, y_max);
+}
+
+Plot::Range HeatMap::selectorRange()
+{
+    return Range();
 }
 
 void HeatMap::plot(QPainter * painter,  const QTransform & transform)

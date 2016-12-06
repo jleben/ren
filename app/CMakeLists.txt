@@ -1,5 +1,6 @@
 
 set(plot_src
+  ../plot/selector.hpp
   ../plot/plot.hpp
   ../plot/line_plot.cpp
   ../plot/heat_map.cpp

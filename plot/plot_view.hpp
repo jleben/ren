@@ -1,12 +1,15 @@
 #pragma once
 
 #include <QWidget>
+#include <QSlider>
 #include <list>
 
 namespace datavis {
 
 using std::list;
 class Plot;
+class Selector;
+class PlotCanvas;
 
 class PlotView : public QWidget
 {
@@ -16,12 +19,23 @@ public:
     void addPlot(Plot*);
     void removePlot(Plot*);
 
-    virtual void resizeEvent(QResizeEvent*) override;
-    virtual void paintEvent(QPaintEvent*) override;
-
 private:
     void onPlotRangeChanged();
+    void onPlotSelectorRangeChanged();
     void onPlotContentChanged();
+
+    void updateSelectorRange();
+
+    PlotCanvas * m_canvas;
+    Selector * m_selector;
+    QSlider * m_selector_slider;
+};
+
+class PlotCanvas : public QWidget
+{
+public:
+    virtual void resizeEvent(QResizeEvent*) override;
+    virtual void paintEvent(QPaintEvent*) override;
 
     void updateViewMap();
     void updatePlotMap();
