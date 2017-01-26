@@ -71,8 +71,11 @@ void MainWindow::openDataFile(const QString & file_path)
     m_data_object = nullptr;
 
     try {
-        auto data = read_hdf5<double>(file_path.toStdString(), "/data");
-        m_data_object = new DataObject("/data", std::move(data));
+        Hdf5Source source(file_path.toStdString());
+        auto object_index = source.objectIndex("data");
+        if (object_index < 0)
+            throw std::runtime_error("No object named 'data'.");
+        m_data_object = source.object(object_index);
     } catch (...) {
         qCritical() << "Failed to open file: " << file_path;
     }

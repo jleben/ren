@@ -1,7 +1,6 @@
 #include "line_plot_settings_view.hpp"
 #include "../plot/line_plot.hpp"
 #include "color_box.hpp"
-#include "data_source.hpp"
 
 #include <QFormLayout>
 #include <QVBoxLayout>

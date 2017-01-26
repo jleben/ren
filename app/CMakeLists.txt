@@ -10,10 +10,10 @@ set(plot_src
 set(app_src
   main.cpp
   color_box.cpp
-  data_source.cpp
   settings_view.cpp
   line_plot_settings_view.cpp
   main_window.cpp
+  ../io/hdf5.cpp
   ${plot_src}
 )
 

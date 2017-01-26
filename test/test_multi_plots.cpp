@@ -2,7 +2,7 @@
 #include "../plot/line_plot.hpp"
 #include "../plot/heat_map.hpp"
 #include "../data/array.hpp"
-#include "../app/data_source.hpp"
+#include "../data/data_object.hpp"
 
 #include <QApplication>
 #include <QDebug>
