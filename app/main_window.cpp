@@ -80,6 +80,14 @@ void MainWindow::makeMenu()
         connect(action, &QAction::triggered,
                 this, &MainWindow::openData);
     }
+    fileMenu->addSeparator();
+    {
+        auto action = fileMenu->addAction("Quit");
+        action->setMenuRole(QAction::QuitRole);
+        action->setShortcut(QKeySequence::Quit);
+        connect(action, &QAction::triggered,
+                this, &MainWindow::close);
+    }
 }
 
 void MainWindow::openData()
