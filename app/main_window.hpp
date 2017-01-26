@@ -3,6 +3,7 @@
 #include <QWidget>
 #include <QListWidget>
 #include <QMainWindow>
+#include <QMenu>
 
 #include "../data/array.hpp"
 
@@ -35,18 +36,21 @@ private:
     DataObject * loadSelectedObject();
     void addLinePlotForSelectedObject();
     void addHeatPlotForSelectedObject();
+    void removeSelectedPlot();
+    bool eventFilter(QObject*, QEvent*) override;
+    void showPlotContextMenu(Plot*, const QPoint & pos);
 
     DataLibrary * m_lib = nullptr;
     DataLibraryView * m_lib_view = nullptr;
 
     vector<DataObject*> m_data_objects;
     vector<Plot*> m_plots;
+    Plot * m_selected_plot = nullptr;
 
-    DataObject * m_data_object = nullptr;
     SettingsView * m_settings_view = nullptr;
     PlotView * m_plot_view = nullptr;
-    LinePlot * m_line_plot = nullptr;
-    LinePlotSettingsView * m_line_plot_settings_view = nullptr;
+
+    QMenu * m_plot_context_menu = nullptr;
 };
 
 }

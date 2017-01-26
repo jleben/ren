@@ -27,7 +27,7 @@ public:
     QTransform m_plot_map;
     bool m_stacked = false;
     bool m_common_x = true;
-    bool m_common_y = true;
+    bool m_common_y = false;
 
     Plot::Range total_x_range;
     Plot::Range total_y_range;
@@ -49,6 +49,8 @@ public:
 
     bool hasCommonY() const { return m_canvas->m_common_y; }
     void setCommonY(bool value);
+
+    Plot * plotAt(const QPoint & pos);
 
 private:
     void onPlotRangeChanged();

@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <algorithm>
 #include <iostream>
+#include <iterator>
 
 using namespace std;
 
@@ -262,6 +263,27 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
         if (!m_stacked)
             plot_y += plot_height + margin;
     }
+}
+
+Plot * PlotView::plotAt(const QPoint & view_pos)
+{
+    QPoint pos = m_canvas->mapFrom(this, view_pos);
+
+    if (m_canvas->m_plots.empty())
+        return nullptr;
+
+    if (m_canvas->m_stacked)
+        return nullptr;
+
+    int plot_count = (int) m_canvas->m_plots.size();
+    float plot_height = float(m_canvas->height()) / plot_count;
+    int plot_index = float(pos.y()) / plot_height;
+    if (plot_index < 0 || plot_index >= plot_count)
+        return nullptr;
+
+    auto iter = m_canvas->m_plots.begin();
+    advance(iter, plot_index);
+    return *iter;
 }
 
 }

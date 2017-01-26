@@ -17,6 +17,8 @@
 #include <QMessageBox>
 #include <QToolButton>
 #include <QToolBar>
+#include <QContextMenuEvent>
+#include <QMenu>
 
 namespace datavis {
 
@@ -29,6 +31,7 @@ MainWindow::MainWindow(QWidget * parent):
     m_lib_view->setLibrary(m_lib);
 
     m_plot_view = new PlotView;
+    m_plot_view->installEventFilter(this);
 
     m_settings_view = new SettingsView;
 
@@ -56,10 +59,6 @@ MainWindow::MainWindow(QWidget * parent):
     layout->addWidget(m_plot_view, 1);
 
     setCentralWidget(content_view);
-
-    m_line_plot_settings_view = new LinePlotSettingsView;
-
-    m_settings_view->setPlotSettingsView(m_line_plot_settings_view);
 
     connect(m_lib, &DataLibrary::openFailed,
             this, &MainWindow::onOpenFailed,
@@ -166,6 +165,83 @@ void MainWindow::addHeatPlotForSelectedObject()
     m_plots.push_back(plot);
 
     m_plot_view->addPlot(plot);
+}
+
+void MainWindow::removeSelectedPlot()
+{
+    if (!m_selected_plot)
+        return;
+
+    int index = 0;
+    for (auto & plot : m_plots)
+    {
+        if (plot == m_selected_plot)
+            break;
+        ++index;
+    }
+
+    if (index >= (int) m_plots.size())
+    {
+        cerr << "Warning: Could not find selected plot index." << endl;
+        return;
+    }
+
+    m_selected_plot = nullptr;
+
+    auto plot = m_plots[index];
+    auto data = m_data_objects[index];
+
+    m_plot_view->removePlot(plot);
+    delete plot;
+    m_plots.erase(m_plots.begin() + index);
+
+    delete data;
+    m_data_objects.erase(m_data_objects.begin() + index);
+}
+
+void MainWindow::showPlotContextMenu(Plot * plot, const QPoint & pos)
+{
+    if (!plot)
+        return;
+
+    m_selected_plot = plot;
+
+    if (!m_plot_context_menu)
+    {
+        auto menu = m_plot_context_menu = new QMenu(this);
+        {
+            auto action = menu->addAction("Remove");
+            connect(action, &QAction::triggered,
+                    this, &MainWindow::removeSelectedPlot);
+        }
+    }
+
+    m_plot_context_menu->popup(pos);
+}
+
+bool MainWindow::eventFilter(QObject * object, QEvent * event)
+{
+    if (object == m_plot_view)
+    {
+        switch(event->type())
+        {
+        case QEvent::ContextMenu:
+        {
+            auto menuEvent = static_cast<QContextMenuEvent*>(event);
+            if (menuEvent->reason() == QContextMenuEvent::Mouse)
+            {
+                auto plot = m_plot_view->plotAt(menuEvent->pos());
+                if (plot)
+                    showPlotContextMenu(plot, menuEvent->globalPos());
+            }
+            event->accept();
+            return true;
+        }
+        default:;
+        }
+    }
+
+    return false;
 }
 
 }
