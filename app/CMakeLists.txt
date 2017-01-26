@@ -9,6 +9,8 @@ set(plot_src
 
 set(app_src
   main.cpp
+  data_library.cpp
+  data_library_view.cpp
   color_box.cpp
   settings_view.cpp
   line_plot_settings_view.cpp

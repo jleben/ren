@@ -17,6 +17,8 @@ class PlotView;
 class SettingsView;
 class LinePlot;
 class LinePlotSettingsView;
+class DataLibrary;
+class DataLibraryView;
 
 class MainWindow : public QMainWindow
 {
@@ -28,7 +30,10 @@ public:
 
 private:
     void makeMenu();
+    void onOpenFailed(const QString & path);
 
+    DataLibrary * m_lib = nullptr;
+    DataLibraryView * m_lib_view = nullptr;
     DataObject * m_data_object = nullptr;
     SettingsView * m_settings_view = nullptr;
     PlotView * m_plot_view = nullptr;

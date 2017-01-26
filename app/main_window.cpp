@@ -1,4 +1,6 @@
 #include "main_window.hpp"
+#include "data_library.hpp"
+#include "data_library_view.hpp"
 #include "settings_view.hpp"
 #include "line_plot_settings_view.hpp"
 #include "../plot/plot_view.hpp"
@@ -11,20 +13,30 @@
 #include <QAction>
 #include <QFileDialog>
 #include <QDebug>
+#include <QMessageBox>
 
 namespace datavis {
 
 MainWindow::MainWindow(QWidget * parent):
     QMainWindow(parent)
 {
+    m_lib = new DataLibrary(this);
+
+    m_lib_view = new DataLibraryView;
+    m_lib_view->setLibrary(m_lib);
+
     m_plot_view = new PlotView;
 
     m_settings_view = new SettingsView;
 
+    auto tool_layout = new QVBoxLayout;
+    tool_layout->addWidget(m_lib_view);
+    tool_layout->addWidget(m_settings_view);
+
     auto content_view = new QWidget;
 
     auto layout = new QHBoxLayout(content_view);
-    layout->addWidget(m_settings_view, 0);
+    layout->addLayout(tool_layout, 0);
     layout->addWidget(m_plot_view, 1);
 
     setCentralWidget(content_view);
@@ -32,6 +44,10 @@ MainWindow::MainWindow(QWidget * parent):
     m_line_plot_settings_view = new LinePlotSettingsView;
 
     m_settings_view->setPlotSettingsView(m_line_plot_settings_view);
+
+    connect(m_lib, &DataLibrary::openFailed,
+            this, &MainWindow::onOpenFailed,
+            Qt::QueuedConnection);
 
     makeMenu();
 }
@@ -61,6 +77,8 @@ void MainWindow::openData()
 
 void MainWindow::openDataFile(const QString & file_path)
 {
+    m_lib->open(file_path);
+#if 0
     m_line_plot_settings_view->setPlot(nullptr);
 
     m_plot_view->removePlot(m_line_plot);
@@ -86,8 +104,14 @@ void MainWindow::openDataFile(const QString & file_path)
     m_line_plot_settings_view->setPlot(m_line_plot);
 
     m_plot_view->addPlot(m_line_plot);
+#endif
 }
 
-
+void MainWindow::onOpenFailed(const QString & path)
+{
+    QMessageBox::warning(this, "Open Failed",
+                         QString("Failed to open file:\n")
+                         + path);
+}
 
 }
