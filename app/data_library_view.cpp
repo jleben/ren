@@ -6,6 +6,8 @@
 #include <QStringList>
 #include <QVBoxLayout>
 
+Q_DECLARE_METATYPE(datavis::DataSource*);
+
 namespace datavis {
 
 DataLibraryView::DataLibraryView(QWidget * parent):
@@ -56,6 +58,7 @@ void DataLibraryView::updateLibraryTree()
         }
 
         auto source_item = new QTreeWidgetItem(QStringList() << source_name);
+        source_item->setData(0, Qt::UserRole, QVariant::fromValue(source));
 
         for (int object_idx = 0; object_idx < source->objectCount(); ++object_idx)
         {
@@ -79,6 +82,31 @@ void DataLibraryView::updateLibraryTree()
 
         m_lib_tree->addTopLevelItem(source_item);
     }
+}
+
+DataSource * DataLibraryView::selectedSource()
+{
+    auto item = m_lib_tree->currentItem();
+    if (!item)
+        return nullptr;
+
+    if(item->parent())
+        item = item->parent();
+
+    return item->data(0, Qt::UserRole).value<DataSource*>();
+}
+
+int DataLibraryView::selectedObjectIndex()
+{
+    auto item = m_lib_tree->currentItem();
+    if (!item)
+        return -1;
+
+    auto parent = item->parent();
+    if (!parent)
+        return -1;
+
+    return parent->indexOfChild(item);
 }
 
 }

@@ -6,6 +6,7 @@
 namespace datavis {
 
 class DataLibrary;
+class DataSource;
 
 class DataLibraryView : public QWidget
 {
@@ -14,6 +15,9 @@ public:
 
     void setLibrary(DataLibrary *);
     DataLibrary * library() { return m_lib; }
+
+    DataSource * selectedSource();
+    int selectedObjectIndex();
 
 private:
     void updateLibraryTree();

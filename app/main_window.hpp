@@ -14,6 +14,7 @@ using std::list;
 
 class DataObject;
 class PlotView;
+class Plot;
 class SettingsView;
 class LinePlot;
 class LinePlotSettingsView;
@@ -31,9 +32,16 @@ public:
 private:
     void makeMenu();
     void onOpenFailed(const QString & path);
+    DataObject * loadSelectedObject();
+    void addLinePlotForSelectedObject();
+    void addHeatPlotForSelectedObject();
 
     DataLibrary * m_lib = nullptr;
     DataLibraryView * m_lib_view = nullptr;
+
+    vector<DataObject*> m_data_objects;
+    vector<Plot*> m_plots;
+
     DataObject * m_data_object = nullptr;
     SettingsView * m_settings_view = nullptr;
     PlotView * m_plot_view = nullptr;
