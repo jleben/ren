@@ -1,6 +1,7 @@
 #include "plot_view.hpp"
 #include "plot.hpp"
 #include "selector.hpp"
+#include "mapping.hpp"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -78,6 +79,24 @@ void PlotView::removePlot(Plot * plot)
     m_canvas->update();
 }
 
+void PlotView::setStacked(bool value)
+{
+    m_canvas->m_stacked = value;
+    m_canvas->update();
+}
+
+void PlotView::setCommonX(bool value)
+{
+    m_canvas->m_common_x = value;
+    m_canvas->update();
+}
+
+void PlotView::setCommonY(bool value)
+{
+    m_canvas->m_common_y = value;
+    m_canvas->update();
+}
+
 void PlotView::onPlotRangeChanged()
 {
     m_canvas->updatePlotMap();
@@ -136,9 +155,6 @@ void PlotCanvas::updateViewMap()
 
 void PlotCanvas::updatePlotMap()
 {
-    Plot::Range total_x_range;
-    Plot::Range total_y_range;
-
     {
         bool first = true;
         for (auto plot : m_plots)
@@ -206,12 +222,46 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
 
     painter.fillRect(rect(), Qt::white);
 
+    if (m_plots.empty())
+        return;
+
+    int margin = 10;
+
+    int plot_width = width() - 2 * margin;
+
+    int plot_height;
+    if (m_stacked)
+        plot_height = height() - 2 * margin;
+    else
+        plot_height = (height() - margin) / int(m_plots.size()) - margin;
+
+    int plot_x = margin;
+    int plot_y = margin;
+
     for (auto plot : m_plots)
     {
         if (plot->isEmpty())
             continue;
 
-        plot->plot(&painter, m_view_map);
+        Mapping2d map;
+
+        Plot::Range x_range = m_common_x ? total_x_range : plot->xRange();
+        Plot::Range y_range = m_common_y ? total_y_range : plot->yRange();
+
+        double x_extent = x_range.max - x_range.min;
+        double y_extent = y_range.max - y_range.min;
+        double x_scale = x_extent == 0 ? 1 : 1.0 / x_extent;
+        double y_scale = y_extent == 0 ? 1 : 1.0 / y_extent;
+
+        map.translate(-x_range.min, -y_range.min);
+        map.scale(x_scale, y_scale);
+        map.scale(plot_width, -plot_height);
+        map.translate(plot_x, plot_y + plot_height);
+
+        plot->plot(&painter, map);
+
+        if (!m_stacked)
+            plot_y += plot_height + margin;
     }
 }
 

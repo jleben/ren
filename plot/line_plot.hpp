@@ -40,7 +40,7 @@ public:
     virtual Range xRange() override;
     virtual Range yRange() override;
     virtual Range selectorRange() override;
-    virtual void plot(QPainter *,  const QTransform &) override;
+    virtual void plot(QPainter *,  const Mapping2d &) override;
 
 signals:
     void sourceChanged();

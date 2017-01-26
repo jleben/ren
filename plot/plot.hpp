@@ -1,5 +1,7 @@
 #pragma once
 
+#include "mapping.hpp"
+
 #include <QObject>
 #include <QPainter>
 
@@ -27,7 +29,7 @@ public:
     virtual Range xRange() = 0;
     virtual Range yRange() = 0;
     virtual Range selectorRange() = 0;
-    virtual void plot(QPainter *, const QTransform &) = 0;
+    virtual void plot(QPainter *, const Mapping2d &) = 0;
 
 signals:
     void xRangeChanged();

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "plot.hpp"
+
 #include <QWidget>
 #include <QSlider>
 #include <list>
@@ -18,6 +20,10 @@ public:
 
     void addPlot(Plot*);
     void removePlot(Plot*);
+
+    void setStacked(bool value);
+    void setCommonX(bool value);
+    void setCommonY(bool value);
 
 private:
     void onPlotRangeChanged();
@@ -43,6 +49,12 @@ public:
     list<Plot*> m_plots;
     QTransform m_view_map;
     QTransform m_plot_map;
+    bool m_stacked = true;
+    bool m_common_x = true;
+    bool m_common_y = true;
+
+    Plot::Range total_x_range;
+    Plot::Range total_y_range;
 };
 
 }

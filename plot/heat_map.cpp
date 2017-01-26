@@ -133,7 +133,7 @@ Plot::Range HeatMap::selectorRange()
     return Range();
 }
 
-void HeatMap::plot(QPainter * painter,  const QTransform & transform)
+void HeatMap::plot(QPainter * painter,  const Mapping2d & transform)
 {
     if (!m_data_region.is_valid())
         return;
@@ -158,8 +158,8 @@ void HeatMap::plot(QPainter * painter,  const QTransform & transform)
 
         int c = 255 * v;
 
-        auto a = QPointF(x-0.5,y-0.5) * transform;
-        auto b = QPointF(x+0.5,y+0.5) * transform;
+        auto a = transform(QPointF(x-0.5,y-0.5));
+        auto b = transform(QPointF(x+0.5,y+0.5));
 
         painter->fillRect(QRectF(a,b), QColor(c,c,c));
     }

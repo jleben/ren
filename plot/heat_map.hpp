@@ -29,7 +29,7 @@ public:
     virtual Range yRange() override;
     virtual Range selectorRange() override;
 
-    virtual void plot(QPainter *,  const QTransform &) override;
+    virtual void plot(QPainter *,  const Mapping2d &) override;
 
 private:
     void update_selected_region();

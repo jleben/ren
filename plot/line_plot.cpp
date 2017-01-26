@@ -307,7 +307,7 @@ Plot::Range LinePlot::selectorRange()
     return Range { double(0), double(data_size[m_selector_dim] - 1) };
 }
 
-void LinePlot::plot(QPainter * painter,  const QTransform & transform)
+void LinePlot::plot(QPainter * painter,  const Mapping2d & transform)
 {
     if (!m_data_region.is_valid())
         return;
@@ -324,13 +324,17 @@ void LinePlot::plot(QPainter * painter,  const QTransform & transform)
     {
         int loc = element.location()[m_dim];
         double value = element.value();
+
+        auto point = transform(QPointF(loc, value));
+
         if (first)
-            path.moveTo(loc, value);
+            path.moveTo(point);
         else
-            path.lineTo(loc, value);
+            path.lineTo(point);
+
         first = false;
     }
-    painter->drawPath(path * transform);
+    painter->drawPath(path);
 
     painter->restore();
 }

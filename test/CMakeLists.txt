@@ -22,5 +22,8 @@ target_link_libraries(test-line-plot plottestlib)
 add_executable(test-heatmap-plot test_heatmap_plot.cpp)
 target_link_libraries(test-heatmap-plot plottestlib)
 
+add_executable(test-multi-plots test_multi_plots.cpp)
+target_link_libraries(test-multi-plots plottestlib)
+
 add_executable(test-plot-hdf5 test_plot_hdf5.cpp)
 target_link_libraries(test-plot-hdf5 plottestlib -lhdf5_cpp -lhdf5)
