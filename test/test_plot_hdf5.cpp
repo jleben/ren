@@ -23,12 +23,12 @@ int main(int argc, char *argv[])
 
     QApplication app(argc, argv);
 
-    auto data = datavis::read_hdf5<double>(file_path, dataset_location);
+    DataObject data("", datavis::read_hdf5<double>(file_path, dataset_location));
 
     auto plot_view = new PlotView;
 
     auto heat = new HeatMap;
-    heat->setData(&data);
+    heat->setDataObject(&data);
     plot_view->addPlot(heat);
 
     plot_view->resize(600,600);

@@ -4,10 +4,10 @@
 
 #include "plot.hpp"
 #include "../data/array.hpp"
+#include "../data/data_object.hpp"
 
 namespace datavis {
 
-class DataSource;
 class Selector;
 
 class LinePlot : public Plot
@@ -20,8 +20,8 @@ public:
 
     LinePlot(QObject * parent = 0);
 
-    DataSource * dataSource() const { return m_data_source; }
-    void setDataSource(DataSource * data);
+    DataObject * dataObject() const { return m_data_object; }
+    void setDataObject(DataObject * data);
 
     virtual void setSelector(Selector *);
 
@@ -53,7 +53,7 @@ private:
     void findEntireValueRange();
     void update_selected_region();
 
-    DataSource * m_data_source = nullptr;
+    DataObject * m_data_object = nullptr;
     Selector * m_selector = nullptr;
     data_region_type m_data_region;
     int m_dim = -1;

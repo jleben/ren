@@ -1,9 +1,9 @@
 #include "main_window.hpp"
 #include "settings_view.hpp"
-#include "data_source.hpp"
 #include "line_plot_settings_view.hpp"
 #include "../plot/plot_view.hpp"
 #include "../plot/line_plot.hpp"
+#include "../io/hdf5.hpp"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -67,17 +67,18 @@ void MainWindow::openDataFile(const QString & file_path)
     delete m_line_plot;
     m_line_plot = nullptr;
 
-    delete m_data_source;
-    m_data_source = nullptr;
+    delete m_data_object;
+    m_data_object = nullptr;
 
     try {
-        m_data_source = new DataSource(file_path, this);
+        auto data = read_hdf5<double>(file_path.toStdString(), "/data");
+        m_data_object = new DataObject("/data", std::move(data));
     } catch (...) {
         qCritical() << "Failed to open file: " << file_path;
     }
 
     m_line_plot = new LinePlot;
-    m_line_plot->setDataSource(m_data_source);
+    m_line_plot->setDataObject(m_data_object);
 
     m_line_plot_settings_view->setPlot(m_line_plot);
 

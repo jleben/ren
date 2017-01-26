@@ -1,6 +1,5 @@
 #include "line_plot.hpp"
 #include "selector.hpp"
-#include "../app/data_source.hpp"
 
 #include <QPainter>
 #include <QPainterPath>
@@ -17,9 +16,9 @@ LinePlot::LinePlot(QObject * parent):
     Plot(parent)
 {}
 
-void LinePlot::setDataSource(DataSource * source)
+void LinePlot::setDataObject(DataObject * source)
 {
-    m_data_source = source;
+    m_data_object = source;
 
     if (!source || source->data()->size().empty())
     {
@@ -83,10 +82,10 @@ void LinePlot::setSelector(Selector * selector)
 
 void LinePlot::setDimension(int dim)
 {
-    if (!m_data_source)
+    if (!m_data_object)
         return;
 
-    auto size = m_data_source->data()->size();
+    auto size = m_data_object->data()->size();
 
     if (dim < 0 || dim >= size.size())
         dim = -1;
@@ -124,13 +123,13 @@ int LinePlot::selectorDim()
 
 void LinePlot::setSelectorDim(int new_dim)
 {
-    if (!m_data_source)
+    if (!m_data_object)
     {
         cerr << "No data." << endl;
         return;
     }
 
-    auto n_data_dim = m_data_source->data()->size().size();
+    auto n_data_dim = m_data_object->data()->size().size();
 
     if (new_dim == m_dim)
     {
@@ -154,10 +153,10 @@ void LinePlot::setSelectorDim(int new_dim)
 
 void LinePlot::setRange(int start, int end)
 {
-    if (!m_data_source)
+    if (!m_data_object)
         return;
 
-    auto size = m_data_source->data()->size();
+    auto size = m_data_object->data()->size();
 
     if (size.empty())
         return;
@@ -209,10 +208,10 @@ void LinePlot::onSelectorValueChanged()
 
 void LinePlot::findEntireValueRange()
 {
-    if (!m_data_source)
+    if (!m_data_object)
         m_value_range = Range(0,0);
 
-    auto region = get_all(*m_data_source->data());
+    auto region = get_all(*m_data_object->data());
 
     auto min_it = std::min_element(region.begin(), region.end());
     auto max_it = std::max_element(region.begin(), region.end());
@@ -223,7 +222,7 @@ void LinePlot::findEntireValueRange()
 
 void LinePlot::update_selected_region()
 {
-    if (!m_data_source)
+    if (!m_data_object)
     {
         m_data_region = data_region_type();
         return;
@@ -235,7 +234,7 @@ void LinePlot::update_selected_region()
         return;
     }
 
-    auto data_size = m_data_source->data()->size();
+    auto data_size = m_data_object->data()->size();
     auto n_dim = data_size.size();
     vector<int> offset(n_dim, 0);
     vector<int> size(n_dim, 1);
@@ -261,7 +260,7 @@ void LinePlot::update_selected_region()
     offset[m_dim] = m_start;
     size[m_dim] = m_end - m_start;
 
-    m_data_region = get_region(*m_data_source->data(), offset, size);
+    m_data_region = get_region(*m_data_object->data(), offset, size);
 }
 
 Plot::Range LinePlot::xRange()
@@ -271,7 +270,9 @@ Plot::Range LinePlot::xRange()
         return Range();
     }
 
-    return Range { double(m_start), double(m_end) };
+    auto dim = m_data_object->dimension(m_dim);
+
+    return Range { dim.map * m_start, dim.map * m_end };
 }
 
 Plot::Range LinePlot::yRange()
@@ -294,23 +295,27 @@ Plot::Range LinePlot::yRange()
 
 Plot::Range LinePlot::selectorRange()
 {
-    if (!m_data_source)
+    if (!m_data_object)
         return Range();
 
     if (m_selector_dim < 0)
         return Range();
 
-    auto data_size = m_data_source->data()->size();
+    auto data_size = m_data_object->data()->size();
 
     assert(m_selector_dim >= 0 && m_selector_dim < data_size.size());
 
-    return Range { double(0), double(data_size[m_selector_dim] - 1) };
+    auto dim = m_data_object->dimension(m_selector_dim);
+
+    return Range { dim.map * 0., dim.map * (data_size[m_selector_dim] - 1) };
 }
 
 void LinePlot::plot(QPainter * painter,  const Mapping2d & transform)
 {
     if (!m_data_region.is_valid())
         return;
+
+    auto dim = m_data_object->dimension(m_dim);
 
     painter->save();
 
@@ -322,10 +327,12 @@ void LinePlot::plot(QPainter * painter,  const Mapping2d & transform)
     bool first = true;
     for (auto & element : m_data_region)
     {
-        int loc = element.location()[m_dim];
+        double loc = element.location()[m_dim];
+        loc = dim.map * loc;
+
         double value = element.value();
 
-        auto point = transform(QPointF(loc, value));
+        auto point = transform * QPointF(loc, value);
 
         if (first)
             path.moveTo(point);

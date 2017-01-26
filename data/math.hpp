@@ -1,9 +1,5 @@
 #pragma once
 
-#include <QPoint>
-#include <QPointF>
-#include <QPainterPath>
-
 namespace datavis {
 
 struct Point2d
@@ -14,6 +10,18 @@ struct Point2d
     double x;
     double y;
 };
+
+struct Mapping1d
+{
+    double scale = 1;
+    double offset = 0;
+};
+
+inline
+double operator*(const Mapping1d & m, double value)
+{
+    return value * m.scale + m.offset;
+}
 
 struct Mapping2d
 {
@@ -45,40 +53,22 @@ struct Mapping2d
         m.y_scale = 1.0 / y_scale;
         m.y_offset = - y_offset / y_scale;
     }
-
-    Point2d operator()(const Point2d & a) const
-    {
-        Point2d b;
-        b.x = a.x * x_scale + x_offset;
-        b.y = a.y * y_scale + y_offset;
-        return  b;
-    }
-
-    QPointF operator()(const QPointF & a) const
-    {
-        return QPointF(a.x() * x_scale + x_offset,
-                       a.y() * y_scale + y_offset);
-    }
-
-    QPoint operator()(const QPoint & a) const
-    {
-        return QPoint(int(a.x() * x_scale + x_offset),
-                      int(a.y() * y_scale + y_offset));
-    }
 };
 
 inline
 Mapping2d operator* (const Mapping2d & a, const Mapping2d & b)
 {
-    // y = k1 x + c1
-    // z = k2 y + c2
-    // z = k2 (k1 x + c1) + c2
-    // z = k2 k1 x + k2 c1 + c2
-
     Mapping2d c;
     c.x_scale = a.x_scale * b.x_scale;
     c.x_offset = a.x_scale * b.x_offset + a.x_offset;
     return c;
+}
+
+inline
+Point2d operator* (const Mapping2d & m, const Point2d & v)
+{
+    return  Point2d(v.x * m.x_scale + m.x_offset,
+                    v.y * m.y_scale + m.y_offset);
 }
 
 }

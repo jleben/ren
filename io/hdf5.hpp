@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../data/array.hpp"
+#include "../data/data_object.hpp"
 
 #include <H5Cpp.h>
 #include <stdexcept>

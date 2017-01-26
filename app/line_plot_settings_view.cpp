@@ -77,10 +77,10 @@ void LinePlotSettingsView::updateDimensionList()
     if (!m_plot)
         return;
 
-    if (!m_plot->dataSource())
+    if (!m_plot->dataObject())
         return;
 
-    auto n_dim = m_plot->dataSource()->data()->size().size();
+    auto n_dim = m_plot->dataObject()->data()->size().size();
 
     m_x_dim->clear();
     m_x_dim->addItem("None", int(-1));

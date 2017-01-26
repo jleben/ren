@@ -5,6 +5,7 @@
 
 #include "plot.hpp"
 #include "../data/array.hpp"
+#include "../data/data_object.hpp"
 
 namespace datavis {
 
@@ -19,7 +20,7 @@ public:
 
     virtual void setSelector(Selector *) {}
 
-    void setData(data_type * data);
+    void setDataObject(DataObject *);
     void setDimensions(const vector_t & dim);
     void setRange(const vector_t & start, const vector_t & size);
 
@@ -34,7 +35,7 @@ public:
 private:
     void update_selected_region();
     void update_value_range();
-    data_type * m_data = nullptr;
+    DataObject * m_data_object = nullptr;
     data_region_type m_data_region;
     pair<double,double> m_value_range;
     vector_t m_dim;

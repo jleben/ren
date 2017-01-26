@@ -21,30 +21,35 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    int wave_length = 200;
+    int data_size = 200;
 
     double base_freq = 1.0/200.0;
 
-    DataSource source1(vector<int>({wave_length}));
+    DataObject source1(vector<int>({data_size}));
     {
         //cout << "Generating data:" << endl;
         auto region = get_all(*source1.data());
         for (auto & i : region)
         {
             auto loc = i.location()[0];
-            i.value() = std::sin(3.0 * loc / wave_length * 2 * pi) ;
+            i.value() = std::sin(2.0 * loc / data_size * 2 * pi) ;
             //cout << i.value() << endl;
         }
     }
 
-    DataSource source2(vector<int>({wave_length/2}));
+    DataObject source2(vector<int>({data_size}));
+    Dimension dim;
+    dim.map.offset = 100;
+    dim.map.scale = 0.5;
+    source2.setDimension(0, dim);
+
     {
         //cout << "Generating data:" << endl;
         auto region = get_all(*source2.data());
         for (auto & i : region)
         {
             auto loc = i.location()[0];
-            i.value() = 0.5 * std::sin(6.0 * loc / wave_length * 2 * pi) ;
+            i.value() = 0.5 * std::sin((0.5 + 2.0 * loc / data_size) * 2 * pi) ;
             //cout << i.value() << endl;
         }
     }
@@ -53,12 +58,12 @@ int main(int argc, char *argv[])
 
     {
         auto plot = new LinePlot;
-        plot->setDataSource(&source1);
+        plot->setDataObject(&source1);
         plot_view->addPlot(plot);
     }
     {
         auto plot = new LinePlot;
-        plot->setDataSource(&source2);
+        plot->setDataObject(&source2);
         plot_view->addPlot(plot);
     }
 

@@ -12,7 +12,7 @@ namespace datavis {
 
 using std::list;
 
-class DataSource;
+class DataObject;
 class PlotView;
 class SettingsView;
 class LinePlot;
@@ -29,7 +29,7 @@ public:
 private:
     void makeMenu();
 
-    DataSource * m_data_source = nullptr;
+    DataObject * m_data_object = nullptr;
     SettingsView * m_settings_view = nullptr;
     PlotView * m_plot_view = nullptr;
     LinePlot * m_line_plot = nullptr;

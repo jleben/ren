@@ -13,10 +13,10 @@ HeatMap::HeatMap(QObject * parent):
     Plot(parent)
 {}
 
-void HeatMap::setData(data_type * data)
+void HeatMap::setDataObject(DataObject * source)
 {
-    m_data = data;
-    auto size = data->size();
+    m_data_object = source;
+    auto size = source->data()->size();
 
     m_dim = { 0, 1 };
     m_start = { 0, 0 };
@@ -31,7 +31,7 @@ void HeatMap::setData(data_type * data)
 
 void HeatMap::setDimensions(const vector_t & dim)
 {
-    auto data_size = m_data->size();
+    auto data_size = m_data_object->data()->size();
 
     m_dim = dim;
     m_start = { 0, 0 };
@@ -59,7 +59,7 @@ void HeatMap::setRange(const vector_t & start, const vector_t & size)
 
 void HeatMap::update_selected_region()
 {
-    auto data_size = m_data->size();
+    auto data_size = m_data_object->data()->size();
     auto data_dim_count = data_size.size();
 
     vector<int> offset(data_dim_count, 0);
@@ -88,7 +88,7 @@ void HeatMap::update_selected_region()
         size[data_dim] = m_size[d];
     }
 
-    m_data_region = get_region(*m_data, offset, size);
+    m_data_region = get_region(*m_data_object->data(), offset, size);
 }
 
 void HeatMap::update_value_range()
@@ -109,10 +109,13 @@ Plot::Range HeatMap::xRange()
         return Range();
     }
 
+    auto x_dim = m_data_object->dimension(m_dim[0]);
+
     double margin = 0.5;
     double x_min = m_start[0] - margin;
     double x_max = m_start[0] + m_size[0] - 1 + margin;
-    return Range(x_min, x_max);
+
+    return Range(x_dim.map * x_min, x_dim.map * x_max);
 }
 
 Plot::Range HeatMap::yRange()
@@ -122,10 +125,13 @@ Plot::Range HeatMap::yRange()
         return Range();
     }
 
+    auto y_dim = m_data_object->dimension(m_dim[1]);
+
     double margin = 0.5;
     double y_min = m_start[1] - margin;
     double y_max = m_start[1] + m_size[1] - 1 + margin;
-    return Range(y_min, y_max);
+
+    return Range(y_dim.map * y_min, y_dim.map * y_max);
 }
 
 Plot::Range HeatMap::selectorRange()
@@ -137,6 +143,9 @@ void HeatMap::plot(QPainter * painter,  const Mapping2d & transform)
 {
     if (!m_data_region.is_valid())
         return;
+
+    auto x_dim = m_data_object->dimension(m_dim[0]);
+    auto y_dim = m_data_object->dimension(m_dim[1]);
 
     painter->save();
 
@@ -158,8 +167,11 @@ void HeatMap::plot(QPainter * painter,  const Mapping2d & transform)
 
         int c = 255 * v;
 
-        auto a = transform(QPointF(x-0.5,y-0.5));
-        auto b = transform(QPointF(x+0.5,y+0.5));
+        auto a = transform * QPointF(x_dim.map * (x-0.5),
+                                     y_dim.map * (y-0.5));
+
+        auto b = transform * QPointF(x_dim.map * (x+0.5),
+                                     y_dim.map * (y+0.5));
 
         painter->fillRect(QRectF(a,b), QColor(c,c,c));
     }

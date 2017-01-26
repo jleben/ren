@@ -1,9 +1,10 @@
 #pragma once
 
-#include "mapping.hpp"
+#include "../data/math.hpp"
 
 #include <QObject>
 #include <QPainter>
+#include <QPointF>
 
 namespace datavis {
 
@@ -37,5 +38,12 @@ signals:
     void selectorRangeChanged();
     void contentChanged();
 };
+
+inline
+QPointF operator* (const Mapping2d & m, const QPointF & v)
+{
+    return  QPointF(v.x() * m.x_scale + m.x_offset,
+                    v.y() * m.y_scale + m.y_offset);
+}
 
 }

@@ -1,7 +1,6 @@
 #include "plot_view.hpp"
 #include "plot.hpp"
 #include "selector.hpp"
-#include "mapping.hpp"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
