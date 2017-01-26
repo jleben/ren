@@ -70,13 +70,13 @@ int main(int argc, char *argv[])
     auto win = new QWidget;
 
     auto stacked_option = new QCheckBox("Stacked");
-    stacked_option->setChecked(true);
+    stacked_option->setChecked(plot_view->isStacked());
 
     auto common_x_option = new QCheckBox("Common X");
-    common_x_option->setChecked(true);
+    common_x_option->setChecked(plot_view->hasCommonX());
 
     auto common_y_option = new QCheckBox("Common Y");
-    common_y_option->setChecked(true);
+    common_y_option->setChecked(plot_view->hasCommonY());
 
     auto layout = new QVBoxLayout(win);
     layout->addWidget(stacked_option);
