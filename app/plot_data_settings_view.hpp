@@ -11,10 +11,10 @@ class PlotDataSettingsView : public QWidget
 {
 public:
     PlotDataSettingsView(QWidget * parent = 0);
-    void setDataInfo(const DataObjectInfo & info);
+    void setDataInfo(const DataSetInfo & info);
     vector<int> selectedDimensions();
 private:
-    DataObjectInfo m_info;
+    DataSetInfo m_info;
     QListWidget * m_dimension_list = nullptr;
 };
 

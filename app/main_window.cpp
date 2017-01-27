@@ -122,7 +122,7 @@ void MainWindow::onSelectedDataChanged()
 
 bool MainWindow::hasSelectedObject()
 {
-    auto object_idx = m_lib_view->selectedObjectIndex();
+    auto object_idx = m_lib_view->selectedDatasetIndex();
     return object_idx >= 0;
 }
 
@@ -132,11 +132,11 @@ void MainWindow::plotSelectedObject()
     if (!source)
         return;
 
-    auto object_idx = m_lib_view->selectedObjectIndex();
+    auto object_idx = m_lib_view->selectedDatasetIndex();
 
     if (object_idx < 0)
     {
-        for (object_idx = 0; object_idx < source->objectCount(); ++object_idx)
+        for (object_idx = 0; object_idx < source->count(); ++object_idx)
         {
             plot(source, object_idx);
         }
@@ -154,7 +154,7 @@ void MainWindow::customPlotSelectedObject()
     if (!source)
         return;
 
-    auto object_idx = m_lib_view->selectedObjectIndex();
+    auto object_idx = m_lib_view->selectedDatasetIndex();
     if (object_idx < 0)
         return;
 
@@ -163,7 +163,7 @@ void MainWindow::customPlotSelectedObject()
 
 void MainWindow::plot(DataSource * source, int index)
 {
-    auto info = source->objectInfo(index);
+    auto info = source->info(index);
 
     if (info.dimensionCount() < 1)
     {
@@ -181,7 +181,7 @@ void MainWindow::plot(DataSource * source, int index)
 
 void MainWindow::plotCustom(DataSource * source, int index)
 {
-    auto info = source->objectInfo(index);
+    auto info = source->info(index);
 
     auto dialog = new QDialog;
     dialog->setWindowTitle("Select Plot Data");
@@ -236,9 +236,9 @@ void MainWindow::plot(DataSource * source, int index, vector<int> dimensions)
         return;
     }
 
-    DataObject * data;
+    DataSet * data;
     try {
-        data = source->object(index);
+        data = source->dataset(index);
     } catch (...) {
         QMessageBox::warning(this, "Read Failed",
                              QString("Failed to read data for object %1.")
@@ -251,14 +251,14 @@ void MainWindow::plot(DataSource * source, int index, vector<int> dimensions)
     if (dimensions.size() == 1)
     {
         auto line = new LinePlot;
-        line->setDataObject(data);
+        line->setDataSet(data);
         line->setDimension(dimensions[0]);
         plot = line;
     }
     else
     {
         auto map = new HeatMap;
-        map->setDataObject(data);
+        map->setDataSet(data);
         map->setDimensions({dimensions[0], dimensions[1]});
         plot = map;
     }

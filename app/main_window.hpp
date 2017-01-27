@@ -14,7 +14,7 @@ namespace datavis {
 
 using std::list;
 
-class DataObject;
+class DataSet;
 class PlotView;
 class Plot;
 class SettingsView;
@@ -49,7 +49,7 @@ private:
     DataLibrary * m_lib = nullptr;
     DataLibraryView * m_lib_view = nullptr;
 
-    vector<DataObject*> m_data_objects;
+    vector<DataSet*> m_data_objects;
     vector<Plot*> m_plots;
     Plot * m_selected_plot = nullptr;
 

@@ -81,12 +81,12 @@ Hdf5Source::Hdf5Source(const string & file_path):
     }
 }
 
-int Hdf5Source::objectCount() const
+int Hdf5Source::count() const
 {
     return m_dataset_indices.size();
 }
 
-int Hdf5Source::objectIndex(const string & id) const
+int Hdf5Source::index(const string & id) const
 {
     for (int i = 0; i < m_dataset_indices.size(); ++i)
     {
@@ -98,7 +98,7 @@ int Hdf5Source::objectIndex(const string & id) const
     return -1;
 }
 
-DataObjectInfo Hdf5Source::objectInfo(int index) const
+DataSetInfo Hdf5Source::info(int index) const
 {
     auto dataset_index = m_dataset_indices[index];
 
@@ -115,7 +115,7 @@ DataObjectInfo Hdf5Source::objectInfo(int index) const
     vector<hsize_t> size(dim_count);
     dataspace.getSimpleExtentDims(size.data());
 
-    DataObjectInfo info;
+    DataSetInfo info;
 
     info.id = dataset_name;
 
@@ -126,7 +126,7 @@ DataObjectInfo Hdf5Source::objectInfo(int index) const
     return info;
 }
 
-DataObject * Hdf5Source::object(int index) const
+DataSet * Hdf5Source::dataset(int index) const
 {
     auto dataset_index = m_dataset_indices[index];
 
@@ -145,7 +145,7 @@ DataObject * Hdf5Source::object(int index) const
 
     vector<int> object_size(size.begin(), size.end());
 
-    auto object = new DataObject(dataset_name, object_size);
+    auto object = new DataSet(dataset_name, object_size);
 
     dataset.read(object->data()->data(), hdf5_type<double>::native_type());
 

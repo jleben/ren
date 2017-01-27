@@ -16,7 +16,7 @@ LinePlot::LinePlot(QObject * parent):
     Plot(parent)
 {}
 
-void LinePlot::setDataObject(DataObject * source)
+void LinePlot::setDataSet(DataSet * source)
 {
     m_data_object = source;
 

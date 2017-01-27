@@ -24,19 +24,19 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     Hdf5Source source(file_path);
-    auto object_index = source.objectIndex(dataset_location);
+    auto object_index = source.index(dataset_location);
     if (object_index < 0)
     {
         cerr << "No object named " << dataset_location << endl;
         return 1;
     }
 
-    auto object = source.object(object_index);
+    auto object = source.dataset(object_index);
 
     auto plot_view = new PlotView;
 
     auto heat = new HeatMap;
-    heat->setDataObject(object);
+    heat->setDataSet(object);
     plot_view->addPlot(heat);
 
     plot_view->resize(600,600);

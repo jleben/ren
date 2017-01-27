@@ -28,9 +28,9 @@ int main(int argc, char *argv[])
 
     int selected_object_index = -1;
 
-    for (int i = 0; i < source.objectCount(); ++i)
+    for (int i = 0; i < source.count(); ++i)
     {
-        auto info = source.objectInfo(i);
+        auto info = source.info(i);
         cout << "* Object: " << info.id << endl;
         cout << "  - size: ";
         for (auto & s : info.size)
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    auto object = source.object(selected_object_index);
+    auto object = source.dataset(selected_object_index);
 
     cout << "Open data size: ";
     for (auto & s : object->data()->size())

@@ -17,7 +17,7 @@ PlotDataSettingsView::PlotDataSettingsView(QWidget *parent):
     layout->addWidget(m_dimension_list);
 }
 
-void PlotDataSettingsView::setDataInfo(const DataObjectInfo & info)
+void PlotDataSettingsView::setDataInfo(const DataSetInfo & info)
 {
     m_dimension_list->clear();
 

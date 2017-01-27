@@ -18,7 +18,7 @@ public:
     DataLibrary * library() { return m_lib; }
 
     DataSource * selectedSource();
-    int selectedObjectIndex();
+    int selectedDatasetIndex();
 
 signals:
     void selectionChanged();

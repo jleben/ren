@@ -2,7 +2,7 @@
 #include "../plot/line_plot.hpp"
 #include "../plot/heat_map.hpp"
 #include "../data/array.hpp"
-#include "../data/data_object.hpp"
+#include "../data/data_set.hpp"
 
 #include <QApplication>
 #include <QDebug>
@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 
     int elem_count = 200;
 
-    DataObject source(vector<int>({elem_count}));
+    DataSet source(vector<int>({elem_count}));
 
     {
         //cout << "Generating data:" << endl;
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     auto plot_view = new PlotView;
 
     auto plot = new LinePlot;
-    plot->setDataObject(&source);
+    plot->setDataSet(&source);
     plot_view->addPlot(plot);
 
     plot_view->resize(600,600);

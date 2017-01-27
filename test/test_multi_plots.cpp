@@ -2,7 +2,7 @@
 #include "../plot/line_plot.hpp"
 #include "../plot/heat_map.hpp"
 #include "../data/array.hpp"
-#include "../data/data_object.hpp"
+#include "../data/data_set.hpp"
 
 #include <QApplication>
 #include <QDebug>
@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 
     double base_freq = 1.0/200.0;
 
-    DataObject source1(vector<int>({data_size}));
+    DataSet source1(vector<int>({data_size}));
     {
         //cout << "Generating data:" << endl;
         auto region = get_all(*source1.data());
@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    DataObject source2(vector<int>({data_size}));
+    DataSet source2(vector<int>({data_size}));
     Dimension dim;
     dim.map.offset = 100;
     dim.map.scale = 0.5;
@@ -58,12 +58,12 @@ int main(int argc, char *argv[])
 
     {
         auto plot = new LinePlot;
-        plot->setDataObject(&source1);
+        plot->setDataSet(&source1);
         plot_view->addPlot(plot);
     }
     {
         auto plot = new LinePlot;
-        plot->setDataObject(&source2);
+        plot->setDataSet(&source2);
         plot_view->addPlot(plot);
     }
 

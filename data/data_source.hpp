@@ -1,15 +1,16 @@
 #pragma once
 
 #include "../data/array.hpp"
-#include "../data/data_object.hpp"
+#include "../data/data_set.hpp"
 
 #include <string>
+#include <memory>
 
 namespace datavis {
 
 using std::string;
 
-class DataObjectInfo
+class DataSetInfo
 {
 public:
     string id;
@@ -25,10 +26,10 @@ class DataSource
 public:
     virtual ~DataSource() {}
     virtual string id() const = 0;
-    virtual int objectCount() const = 0;
-    virtual int objectIndex(const string & id) const = 0;
-    virtual DataObjectInfo objectInfo(int index) const = 0;
-    virtual DataObject * object(int index) const = 0;
+    virtual int count() const = 0;
+    virtual int index(const string & id) const = 0;
+    virtual DataSetInfo info(int index) const = 0;
+    virtual DataSet * dataset(int index) const = 0;
 };
 
 }

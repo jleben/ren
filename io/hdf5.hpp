@@ -12,10 +12,10 @@ public:
     Hdf5Source(const string & file_path);
 
     string id() const override { return m_file_path; }
-    int objectCount() const override;
-    int objectIndex(const string & id) const override;
-    DataObjectInfo objectInfo(int index) const override;
-    DataObject * object(int index) const override;
+    int count() const override;
+    int index(const string & id) const override;
+    DataSetInfo info(int index) const override;
+    DataSet * dataset(int index) const override;
 
 private:
     string m_file_path;

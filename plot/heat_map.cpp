@@ -13,7 +13,7 @@ HeatMap::HeatMap(QObject * parent):
     Plot(parent)
 {}
 
-void HeatMap::setDataObject(DataObject * source)
+void HeatMap::setDataSet(DataSet * source)
 {
     m_data_object = source;
     auto size = source->data()->size();

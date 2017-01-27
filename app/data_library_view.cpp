@@ -63,9 +63,9 @@ void DataLibraryView::updateLibraryTree()
         auto source_item = new QTreeWidgetItem(QStringList() << source_name);
         source_item->setData(0, Qt::UserRole, QVariant::fromValue(source));
 
-        for (int object_idx = 0; object_idx < source->objectCount(); ++object_idx)
+        for (int object_idx = 0; object_idx < source->count(); ++object_idx)
         {
-            auto object = source->objectInfo(object_idx);
+            auto object = source->info(object_idx);
 
             QString name = QString::fromStdString(object.id);
 
@@ -100,7 +100,7 @@ DataSource * DataLibraryView::selectedSource()
     return item->data(0, Qt::UserRole).value<DataSource*>();
 }
 
-int DataLibraryView::selectedObjectIndex()
+int DataLibraryView::selectedDatasetIndex()
 {
     auto item = m_lib_tree->currentItem();
     if (!item)

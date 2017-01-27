@@ -14,27 +14,27 @@ struct Dimension
     Mapping1d map;
 };
 
-class DataObject
+class DataSet
 {
 public:
-    DataObject(const vector<int> & size):
-        DataObject(string(), size)
+    DataSet(const vector<int> & size):
+        DataSet(string(), size)
     {}
 
-    DataObject(const string & id, const vector<int> & size):
+    DataSet(const string & id, const vector<int> & size):
         m_id(id),
         m_data(size),
         m_dimensions(size.size())
     {}
 
-    DataObject(const string & id, const array<double> & data):
+    DataSet(const string & id, const array<double> & data):
         m_id(id),
         m_data(data),
         m_dimensions(data.size().size())
     {}
 
 
-    DataObject(const string & id, array<double> && data):
+    DataSet(const string & id, array<double> && data):
         m_id(id),
         m_data(data),
         m_dimensions(data.size().size())
