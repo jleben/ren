@@ -6,6 +6,7 @@
 #include <QMenu>
 
 #include "../data/array.hpp"
+#include "../io/data_source.hpp"
 
 #include <list>
 
@@ -33,9 +34,10 @@ public:
 private:
     void makeMenu();
     void onOpenFailed(const QString & path);
-    DataObject * loadSelectedObject();
-    void addLinePlotForSelectedObject();
-    void addHeatPlotForSelectedObject();
+    bool hasSelectedObject();
+    void plotSelectedObject();
+    void plot(DataSource *, int index);
+    void customPlotSelectedObject();
     void removeSelectedPlot();
     bool eventFilter(QObject*, QEvent*) override;
     void showPlotContextMenu(Plot*, const QPoint & pos);

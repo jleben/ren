@@ -37,14 +37,9 @@ MainWindow::MainWindow(QWidget * parent):
 
     auto lib_action_bar = new QToolBar;
     {
-        auto action = lib_action_bar->addAction("Line");
+        auto action = lib_action_bar->addAction("Plot");
         connect(action, &QAction::triggered,
-                this, &MainWindow::addLinePlotForSelectedObject);
-    }
-    {
-        auto action = lib_action_bar->addAction("Heatmap");
-        connect(action, &QAction::triggered,
-                this, &MainWindow::addHeatPlotForSelectedObject);
+                this, &MainWindow::plotSelectedObject);
     }
 
     auto tool_layout = new QVBoxLayout;
@@ -110,61 +105,90 @@ void MainWindow::onOpenFailed(const QString & path)
                          + path);
 }
 
-DataObject * MainWindow::loadSelectedObject()
+bool MainWindow::hasSelectedObject()
+{
+    auto object_idx = m_lib_view->selectedObjectIndex();
+    return object_idx >= 0;
+}
+
+void MainWindow::plotSelectedObject()
 {
     auto source = m_lib_view->selectedSource();
     if (!source)
-        return nullptr;
+        return;
 
     auto object_idx = m_lib_view->selectedObjectIndex();
+
     if (object_idx < 0)
-        return nullptr;
+    {
+        for (object_idx = 0; object_idx < source->objectCount(); ++object_idx)
+        {
+            plot(source, object_idx);
+        }
+        return;
+    }
+    else
+    {
+        plot(source, object_idx);
+    }
+}
 
-    DataObject * object;
+void MainWindow::plot(DataSource * source, int index)
+{
+    auto info = source->objectInfo(index);
 
-    try {
-        object = source->object(object_idx);
-    } catch (...) {
-        QMessageBox::warning(this, "Read Failed",
-                             QString("Failed to read data."));
-        return nullptr;
+    bool is_line = false;
+
+    if (info.dimensionCount() == 1)
+    {
+        is_line = true;
+    }
+    else if (info.dimensionCount() == 2)
+    {
+        is_line = false;
+    }
+    else
+    {
+        auto msg = QString("The object %1 has more than 2 dimensions.\n"
+                           "Plotting is not supported.").arg(info.id.c_str());
+
+        QMessageBox::warning(this, "Not Implemented", msg);
+
+        return;
     }
 
-    return object;
-}
-
-void MainWindow::addLinePlotForSelectedObject()
-{
-    auto object = loadSelectedObject();
-
-    if (!object)
+    DataObject * data;
+    try {
+        data = source->object(index);
+    } catch (...) {
+        QMessageBox::warning(this, "Read Failed",
+                             QString("Failed to read data for object %1.").arg(info.id.c_str()));
         return;
+    }
 
-    m_data_objects.push_back(object);
+    Plot * plot;
+    if (is_line)
+    {
+        auto line = new LinePlot;
+        line->setDataObject(data);
+        plot = line;
+    }
+    else
+    {
+        auto map = new HeatMap;
+        map->setDataObject(data);
+        plot = map;
+    }
 
-    auto plot = new LinePlot(this);
-    plot->setDataObject(object);
-
+    m_data_objects.push_back(data);
     m_plots.push_back(plot);
 
     m_plot_view->addPlot(plot);
 }
 
-void MainWindow::addHeatPlotForSelectedObject()
+void MainWindow::customPlotSelectedObject()
 {
-    auto object = loadSelectedObject();
 
-    if (!object)
-        return;
-
-    m_data_objects.push_back(object);
-
-    auto plot = new HeatMap(this);
-    plot->setDataObject(object);
-
-    m_plots.push_back(plot);
-
-    m_plot_view->addPlot(plot);
 }
 
 void MainWindow::removeSelectedPlot()
