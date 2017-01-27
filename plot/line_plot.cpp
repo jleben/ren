@@ -319,7 +319,11 @@ void LinePlot::plot(QPainter * painter,  const Mapping2d & transform)
 
     painter->save();
 
-    painter->setPen(m_color);
+    QPen line_pen;
+    line_pen.setWidth(2);
+    line_pen.setColor(m_color);
+
+    painter->setPen(line_pen);
     painter->setBrush(Qt::NoBrush);
     painter->setRenderHint(QPainter::Antialiasing, true);
 

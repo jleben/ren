@@ -238,8 +238,19 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
     int plot_x = margin;
     int plot_y = margin;
 
+    painter.setBrush(Qt::NoBrush);
+
+    QPen frame_pen;
+    frame_pen.setColor(Qt::lightGray);
+
     for (auto plot : m_plots)
     {
+        {
+            QRect frame_rect(plot_x, plot_y, plot_width, plot_height);
+            painter.setPen(frame_pen);
+            painter.drawRect(frame_rect);
+        }
+
         if (plot->isEmpty())
             continue;
 
