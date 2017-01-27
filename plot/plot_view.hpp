@@ -17,6 +17,9 @@ class PlotCanvas : public QWidget
 {
 public:
     virtual void resizeEvent(QResizeEvent*) override;
+    virtual void enterEvent(QEvent*) override;
+    virtual void leaveEvent(QEvent*) override;
+    virtual void mouseMoveEvent(QMouseEvent*) override;
     virtual void paintEvent(QPaintEvent*) override;
 
     void updateViewMap();

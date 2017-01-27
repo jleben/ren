@@ -6,6 +6,7 @@
 #include <QVBoxLayout>
 #include <QPainter>
 #include <QDebug>
+#include <QCursor>
 #include <algorithm>
 #include <iostream>
 #include <iterator>
@@ -18,6 +19,8 @@ PlotView::PlotView(QWidget * parent):
     QWidget(parent)
 {
     m_canvas = new PlotCanvas;
+    m_canvas->setMouseTracking(true);
+
     m_selector = new Selector;
     m_selector_slider = new QSlider;
     m_selector_slider->setOrientation(Qt::Horizontal);
@@ -216,6 +219,21 @@ void PlotCanvas::resizeEvent(QResizeEvent*)
     updateViewMap();
 }
 
+void PlotCanvas::enterEvent(QEvent*)
+{
+    update();
+}
+
+void PlotCanvas::leaveEvent(QEvent*)
+{
+    update();
+}
+
+void PlotCanvas::mouseMoveEvent(QMouseEvent*)
+{
+    update();
+}
+
 void PlotCanvas::paintEvent(QPaintEvent* event)
 {
     QPainter painter(this);
@@ -273,6 +291,20 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
 
         if (!m_stacked)
             plot_y += plot_height + margin;
+    }
+
+    if (underMouse())
+    {
+        auto pos = mapFromGlobal(QCursor::pos());
+
+        QPen cursor_pen;
+        cursor_pen.setColor(Qt::red);
+        cursor_pen.setWidth(1);
+
+        painter.setPen(cursor_pen);
+
+        painter.drawLine(pos.x(), 0, pos.x(), height());
+        painter.drawLine(0, pos.y(), width(), pos.y());
     }
 }
 
