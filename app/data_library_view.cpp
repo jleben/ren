@@ -81,6 +81,7 @@ void DataLibraryView::updateLibraryTree()
         }
 
         m_lib_tree->addTopLevelItem(source_item);
+        source_item->setExpanded(true);
     }
 }
 
