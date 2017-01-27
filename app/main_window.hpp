@@ -6,7 +6,7 @@
 #include <QMenu>
 
 #include "../data/array.hpp"
-#include "../io/data_source.hpp"
+#include "../data/data_source.hpp"
 
 #include <list>
 

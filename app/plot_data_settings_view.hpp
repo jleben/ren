@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../io/data_source.hpp"
+#include "../data/data_source.hpp"
 
 #include <QWidget>
 #include <QListWidget>

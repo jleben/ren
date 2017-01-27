@@ -1,6 +1,6 @@
 #include "data_library_view.hpp"
 #include "data_library.hpp"
-#include "../io/data_source.hpp"
+#include "../data/data_source.hpp"
 
 #include <QTreeWidgetItem>
 #include <QStringList>

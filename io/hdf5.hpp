@@ -1,6 +1,6 @@
 #pragma once
 
-#include "data_source.hpp"
+#include "../data/data_source.hpp"
 
 #include <H5Cpp.h>
 
