@@ -13,6 +13,7 @@ set(app_src
   data_library_view.cpp
   color_box.cpp
   settings_view.cpp
+  plot_data_settings_view.cpp
   line_plot_settings_view.cpp
   main_window.cpp
   ../io/hdf5.cpp

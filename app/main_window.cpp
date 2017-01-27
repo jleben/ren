@@ -2,6 +2,7 @@
 #include "data_library.hpp"
 #include "data_library_view.hpp"
 #include "settings_view.hpp"
+#include "plot_data_settings_view.hpp"
 #include "line_plot_settings_view.hpp"
 #include "../plot/plot_view.hpp"
 #include "../plot/line_plot.hpp"
@@ -19,6 +20,8 @@
 #include <QToolBar>
 #include <QContextMenuEvent>
 #include <QMenu>
+#include <QDialog>
+#include <QDialogButtonBox>
 
 namespace datavis {
 
@@ -41,11 +44,15 @@ MainWindow::MainWindow(QWidget * parent):
         connect(action, &QAction::triggered,
                 this, &MainWindow::plotSelectedObject);
     }
+    {
+        auto action = lib_action_bar->addAction("Custom...");
+        connect(action, &QAction::triggered,
+                this, &MainWindow::customPlotSelectedObject);
+    }
 
     auto tool_layout = new QVBoxLayout;
     tool_layout->addWidget(m_lib_view);
     tool_layout->addWidget(lib_action_bar);
-    tool_layout->addWidget(m_settings_view);
 
     auto content_view = new QWidget;
 
@@ -58,6 +65,9 @@ MainWindow::MainWindow(QWidget * parent):
     connect(m_lib, &DataLibrary::openFailed,
             this, &MainWindow::onOpenFailed,
             Qt::QueuedConnection);
+
+    connect(m_lib_view, &DataLibraryView::selectionChanged,
+            this, &MainWindow::onSelectedDataChanged);
 
     makeMenu();
 }
@@ -105,6 +115,11 @@ void MainWindow::onOpenFailed(const QString & path)
                          + path);
 }
 
+void MainWindow::onSelectedDataChanged()
+{
+
+}
+
 bool MainWindow::hasSelectedObject()
 {
     auto object_idx = m_lib_view->selectedObjectIndex();
@@ -133,27 +148,91 @@ void MainWindow::plotSelectedObject()
     }
 }
 
+void MainWindow::customPlotSelectedObject()
+{
+    auto source = m_lib_view->selectedSource();
+    if (!source)
+        return;
+
+    auto object_idx = m_lib_view->selectedObjectIndex();
+    if (object_idx < 0)
+        return;
+
+    plotCustom(source, object_idx);
+}
+
 void MainWindow::plot(DataSource * source, int index)
 {
     auto info = source->objectInfo(index);
 
-    bool is_line = false;
-
-    if (info.dimensionCount() == 1)
+    if (info.dimensionCount() < 1)
     {
-        is_line = true;
+        return;
     }
-    else if (info.dimensionCount() == 2)
+    else if (info.dimensionCount() == 1)
     {
-        is_line = false;
+        plot(source, index, {0});
     }
     else
     {
-        auto msg = QString("The object %1 has more than 2 dimensions.\n"
-                           "Plotting is not supported.").arg(info.id.c_str());
+        plot(source, index, {0, 1});
+    }
+}
 
-        QMessageBox::warning(this, "Not Implemented", msg);
+void MainWindow::plotCustom(DataSource * source, int index)
+{
+    auto info = source->objectInfo(index);
 
+    auto dialog = new QDialog;
+    dialog->setWindowTitle("Select Plot Data");
+
+    auto settings = new PlotDataSettingsView;
+    settings->setDataInfo(info);
+
+    auto buttons = new QDialogButtonBox
+            ( QDialogButtonBox::Ok | QDialogButtonBox::Cancel );
+
+    auto layout = new QVBoxLayout(dialog);
+    layout->addWidget(settings);
+    layout->addWidget(buttons);
+
+    connect(buttons, &QDialogButtonBox::accepted,
+            dialog, &QDialog::accept);
+    connect(buttons, &QDialogButtonBox::rejected,
+            dialog, &QDialog::reject);
+
+    bool ok = false;
+
+    vector<int> selected_dimensions;
+
+    while (!ok)
+    {
+        auto result = dialog->exec();
+        if (result == QDialog::Rejected)
+            return;
+
+        selected_dimensions = settings->selectedDimensions();
+        if ( selected_dimensions.size() < 1 ||
+             selected_dimensions.size() > 2 )
+        {
+            QMessageBox::warning(this, "Invalid Selection.",
+                                 "Please select at least 1 and at most 2 dimensions.");
+        }
+        else
+        {
+            ok = true;
+        }
+    }
+
+    plot(source, index, selected_dimensions);
+}
+
+void MainWindow::plot(DataSource * source, int index, vector<int> dimensions)
+{
+    if (dimensions.size() < 1 || dimensions.size() > 2)
+    {
+        cerr << "Unexpected: Invalid number of dimension selected for plotting: "
+             << dimensions.size() << endl;
         return;
     }
 
@@ -162,21 +241,25 @@ void MainWindow::plot(DataSource * source, int index)
         data = source->object(index);
     } catch (...) {
         QMessageBox::warning(this, "Read Failed",
-                             QString("Failed to read data for object %1.").arg(info.id.c_str()));
+                             QString("Failed to read data for object %1.")
+                             .arg(data->id().c_str()));
         return;
     }
 
     Plot * plot;
-    if (is_line)
+
+    if (dimensions.size() == 1)
     {
         auto line = new LinePlot;
         line->setDataObject(data);
+        line->setDimension(dimensions[0]);
         plot = line;
     }
     else
     {
         auto map = new HeatMap;
         map->setDataObject(data);
+        map->setDimensions({dimensions[0], dimensions[1]});
         plot = map;
     }
 
@@ -184,11 +267,6 @@ void MainWindow::plot(DataSource * source, int index)
     m_plots.push_back(plot);
 
     m_plot_view->addPlot(plot);
-}
-
-void MainWindow::customPlotSelectedObject()
-{
-
 }
 
 void MainWindow::removeSelectedPlot()

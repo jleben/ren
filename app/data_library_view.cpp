@@ -19,6 +19,9 @@ DataLibraryView::DataLibraryView(QWidget * parent):
 
     auto layout = new QVBoxLayout(this);
     layout->addWidget(m_lib_tree);
+
+    connect(m_lib_tree, &QTreeWidget::currentItemChanged,
+            this, &DataLibraryView::selectionChanged);
 }
 
 void DataLibraryView::setLibrary(DataLibrary * lib)

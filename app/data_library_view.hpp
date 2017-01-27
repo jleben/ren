@@ -10,6 +10,7 @@ class DataSource;
 
 class DataLibraryView : public QWidget
 {
+    Q_OBJECT
 public:
     DataLibraryView(QWidget * parent = 0);
 
@@ -18,6 +19,9 @@ public:
 
     DataSource * selectedSource();
     int selectedObjectIndex();
+
+signals:
+    void selectionChanged();
 
 private:
     void updateLibraryTree();

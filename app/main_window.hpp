@@ -22,6 +22,7 @@ class LinePlot;
 class LinePlotSettingsView;
 class DataLibrary;
 class DataLibraryView;
+class PlotDataSettingsView;
 
 class MainWindow : public QMainWindow
 {
@@ -34,10 +35,13 @@ public:
 private:
     void makeMenu();
     void onOpenFailed(const QString & path);
+    void onSelectedDataChanged();
     bool hasSelectedObject();
     void plotSelectedObject();
-    void plot(DataSource *, int index);
     void customPlotSelectedObject();
+    void plot(DataSource *, int index);
+    void plotCustom(DataSource *, int index);
+    void plot(DataSource *, int index, vector<int> dimensions);
     void removeSelectedPlot();
     bool eventFilter(QObject*, QEvent*) override;
     void showPlotContextMenu(Plot*, const QPoint & pos);
