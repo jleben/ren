@@ -44,7 +44,5 @@ int main(int argc, char *argv[])
 
     int result = app.exec();
 
-    delete object;
-
     return result;
 }

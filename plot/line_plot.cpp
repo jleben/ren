@@ -16,9 +16,9 @@ LinePlot::LinePlot(QObject * parent):
     Plot(parent)
 {}
 
-void LinePlot::setDataSet(DataSet * source)
+void LinePlot::setDataSet(DataSetPtr source)
 {
-    m_data_object = source;
+    m_dataset = source;
 
     if (!source || source->data()->size().empty())
     {
@@ -82,10 +82,10 @@ void LinePlot::setSelector(Selector * selector)
 
 void LinePlot::setDimension(int dim)
 {
-    if (!m_data_object)
+    if (!m_dataset)
         return;
 
-    auto size = m_data_object->data()->size();
+    auto size = m_dataset->data()->size();
 
     if (dim < 0 || dim >= size.size())
         dim = -1;
@@ -123,13 +123,13 @@ int LinePlot::selectorDim()
 
 void LinePlot::setSelectorDim(int new_dim)
 {
-    if (!m_data_object)
+    if (!m_dataset)
     {
         cerr << "No data." << endl;
         return;
     }
 
-    auto n_data_dim = m_data_object->data()->size().size();
+    auto n_data_dim = m_dataset->data()->size().size();
 
     if (new_dim == m_dim)
     {
@@ -153,10 +153,10 @@ void LinePlot::setSelectorDim(int new_dim)
 
 void LinePlot::setRange(int start, int end)
 {
-    if (!m_data_object)
+    if (!m_dataset)
         return;
 
-    auto size = m_data_object->data()->size();
+    auto size = m_dataset->data()->size();
 
     if (size.empty())
         return;
@@ -208,10 +208,10 @@ void LinePlot::onSelectorValueChanged()
 
 void LinePlot::findEntireValueRange()
 {
-    if (!m_data_object)
+    if (!m_dataset)
         m_value_range = Range(0,0);
 
-    auto region = get_all(*m_data_object->data());
+    auto region = get_all(*m_dataset->data());
 
     auto min_it = std::min_element(region.begin(), region.end());
     auto max_it = std::max_element(region.begin(), region.end());
@@ -222,7 +222,7 @@ void LinePlot::findEntireValueRange()
 
 void LinePlot::update_selected_region()
 {
-    if (!m_data_object)
+    if (!m_dataset)
     {
         m_data_region = data_region_type();
         return;
@@ -234,7 +234,7 @@ void LinePlot::update_selected_region()
         return;
     }
 
-    auto data_size = m_data_object->data()->size();
+    auto data_size = m_dataset->data()->size();
     auto n_dim = data_size.size();
     vector<int> offset(n_dim, 0);
     vector<int> size(n_dim, 1);
@@ -260,7 +260,7 @@ void LinePlot::update_selected_region()
     offset[m_dim] = m_start;
     size[m_dim] = m_end - m_start;
 
-    m_data_region = get_region(*m_data_object->data(), offset, size);
+    m_data_region = get_region(*m_dataset->data(), offset, size);
 }
 
 Plot::Range LinePlot::xRange()
@@ -270,7 +270,7 @@ Plot::Range LinePlot::xRange()
         return Range();
     }
 
-    auto dim = m_data_object->dimension(m_dim);
+    auto dim = m_dataset->dimension(m_dim);
 
     return Range { dim.map * m_start, dim.map * m_end };
 }
@@ -295,17 +295,17 @@ Plot::Range LinePlot::yRange()
 
 Plot::Range LinePlot::selectorRange()
 {
-    if (!m_data_object)
+    if (!m_dataset)
         return Range();
 
     if (m_selector_dim < 0)
         return Range();
 
-    auto data_size = m_data_object->data()->size();
+    auto data_size = m_dataset->data()->size();
 
     assert(m_selector_dim >= 0 && m_selector_dim < data_size.size());
 
-    auto dim = m_data_object->dimension(m_selector_dim);
+    auto dim = m_dataset->dimension(m_selector_dim);
 
     return Range { dim.map * 0., dim.map * (data_size[m_selector_dim] - 1) };
 }
@@ -315,7 +315,7 @@ void LinePlot::plot(QPainter * painter,  const Mapping2d & transform)
     if (!m_data_region.is_valid())
         return;
 
-    auto dim = m_data_object->dimension(m_dim);
+    auto dim = m_dataset->dimension(m_dim);
 
     painter->save();
 

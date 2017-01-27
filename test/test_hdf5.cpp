@@ -76,7 +76,5 @@ int main(int argc, char *argv[])
             break;
     }
 
-    delete object;
-
     return 0;
 }

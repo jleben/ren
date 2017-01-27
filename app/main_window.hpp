@@ -49,7 +49,6 @@ private:
     DataLibrary * m_lib = nullptr;
     DataLibraryView * m_lib_view = nullptr;
 
-    vector<DataSet*> m_data_objects;
     vector<Plot*> m_plots;
     Plot * m_selected_plot = nullptr;
 

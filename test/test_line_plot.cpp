@@ -19,11 +19,11 @@ int main(int argc, char *argv[])
 
     int elem_count = 200;
 
-    DataSet source(vector<int>({elem_count}));
+    auto source = make_shared<DataSet>(vector<int>({elem_count}));
 
     {
         //cout << "Generating data:" << endl;
-        auto region = get_all(*source.data());
+        auto region = get_all(*source->data());
         for (auto & i : region)
         {
             auto loc = i.location()[0];
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     auto plot_view = new PlotView;
 
     auto plot = new LinePlot;
-    plot->setDataSet(&source);
+    plot->setDataSet(source);
     plot_view->addPlot(plot);
 
     plot_view->resize(600,600);

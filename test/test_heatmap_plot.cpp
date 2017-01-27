@@ -19,11 +19,11 @@ int main(int argc, char *argv[])
 
     int elem_count = 200;
 
-    DataSet a({elem_count, elem_count});
+    auto a = make_shared<DataSet>(vector<int>({elem_count, elem_count}));
 
     {
         //cout << "Generating data:" << endl;
-        auto region = get_all(*a.data());
+        auto region = get_all(*a->data());
         for (auto & i : region)
         {
             //auto loc = i.location()[0];
@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     auto plot_view = new PlotView;
 
     auto heat = new HeatMap;
-    heat->setDataSet(&a);
+    heat->setDataSet(a);
     plot_view->addPlot(heat);
 
     plot_view->resize(600,600);

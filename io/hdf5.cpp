@@ -79,6 +79,8 @@ Hdf5Source::Hdf5Source(const string & file_path):
 
         m_dataset_indices.push_back(i);
     }
+
+    m_datasets.resize(m_dataset_indices.size());
 }
 
 int Hdf5Source::count() const
@@ -126,8 +128,12 @@ DataSetInfo Hdf5Source::info(int index) const
     return info;
 }
 
-DataSet * Hdf5Source::dataset(int index) const
+DataSetPtr Hdf5Source::dataset(int index) const
 {
+    auto client_dataset = m_datasets[index].lock();
+    if (client_dataset)
+        return client_dataset;
+
     auto dataset_index = m_dataset_indices[index];
 
     auto dataset_name = m_file.getObjnameByIdx(dataset_index);
@@ -145,11 +151,11 @@ DataSet * Hdf5Source::dataset(int index) const
 
     vector<int> object_size(size.begin(), size.end());
 
-    auto object = new DataSet(dataset_name, object_size);
+    client_dataset = make_shared<DataSet>(dataset_name, object_size);
 
-    dataset.read(object->data()->data(), hdf5_type<double>::native_type());
+    dataset.read(client_dataset->data()->data(), hdf5_type<double>::native_type());
 
-    return object;
+    return client_dataset;
 }
 
 }

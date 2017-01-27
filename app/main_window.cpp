@@ -236,7 +236,7 @@ void MainWindow::plot(DataSource * source, int index, vector<int> dimensions)
         return;
     }
 
-    DataSet * data;
+    DataSetPtr data;
     try {
         data = source->dataset(index);
     } catch (...) {
@@ -263,7 +263,6 @@ void MainWindow::plot(DataSource * source, int index, vector<int> dimensions)
         plot = map;
     }
 
-    m_data_objects.push_back(data);
     m_plots.push_back(plot);
 
     m_plot_view->addPlot(plot);
@@ -291,14 +290,10 @@ void MainWindow::removeSelectedPlot()
     m_selected_plot = nullptr;
 
     auto plot = m_plots[index];
-    auto data = m_data_objects[index];
 
     m_plot_view->removePlot(plot);
     delete plot;
     m_plots.erase(m_plots.begin() + index);
-
-    delete data;
-    m_data_objects.erase(m_data_objects.begin() + index);
 }
 
 void MainWindow::showPlotContextMenu(Plot * plot, const QPoint & pos)

@@ -25,10 +25,11 @@ int main(int argc, char *argv[])
 
     double base_freq = 1.0/200.0;
 
-    DataSet source1(vector<int>({data_size}));
+    auto source1 = make_shared<DataSet>(vector<int>({data_size}));
+
     {
         //cout << "Generating data:" << endl;
-        auto region = get_all(*source1.data());
+        auto region = get_all(*source1->data());
         for (auto & i : region)
         {
             auto loc = i.location()[0];
@@ -37,15 +38,16 @@ int main(int argc, char *argv[])
         }
     }
 
-    DataSet source2(vector<int>({data_size}));
+    auto source2 = make_shared<DataSet>(vector<int>({data_size}));
+
     Dimension dim;
     dim.map.offset = 100;
     dim.map.scale = 0.5;
-    source2.setDimension(0, dim);
+    source2->setDimension(0, dim);
 
     {
         //cout << "Generating data:" << endl;
-        auto region = get_all(*source2.data());
+        auto region = get_all(*source2->data());
         for (auto & i : region)
         {
             auto loc = i.location()[0];
@@ -58,12 +60,12 @@ int main(int argc, char *argv[])
 
     {
         auto plot = new LinePlot;
-        plot->setDataSet(&source1);
+        plot->setDataSet(source1);
         plot_view->addPlot(plot);
     }
     {
         auto plot = new LinePlot;
-        plot->setDataSet(&source2);
+        plot->setDataSet(source2);
         plot_view->addPlot(plot);
     }
 

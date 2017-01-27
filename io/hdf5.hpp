@@ -3,6 +3,7 @@
 #include "../data/data_source.hpp"
 
 #include <H5Cpp.h>
+#include <memory>
 
 namespace datavis {
 
@@ -15,12 +16,15 @@ public:
     int count() const override;
     int index(const string & id) const override;
     DataSetInfo info(int index) const override;
-    DataSet * dataset(int index) const override;
+    DataSetPtr dataset(int index) const override;
 
 private:
+    using PrivateDataSetPtr = std::weak_ptr<DataSet>;
+
     string m_file_path;
     H5::H5File m_file;
     vector<hsize_t> m_dataset_indices;
+    vector<PrivateDataSetPtr> m_datasets;
 };
 
 }

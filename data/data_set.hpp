@@ -4,6 +4,7 @@
 #include "math.hpp"
 
 #include <string>
+#include <memory>
 
 namespace datavis {
 
@@ -55,5 +56,7 @@ private:
     vector<Dimension> m_dimensions;
 
 };
+
+using DataSetPtr = std::shared_ptr<DataSet>;
 
 }

@@ -20,8 +20,8 @@ public:
 
     LinePlot(QObject * parent = 0);
 
-    DataSet * dataObject() const { return m_data_object; }
-    void setDataSet(DataSet * data);
+    DataSetPtr dataSet() const { return m_dataset; }
+    void setDataSet(DataSetPtr data);
 
     virtual void setSelector(Selector *);
 
@@ -53,7 +53,7 @@ private:
     void findEntireValueRange();
     void update_selected_region();
 
-    DataSet * m_data_object = nullptr;
+    DataSetPtr m_dataset = nullptr;
     Selector * m_selector = nullptr;
     data_region_type m_data_region;
     int m_dim = -1;
