@@ -31,9 +31,6 @@ MainWindow::MainWindow(QWidget * parent):
     m_lib_view = new DataLibraryView;
     m_lib_view->setLibrary(m_lib);
 
-    m_plot_view = new PlotView;
-    m_plot_view->installEventFilter(this);
-
     auto lib_action_bar = new QToolBar;
     {
         auto action = lib_action_bar->addAction("Plot");
@@ -46,6 +43,14 @@ MainWindow::MainWindow(QWidget * parent):
                 this, &MainWindow::customPlotSelectedObject);
     }
 
+    lib_action_bar->addSeparator();
+
+    {
+        auto action = lib_action_bar->addAction("Add View");
+        connect(action, &QAction::triggered,
+                this, &MainWindow::addPlotView);
+    }
+
     auto tool_layout = new QVBoxLayout;
     tool_layout->addWidget(m_lib_view);
     tool_layout->addWidget(lib_action_bar);
@@ -54,7 +59,6 @@ MainWindow::MainWindow(QWidget * parent):
 
     auto layout = new QHBoxLayout(content_view);
     layout->addLayout(tool_layout, 0);
-    layout->addWidget(m_plot_view, 1);
 
     setCentralWidget(content_view);
 
@@ -155,6 +159,28 @@ void MainWindow::customPlotSelectedObject()
         return;
 
     plotCustom(source, object_idx);
+}
+
+PlotView * MainWindow::addPlotView()
+{
+    auto view = new PlotView;
+    view->installEventFilter(this);
+
+    m_plot_views.push_back(view);
+
+    view->show();
+
+    return view;
+}
+
+void MainWindow::removePlotView(PlotView * view)
+{
+    if (m_selected_plot_view = view)
+        m_selected_plot_view = nullptr;
+
+    m_plot_views.remove(view);
+    view->removeEventFilter(this);
+    view->deleteLater();
 }
 
 void MainWindow::plot(DataSource * source, int index)
@@ -259,9 +285,21 @@ void MainWindow::plot(DataSource * source, int index, vector<int> dimensions)
         plot = map;
     }
 
-    m_plots.push_back(plot);
+    if (!m_selected_plot_view)
+    {
+        if(m_plot_views.empty())
+        {
+            m_selected_plot_view = addPlotView();
+        }
+        else
+        {
+            m_selected_plot_view = m_plot_views.front();
+        }
+    }
 
-    m_plot_view->addPlot(plot);
+    m_selected_plot_view->addPlot(plot);
+
+    m_selected_plot_view->show();
 }
 
 void MainWindow::removeSelectedPlot()
@@ -269,27 +307,11 @@ void MainWindow::removeSelectedPlot()
     if (!m_selected_plot)
         return;
 
-    int index = 0;
-    for (auto & plot : m_plots)
-    {
-        if (plot == m_selected_plot)
-            break;
-        ++index;
-    }
-
-    if (index >= (int) m_plots.size())
-    {
-        cerr << "Warning: Could not find selected plot index." << endl;
-        return;
-    }
+    auto plot = m_selected_plot;
+    plot->view()->removePlot(plot);
+    delete plot;
 
     m_selected_plot = nullptr;
-
-    auto plot = m_plots[index];
-
-    m_plot_view->removePlot(plot);
-    delete plot;
-    m_plots.erase(m_plots.begin() + index);
 }
 
 void MainWindow::showPlotContextMenu(Plot * plot, const QPoint & pos)
@@ -314,7 +336,9 @@ void MainWindow::showPlotContextMenu(Plot * plot, const QPoint & pos)
 
 bool MainWindow::eventFilter(QObject * object, QEvent * event)
 {
-    if (object == m_plot_view)
+    auto plot_view = qobject_cast<PlotView*>(object);
+
+    if (plot_view)
     {
         switch(event->type())
         {
@@ -323,12 +347,22 @@ bool MainWindow::eventFilter(QObject * object, QEvent * event)
             auto menuEvent = static_cast<QContextMenuEvent*>(event);
             if (menuEvent->reason() == QContextMenuEvent::Mouse)
             {
-                auto plot = m_plot_view->plotAt(menuEvent->pos());
+                auto plot = plot_view->plotAt(menuEvent->pos());
                 if (plot)
                     showPlotContextMenu(plot, menuEvent->globalPos());
             }
             event->accept();
             return true;
+        }
+        case QEvent::WindowActivate:
+        {
+            m_selected_plot_view = plot_view;
+            return false;
+        }
+        case QEvent::Close:
+        {
+            removePlotView(plot_view);
+            return false;
         }
         default:;
         }

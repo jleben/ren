@@ -21,7 +21,8 @@ int main(int argc, char *argv[])
         main_win->openDataFile(file_path);
     }
 
-    main_win->resize(800,600);
+    main_win->resize(400,500);
+    main_win->move(50,50);
     main_win->show();
 
     return app.exec();

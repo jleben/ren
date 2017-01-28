@@ -18,6 +18,8 @@ namespace datavis {
 PlotView::PlotView(QWidget * parent):
     QWidget(parent)
 {
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
     m_canvas = new PlotCanvas;
     m_canvas->setMouseTracking(true);
 
@@ -29,6 +31,8 @@ void PlotView::addPlot(Plot * plot)
 {
     if (!plot)
         return;
+
+    plot->setView(this);
 
     m_canvas->m_plots.push_back(plot);
 

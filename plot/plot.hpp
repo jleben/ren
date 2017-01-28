@@ -14,6 +14,7 @@ namespace datavis {
 using std::vector;
 
 class Selector;
+class PlotView;
 
 class Plot : public QObject
 {
@@ -32,6 +33,9 @@ public:
     };
 
     Plot(QObject * parent = 0): QObject(parent) {}
+
+    PlotView * view() { return m_view; }
+
     virtual DataSetPtr dataSet() = 0;
     virtual bool isEmpty() const = 0;
     virtual Range xRange() = 0;
@@ -43,6 +47,11 @@ signals:
     void xRangeChanged();
     void yRangeChanged();
     void contentChanged();
+
+private:
+    friend class PlotView;
+    void setView(PlotView *view) { m_view = view; }
+    PlotView * m_view;
 };
 
 inline

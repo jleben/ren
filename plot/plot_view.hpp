@@ -41,6 +41,8 @@ public:
 
 class PlotView : public QWidget
 {
+    Q_OBJECT
+
 public:
     PlotView(QWidget * parent = 0);
 
@@ -57,6 +59,8 @@ public:
     void setCommonY(bool value);
 
     Plot * plotAt(const QPoint & pos);
+
+    QSize sizeHint() const override { return QSize(600,400); }
 
 private:
     void onPlotRangeChanged();

@@ -37,6 +37,8 @@ private:
     bool hasSelectedObject();
     void plotSelectedObject();
     void customPlotSelectedObject();
+    PlotView * addPlotView();
+    void removePlotView(PlotView*);
     void plot(DataSource *, int index);
     void plotCustom(DataSource *, int index);
     void plot(DataSource *, int index, vector<int> dimensions);
@@ -47,10 +49,10 @@ private:
     DataLibrary * m_lib = nullptr;
     DataLibraryView * m_lib_view = nullptr;
 
-    vector<Plot*> m_plots;
-    Plot * m_selected_plot = nullptr;
+    list<PlotView*> m_plot_views;
 
-    PlotView * m_plot_view = nullptr;
+    PlotView * m_selected_plot_view = nullptr;
+    Plot * m_selected_plot = nullptr;
 
     QMenu * m_plot_context_menu = nullptr;
 };
