@@ -214,7 +214,7 @@ Plot::Range LinePlot::xRange()
 
     auto dim = m_dataset->dimension(m_dim);
 
-    return Range { dim.map * m_start, dim.map * m_end };
+    return Range { dim.map * m_start, dim.map * (m_end - 1) };
 }
 
 Plot::Range LinePlot::yRange()
