@@ -128,7 +128,7 @@ DataSetInfo Hdf5Source::info(int index) const
     return info;
 }
 
-DataSetPtr Hdf5Source::dataset(int index) const
+DataSetPtr Hdf5Source::dataset(int index)
 {
     auto client_dataset = m_datasets[index].lock();
     if (client_dataset)
@@ -154,6 +154,8 @@ DataSetPtr Hdf5Source::dataset(int index) const
     client_dataset = make_shared<DataSet>(dataset_name, object_size);
 
     dataset.read(client_dataset->data()->data(), hdf5_type<double>::native_type());
+
+    m_datasets[index] = client_dataset;
 
     return client_dataset;
 }

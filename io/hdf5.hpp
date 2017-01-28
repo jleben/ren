@@ -16,7 +16,7 @@ public:
     int count() const override;
     int index(const string & id) const override;
     DataSetInfo info(int index) const override;
-    DataSetPtr dataset(int index) const override;
+    DataSetPtr dataset(int index) override;
 
 private:
     using PrivateDataSetPtr = std::weak_ptr<DataSet>;

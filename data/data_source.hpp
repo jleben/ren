@@ -29,7 +29,7 @@ public:
     virtual int count() const = 0;
     virtual int index(const string & id) const = 0;
     virtual DataSetInfo info(int index) const = 0;
-    virtual DataSetPtr dataset(int index) const = 0;
+    virtual DataSetPtr dataset(int index) = 0;
 };
 
 }
