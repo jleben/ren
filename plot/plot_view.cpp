@@ -321,7 +321,22 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
 
             auto text = QString("%1 : %2").arg(plotPos.x()).arg(plotPos.y());
 
-            painter.drawText(pos + QPoint(20,-20), text);
+            auto fm = fontMetrics();
+            auto rect = fm.boundingRect(text);
+
+            int x, y;
+
+            if (pos.x() < width() / 2)
+                x = pos.x() + 20;
+            else
+                x = pos.x() - 20 - rect.width();
+
+            if (pos.y() < height() / 2)
+                y = pos.y() + 20;
+            else
+                y = pos.y() - 20 - fm.descent();
+
+            painter.drawText(QPoint(x,y), text);
         }
     }
 }
