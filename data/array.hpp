@@ -92,6 +92,10 @@ public:
 
     bool is_valid() const { return m_data != nullptr; }
 
+    const vector<int> & offset() const { return m_region_offset; }
+
+    const vector<int> & size() const { return m_region_size; }
+
     class iterator
     {
         T * m_data = nullptr;

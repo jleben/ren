@@ -8,6 +8,7 @@ set(plot_src
   ../plot/heat_map.cpp
   ../plot/plot_view.cpp
   ../io/hdf5.cpp
+  ../data/data_set.cpp
 )
 
 

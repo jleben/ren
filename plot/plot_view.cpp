@@ -1,12 +1,12 @@
 #include "plot_view.hpp"
 #include "plot.hpp"
-#include "selector.hpp"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QPainter>
 #include <QDebug>
 #include <QCursor>
+#include <QMouseEvent>
 #include <algorithm>
 #include <iostream>
 #include <iterator>
@@ -21,18 +21,8 @@ PlotView::PlotView(QWidget * parent):
     m_canvas = new PlotCanvas;
     m_canvas->setMouseTracking(true);
 
-    m_selector = new Selector;
-    m_selector_slider = new QSlider;
-    m_selector_slider->setOrientation(Qt::Horizontal);
-
     auto layout = new QVBoxLayout(this);
     layout->addWidget(m_canvas);
-    layout->addWidget(m_selector_slider);
-
-    connect(m_selector, &Selector::valueChanged,
-            m_selector_slider, &QSlider::setValue);
-    connect(m_selector_slider, &QSlider::valueChanged,
-            m_selector, &Selector::setValue);
 }
 
 void PlotView::addPlot(Plot * plot)
@@ -40,20 +30,14 @@ void PlotView::addPlot(Plot * plot)
     if (!plot)
         return;
 
-    plot->setSelector(m_selector);
-
     m_canvas->m_plots.push_back(plot);
 
     connect(plot, &Plot::xRangeChanged,
             this, &PlotView::onPlotRangeChanged);
     connect(plot, &Plot::yRangeChanged,
             this, &PlotView::onPlotRangeChanged);
-    connect(plot, &Plot::selectorRangeChanged,
-            this, &PlotView::onPlotSelectorRangeChanged);
     connect(plot, &Plot::contentChanged,
             this, &PlotView::onPlotContentChanged);
-
-    updateSelectorRange();
 
     m_canvas->updatePlotMap();
     m_canvas->updateViewMap();
@@ -71,7 +55,6 @@ void PlotView::removePlot(Plot * plot)
     auto handle = std::find(plots.begin(), plots.end(), plot);
     if (handle != plots.end())
     {
-        plot->setSelector(nullptr);
         disconnect(plot, 0, this, 0);
         m_canvas->m_plots.erase(handle);
     }
@@ -107,40 +90,55 @@ void PlotView::onPlotRangeChanged()
     m_canvas->update();
 }
 
-void PlotView::onPlotSelectorRangeChanged()
-{
-    updateSelectorRange();
-}
-
 void PlotView::onPlotContentChanged()
 {
     m_canvas->update();
 }
 
-void PlotView::updateSelectorRange()
+QRect PlotCanvas::plotRect(int index)
 {
-    double min;
-    double max;
-    bool first = true;
-    for (auto plot : m_canvas->m_plots)
+    int plot_count = (int) m_plots.size();
+
+    double plot_width = width() - 2 * m_margin;
+
+    int plot_left = m_margin;
+    int plot_right = width() - m_margin;
+
+    int plot_top;
+    int plot_bottom;
+
+    if (m_stacked)
     {
-        auto range = plot->selectorRange();
-        if (first)
-        {
-            min = range.min;
-            max = range.max;
-        }
-        else
-        {
-            min = std::min(min, range.min);
-            max = std::max(max, range.max);
-        }
-        first = false;
+        plot_top = m_margin;
+        plot_bottom = height() - m_margin;
+    }
+    else
+    {
+        double plot_offset = double(height() - m_margin) / plot_count;
+        plot_top = m_margin + index * plot_offset;
+        plot_bottom = (index + 1) * plot_offset;
     }
 
-    qDebug() << "Plot selector range:" << min << "," << max;
+    return QRect(QPoint(plot_left, plot_top), QPoint(plot_right, plot_bottom));
+}
 
-    m_selector_slider->setRange(min, max);
+QPointF PlotCanvas::mapToPlot(int plotIndex, const QPointF & pos)
+{
+    if (m_plots.empty())
+        return pos;
+
+    auto plot = m_plots[plotIndex];
+    auto xRange = m_common_x ? total_x_range : plot->xRange();
+    auto yRange = m_common_y ? total_y_range : plot->yRange();
+
+    auto rect = plotRect(plotIndex);
+    if (rect.isEmpty())
+        return QPointF(0,0);
+
+    double x = (pos.x() - rect.x()) * (xRange.extent() / rect.width());
+    double y = (rect.y() + rect.height() - pos.y()) * (yRange.extent() / rect.height());
+
+    return QPointF(x,y);
 }
 
 void PlotCanvas::updateViewMap()
@@ -234,8 +232,27 @@ void PlotCanvas::mouseMoveEvent(QMouseEvent*)
     update();
 }
 
+void PlotCanvas::mousePressEvent(QMouseEvent* event)
+{
+    auto pos = event->pos();
+    for (int i = 0; i < m_plots.size(); ++i)
+    {
+        auto plot = m_plots[i];
+        if (plotRect(i).contains(pos))
+        {
+            auto plotPos = mapToPlot(i, pos);
+            auto dataPos = plot->dataPoint(plotPos);
+            vector<int> dataIndex(dataPos.begin(), dataPos.end());
+            plot->dataSet()->selectIndex(dataIndex);
+            return;
+        }
+    }
+}
+
 void PlotCanvas::paintEvent(QPaintEvent* event)
 {
+    auto mouse_pos = mapFromGlobal(QCursor::pos());
+
     QPainter painter(this);
 
     painter.fillRect(rect(), Qt::white);
@@ -243,31 +260,24 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
     if (m_plots.empty())
         return;
 
-    int margin = 10;
-
-    int plot_width = width() - 2 * margin;
-
-    int plot_height;
-    if (m_stacked)
-        plot_height = height() - 2 * margin;
-    else
-        plot_height = (height() - margin) / int(m_plots.size()) - margin;
-
-    int plot_x = margin;
-    int plot_y = margin;
-
     painter.setBrush(Qt::NoBrush);
 
     QPen frame_pen;
     frame_pen.setColor(Qt::lightGray);
 
+    int plot_index = 0;
+
+    int plot_under_mouse_index = -1;
+
     for (auto plot : m_plots)
     {
-        {
-            QRect frame_rect(plot_x, plot_y, plot_width, plot_height);
-            painter.setPen(frame_pen);
-            painter.drawRect(frame_rect);
-        }
+        auto plot_rect = this->plotRect(plot_index);
+
+        if (plot_rect.contains(mouse_pos))
+            plot_under_mouse_index = plot_index;
+
+        painter.setPen(frame_pen);
+        painter.drawRect(plot_rect);
 
         if (plot->isEmpty())
             continue;
@@ -284,13 +294,12 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
 
         map.translate(-x_range.min, -y_range.min);
         map.scale(x_scale, y_scale);
-        map.scale(plot_width, -plot_height);
-        map.translate(plot_x, plot_y + plot_height);
+        map.scale(plot_rect.width(), -plot_rect.height());
+        map.translate(plot_rect.x(), plot_rect.y() + plot_rect.height());
 
         plot->plot(&painter, map);
 
-        if (!m_stacked)
-            plot_y += plot_height + margin;
+        ++plot_index;
     }
 
     if (underMouse())
@@ -305,6 +314,15 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
 
         painter.drawLine(pos.x(), 0, pos.x(), height());
         painter.drawLine(0, pos.y(), width(), pos.y());
+
+        if (plot_under_mouse_index >= 0)
+        {
+            auto plotPos = mapToPlot(plot_under_mouse_index, pos);
+
+            auto text = QString("%1 : %2").arg(plotPos.x()).arg(plotPos.y());
+
+            painter.drawText(pos + QPoint(20,-20), text);
+        }
     }
 }
 

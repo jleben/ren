@@ -5,6 +5,7 @@
 
 #include <string>
 #include <memory>
+#include <QObject>
 
 namespace datavis {
 
@@ -15,8 +16,10 @@ struct Dimension
     Mapping1d map;
 };
 
-class DataSet
+class DataSet : public QObject
 {
+    Q_OBJECT
+
 public:
     DataSet(const vector<int> & size):
         DataSet(string(), size)
@@ -25,20 +28,23 @@ public:
     DataSet(const string & id, const vector<int> & size):
         m_id(id),
         m_data(size),
-        m_dimensions(size.size())
+        m_dimensions(size.size()),
+        m_selection(size.size(), 0)
     {}
 
     DataSet(const string & id, const array<double> & data):
         m_id(id),
         m_data(data),
-        m_dimensions(data.size().size())
+        m_dimensions(data.size().size()),
+        m_selection(data.size().size(), 0)
     {}
 
 
     DataSet(const string & id, array<double> && data):
         m_id(id),
         m_data(data),
-        m_dimensions(data.size().size())
+        m_dimensions(data.size().size()),
+        m_selection(data.size().size(), 0)
     {}
 
     string id() const { return m_id; }
@@ -46,14 +52,39 @@ public:
     array<double> * data() { return & m_data; }
     const array<double> * data() const { return & m_data; }
 
-    Dimension dimension(int idx) { return m_dimensions[idx]; }
+    Dimension dimension(int idx) const { return m_dimensions[idx]; }
     void setDimension(int idx, const Dimension & dim) { m_dimensions[idx] = dim; }
 
-private:
+    void selectIndex(int dim, int index);
+    void selectIndex(const vector<int> & index);
 
+    int selectedIndex(int dim) const { return m_selection[dim]; }
+
+    vector<int> selectedIndex() const { return m_selection; }
+
+    double selectedPoint(int dim) const
+    {
+        return m_dimensions[dim].map * m_selection[dim];
+    }
+
+    vector<double> selectedPoint() const
+    {
+        vector<double> point(m_selection.size());
+        for (int d = 0; d < m_selection.size(); ++d)
+        {
+            point[d] = m_dimensions[d].map * m_selection[d];
+        }
+        return point;
+    }
+
+signals:
+    void selectionChanged();
+
+private:
     string m_id;
     array<double> m_data;
     vector<Dimension> m_dimensions;
+    vector<int> m_selection;
 
 };
 

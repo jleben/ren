@@ -1,9 +1,7 @@
 #include "main_window.hpp"
 #include "data_library.hpp"
 #include "data_library_view.hpp"
-#include "settings_view.hpp"
 #include "plot_data_settings_view.hpp"
-#include "line_plot_settings_view.hpp"
 #include "../plot/plot_view.hpp"
 #include "../plot/line_plot.hpp"
 #include "../plot/heat_map.hpp"
@@ -35,8 +33,6 @@ MainWindow::MainWindow(QWidget * parent):
 
     m_plot_view = new PlotView;
     m_plot_view->installEventFilter(this);
-
-    m_settings_view = new SettingsView;
 
     auto lib_action_bar = new QToolBar;
     {

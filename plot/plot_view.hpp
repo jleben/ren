@@ -10,7 +10,6 @@ namespace datavis {
 
 using std::list;
 class Plot;
-class Selector;
 class PlotCanvas;
 
 class PlotCanvas : public QWidget
@@ -20,14 +19,18 @@ public:
     virtual void enterEvent(QEvent*) override;
     virtual void leaveEvent(QEvent*) override;
     virtual void mouseMoveEvent(QMouseEvent*) override;
+    virtual void mousePressEvent(QMouseEvent*) override;
     virtual void paintEvent(QPaintEvent*) override;
 
     void updateViewMap();
     void updatePlotMap();
+    QRect plotRect(int index);
+    QPointF mapToPlot(int plotIndex, const QPointF & pos);
 
-    list<Plot*> m_plots;
+    vector<Plot*> m_plots;
     QTransform m_view_map;
     QTransform m_plot_map;
+    int m_margin = 10;
     bool m_stacked = false;
     bool m_common_x = true;
     bool m_common_y = false;
@@ -57,14 +60,9 @@ public:
 
 private:
     void onPlotRangeChanged();
-    void onPlotSelectorRangeChanged();
     void onPlotContentChanged();
 
-    void updateSelectorRange();
-
     PlotCanvas * m_canvas;
-    Selector * m_selector;
-    QSlider * m_selector_slider;
 };
 
 }

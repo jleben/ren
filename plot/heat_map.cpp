@@ -15,15 +15,25 @@ HeatMap::HeatMap(QObject * parent):
 
 void HeatMap::setDataSet(DataSetPtr source)
 {
-    m_dataset = source;
-    auto size = source->data()->size();
+    if (m_dataset)
+        m_dataset->disconnect(this);
 
-    m_dim = { 0, 1 };
-    m_start = { 0, 0 };
-    if (size.size() >= 2)
-        m_size = { size[0], size[1] };
-    else
-        m_size = { 0, 0 };
+    m_dataset = source;
+
+    if (m_dataset)
+    {
+        connect(m_dataset.get(), &DataSet::selectionChanged,
+                this, &HeatMap::onSelectionChanged);
+
+        auto size = source->data()->size();
+
+        m_dim = { 0, 1 };
+        m_start = { 0, 0 };
+        if (size.size() >= 2)
+            m_size = { size[0], size[1] };
+        else
+            m_size = { 0, 0 };
+    }
 
     update_selected_region();
     update_value_range();
@@ -57,12 +67,25 @@ void HeatMap::setRange(const vector_t & start, const vector_t & size)
     update_value_range();
 }
 
+void HeatMap::onSelectionChanged()
+{
+    // FIXME: Optimize: only update if needed
+
+    update_selected_region();
+}
+
 void HeatMap::update_selected_region()
 {
+    if (!m_dataset)
+    {
+        m_data_region = data_region_type();
+        return;
+    }
+
     auto data_size = m_dataset->data()->size();
     auto data_dim_count = data_size.size();
 
-    vector<int> offset(data_dim_count, 0);
+    vector<int> offset = m_dataset->selectedIndex();
     vector<int> size(data_dim_count, 1);
 
     for (int d = 0; d < 2; ++d)
@@ -134,9 +157,17 @@ Plot::Range HeatMap::yRange()
     return Range(y_dim.map * y_min, y_dim.map * y_max);
 }
 
-Plot::Range HeatMap::selectorRange()
+vector<double> HeatMap::dataPoint(const QPointF & point)
 {
-    return Range();
+    if (isEmpty())
+        return vector<double>();
+
+    auto offset = m_data_region.offset();
+
+    vector<double> location(offset.begin(), offset.end());
+    location[m_dim[0]] = point.x();
+    location[m_dim[1]] = point.y();
+    return location;
 }
 
 void HeatMap::plot(QPainter * painter,  const Mapping2d & transform)

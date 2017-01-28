@@ -1,5 +1,4 @@
 #include "line_plot.hpp"
-#include "selector.hpp"
 
 #include <QPainter>
 #include <QPainterPath>
@@ -18,12 +17,20 @@ LinePlot::LinePlot(QObject * parent):
 
 void LinePlot::setDataSet(DataSetPtr source)
 {
+    if (m_dataset)
+        m_dataset->disconnect(this);
+
     m_dataset = source;
+
+    if (m_dataset)
+    {
+        connect(m_dataset.get(), &DataSet::selectionChanged,
+                this, &LinePlot::onSelectionChanged);
+    }
 
     if (!source || source->data()->size().empty())
     {
         m_dim = -1;
-        m_selector_dim = -1;
         m_start = 0;
         m_end = 0;
     }
@@ -33,12 +40,10 @@ void LinePlot::setDataSet(DataSetPtr source)
 
         if (size.size() > 1)
         {
-            m_selector_dim = 0;
             m_dim = 1;
         }
         else
         {
-            m_selector_dim = -1;
             m_dim = 0;
         }
 
@@ -52,31 +57,8 @@ void LinePlot::setDataSet(DataSetPtr source)
 
     emit sourceChanged();
     emit dimensionChanged();
-    emit selectorDimChanged();
     emit xRangeChanged();
     emit yRangeChanged();
-    emit selectorRangeChanged();
-    emit contentChanged();
-}
-
-void LinePlot::setSelector(Selector * selector)
-{
-    if (m_selector)
-    {
-        disconnect(m_selector, 0, this, 0);
-    }
-
-    m_selector = selector;
-
-    if (m_selector)
-    {
-        connect(m_selector, &Selector::valueChanged,
-                this, &LinePlot::onSelectorValueChanged);
-    }
-
-    update_selected_region();
-
-    //emit yRangeChanged();
     emit contentChanged();
 }
 
@@ -89,9 +71,6 @@ void LinePlot::setDimension(int dim)
 
     if (dim < 0 || dim >= size.size())
         dim = -1;
-
-    if (m_selector_dim == dim)
-        m_selector_dim = -1;
 
     m_dim = dim;
 
@@ -109,45 +88,8 @@ void LinePlot::setDimension(int dim)
     update_selected_region();
 
     emit dimensionChanged();
-    emit selectorDimChanged();
     emit xRangeChanged();
     //emit yRangeChanged();
-    emit selectorRangeChanged();
-    emit contentChanged();
-}
-
-int LinePlot::selectorDim()
-{
-    return m_selector_dim;
-}
-
-void LinePlot::setSelectorDim(int new_dim)
-{
-    if (!m_dataset)
-    {
-        cerr << "No data." << endl;
-        return;
-    }
-
-    auto n_data_dim = m_dataset->data()->size().size();
-
-    if (new_dim == m_dim)
-    {
-        m_dim = -1;
-    }
-
-    if (new_dim < 0 || new_dim >= n_data_dim)
-        new_dim = -1;
-
-    m_selector_dim = new_dim;
-
-    update_selected_region();
-
-    emit dimensionChanged();
-    emit selectorDimChanged();
-    emit xRangeChanged();
-    //emit yRangeChanged();
-    emit selectorRangeChanged();
     emit contentChanged();
 }
 
@@ -197,14 +139,14 @@ void LinePlot::setColor(const QColor & color)
     emit contentChanged();
 }
 
-void LinePlot::onSelectorValueChanged()
+void LinePlot::onSelectionChanged()
 {
+    // FIXME: Optimize: only update if needed
+
     update_selected_region();
 
-    //emit yRangeChanged();
     emit contentChanged();
 }
-
 
 void LinePlot::findEntireValueRange()
 {
@@ -236,29 +178,29 @@ void LinePlot::update_selected_region()
 
     auto data_size = m_dataset->data()->size();
     auto n_dim = data_size.size();
+
     vector<int> offset(n_dim, 0);
     vector<int> size(n_dim, 1);
 
-    if (m_selector_dim >= 0 && m_selector)
+    auto selected_index = m_dataset->selectedIndex();
+#if 0
+    cout << "LinePlot: selected index: ";
+    for (auto & i : selected_index)
+        cout << i << " ";
+    cout << endl;
+#endif
+    for (int dim = 0; dim < n_dim; ++dim)
     {
-        assert(m_selector_dim < n_dim);
-        int value = m_selector->value();
-        //qDebug() << "Selector value:" << value;
-        //qDebug() << "Data size: " << data_size[m_selector_dim];
-        if (value >= 0 && value < data_size[m_selector_dim])
+        if (dim == m_dim)
         {
-            offset[m_selector_dim] = value;
-            size[m_selector_dim] = 1;
+            offset[dim] = m_start;
+            size[dim] = m_end - m_start;
         }
         else
         {
-            m_data_region = data_region_type();
-            return;
+            offset[dim] = selected_index[dim];
         }
     }
-
-    offset[m_dim] = m_start;
-    size[m_dim] = m_end - m_start;
 
     m_data_region = get_region(*m_dataset->data(), offset, size);
 }
@@ -293,21 +235,16 @@ Plot::Range LinePlot::yRange()
 #endif
 }
 
-Plot::Range LinePlot::selectorRange()
+vector<double> LinePlot::dataPoint(const QPointF & point)
 {
-    if (!m_dataset)
-        return Range();
+    if (isEmpty())
+        return vector<double>();
 
-    if (m_selector_dim < 0)
-        return Range();
+    auto offset = m_data_region.offset();
 
-    auto data_size = m_dataset->data()->size();
-
-    assert(m_selector_dim >= 0 && m_selector_dim < data_size.size());
-
-    auto dim = m_dataset->dimension(m_selector_dim);
-
-    return Range { dim.map * 0., dim.map * (data_size[m_selector_dim] - 1) };
+    vector<double> location(offset.begin(), offset.end());
+    location[m_dim] = point.x();
+    return location;
 }
 
 void LinePlot::plot(QPainter * painter,  const Mapping2d & transform)

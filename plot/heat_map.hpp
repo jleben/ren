@@ -18,21 +18,22 @@ public:
 
     HeatMap(QObject * parent = 0);
 
-    virtual void setSelector(Selector *) {}
-
     void setDataSet(DataSetPtr);
     void setDimensions(const vector_t & dim);
     void setRange(const vector_t & start, const vector_t & size);
+
+    DataSetPtr dataSet() override { return m_dataset; }
 
     virtual bool isEmpty() const override { return !m_data_region.is_valid(); }
 
     virtual Range xRange() override;
     virtual Range yRange() override;
-    virtual Range selectorRange() override;
+    virtual vector<double> dataPoint(const QPointF & point) override;
 
     virtual void plot(QPainter *,  const Mapping2d &) override;
 
 private:
+    void onSelectionChanged();
     void update_selected_region();
     void update_value_range();
     DataSetPtr m_dataset = nullptr;

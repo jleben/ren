@@ -17,9 +17,7 @@ using std::list;
 class DataSet;
 class PlotView;
 class Plot;
-class SettingsView;
 class LinePlot;
-class LinePlotSettingsView;
 class DataLibrary;
 class DataLibraryView;
 class PlotDataSettingsView;
@@ -52,7 +50,6 @@ private:
     vector<Plot*> m_plots;
     Plot * m_selected_plot = nullptr;
 
-    SettingsView * m_settings_view = nullptr;
     PlotView * m_plot_view = nullptr;
 
     QMenu * m_plot_context_menu = nullptr;

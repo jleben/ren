@@ -1,12 +1,17 @@
 #pragma once
 
 #include "../data/math.hpp"
+#include "../data/data_set.hpp"
 
 #include <QObject>
 #include <QPainter>
 #include <QPointF>
 
+#include <vector>
+
 namespace datavis {
+
+using std::vector;
 
 class Selector;
 
@@ -22,20 +27,21 @@ public:
 
         double min = 0;
         double max = 0;
+
+        double extent() { return max - min; }
     };
 
     Plot(QObject * parent = 0): QObject(parent) {}
-    virtual void setSelector(Selector *) = 0;
+    virtual DataSetPtr dataSet() = 0;
     virtual bool isEmpty() const = 0;
     virtual Range xRange() = 0;
     virtual Range yRange() = 0;
-    virtual Range selectorRange() = 0;
     virtual void plot(QPainter *, const Mapping2d &) = 0;
+    virtual vector<double> dataPoint(const QPointF & point) = 0;
 
 signals:
     void xRangeChanged();
     void yRangeChanged();
-    void selectorRangeChanged();
     void contentChanged();
 };
 

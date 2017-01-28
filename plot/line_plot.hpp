@@ -8,8 +8,6 @@
 
 namespace datavis {
 
-class Selector;
-
 class LinePlot : public Plot
 {
     Q_OBJECT
@@ -23,41 +21,34 @@ public:
     DataSetPtr dataSet() const { return m_dataset; }
     void setDataSet(DataSetPtr data);
 
-    virtual void setSelector(Selector *);
-
     int dimension() const { return m_dim; }
     void setDimension(int dim);
-
-    int selectorDim();
-    void setSelectorDim(int dim);
 
     void setRange(int start, int end);
 
     QColor color() const { return m_color; }
     void setColor(const QColor & c);
 
+    DataSetPtr dataSet() override { return m_dataset; }
     virtual bool isEmpty() const override { return !m_data_region.is_valid(); }
     virtual Range xRange() override;
     virtual Range yRange() override;
-    virtual Range selectorRange() override;
+    virtual vector<double> dataPoint(const QPointF & point) override;
     virtual void plot(QPainter *,  const Mapping2d &) override;
 
 signals:
     void sourceChanged();
     void dimensionChanged();
-    void selectorDimChanged();
     void colorChanged();
 
 private:
-    void onSelectorValueChanged();
+    void onSelectionChanged();
     void findEntireValueRange();
     void update_selected_region();
 
     DataSetPtr m_dataset = nullptr;
-    Selector * m_selector = nullptr;
     data_region_type m_data_region;
     int m_dim = -1;
-    int m_selector_dim = -1;
     int m_start = 0;
     int m_end = 0;
 
