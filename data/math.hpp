@@ -23,6 +23,12 @@ double operator*(const Mapping1d & m, double value)
     return value * m.scale + m.offset;
 }
 
+inline
+double operator/(double value, const Mapping1d & m)
+{
+    return (value - m.offset) / m.scale;
+}
+
 struct Mapping2d
 {
     double x_scale = 1;

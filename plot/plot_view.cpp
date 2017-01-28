@@ -245,8 +245,8 @@ void PlotCanvas::mousePressEvent(QMouseEvent* event)
         if (plotRect(i).contains(pos))
         {
             auto plotPos = mapToPlot(i, pos);
-            auto dataPos = plot->dataPoint(plotPos);
-            vector<int> dataIndex(dataPos.begin(), dataPos.end());
+            auto dataPos = plot->dataLocation(plotPos);
+            auto dataIndex = plot->dataSet()->indexForPoint(dataPos);
             plot->dataSet()->selectIndex(dataIndex);
             return;
         }
@@ -321,9 +321,33 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
 
         if (plot_under_mouse_index >= 0)
         {
+            auto plot = m_plots[plot_under_mouse_index];
             auto plotPos = mapToPlot(plot_under_mouse_index, pos);
+            auto dataPos = plot->dataLocation(plotPos);
+            auto dataIndex = plot->dataSet()->indexForPoint(dataPos);
 
-            auto text = QString("%1 : %2").arg(plotPos.x()).arg(plotPos.y());
+            vector<int> dataSize = plot->dataSet()->data()->size();
+
+            bool in_bounds = true;
+            for (int d = 0; d < dataSize.size(); ++d)
+                in_bounds &= (dataIndex[d] >= 0 && dataIndex[d] < dataSize[d]);
+
+            QString text;
+
+            if (in_bounds)
+            {
+                double value = (*plot->dataSet()->data())(dataIndex);
+
+                text += QString::number(value);
+                text += " ";
+            }
+
+            QStringList coord_strings;
+            for (auto & i : dataPos)
+                coord_strings << QString::number(i, 'f', 2);
+
+            text += "@ ";
+            text += coord_strings.join(" ");
 
             auto fm = fontMetrics();
             auto rect = fm.boundingRect(text);

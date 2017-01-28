@@ -55,6 +55,14 @@ public:
     Dimension dimension(int idx) const { return m_dimensions[idx]; }
     void setDimension(int idx, const Dimension & dim) { m_dimensions[idx] = dim; }
 
+    vector<int> indexForPoint(const vector<double> & point)
+    {
+        vector<int> index(point.size());
+        for (int d = 0; d < point.size(); ++d)
+            index[d] = int(point[d] / m_dimensions[d].map);
+        return index;
+    }
+
     void selectIndex(int dim, int index);
     void selectIndex(const vector<int> & index);
 

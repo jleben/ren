@@ -235,7 +235,7 @@ Plot::Range LinePlot::yRange()
 #endif
 }
 
-vector<double> LinePlot::dataPoint(const QPointF & point)
+vector<double> LinePlot::dataLocation(const QPointF & point)
 {
     if (isEmpty())
         return vector<double>();

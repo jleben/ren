@@ -28,7 +28,7 @@ public:
 
     virtual Range xRange() override;
     virtual Range yRange() override;
-    virtual vector<double> dataPoint(const QPointF & point) override;
+    virtual vector<double> dataLocation(const QPointF & point) override;
 
     virtual void plot(QPainter *,  const Mapping2d &) override;
 

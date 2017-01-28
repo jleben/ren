@@ -157,7 +157,7 @@ Plot::Range HeatMap::yRange()
     return Range(y_dim.map * y_min, y_dim.map * y_max);
 }
 
-vector<double> HeatMap::dataPoint(const QPointF & point)
+vector<double> HeatMap::dataLocation(const QPointF & point)
 {
     if (isEmpty())
         return vector<double>();
