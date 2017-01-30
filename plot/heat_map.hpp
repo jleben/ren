@@ -22,6 +22,8 @@ public:
     void setDimensions(const vector_t & dim);
     void setRange(const vector_t & start, const vector_t & size);
 
+    vector_t dimensions() { return m_dim; }
+
     DataSetPtr dataSet() override { return m_dataset; }
 
     virtual bool isEmpty() const override { return !m_data_region.is_valid(); }

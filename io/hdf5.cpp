@@ -152,6 +152,7 @@ DataSetPtr Hdf5Source::dataset(int index)
     vector<int> object_size(size.begin(), size.end());
 
     client_dataset = make_shared<DataSet>(dataset_name, object_size);
+    client_dataset->setSource(this);
 
     dataset.read(client_dataset->data()->data(), hdf5_type<double>::native_type());
 

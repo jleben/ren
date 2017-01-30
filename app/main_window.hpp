@@ -46,6 +46,9 @@ private:
     bool eventFilter(QObject*, QEvent*) override;
     void showPlotContextMenu(Plot*, const QPoint & pos);
 
+    void saveProject();
+    void openProject();
+
     DataLibrary * m_lib = nullptr;
     DataLibraryView * m_lib_view = nullptr;
 

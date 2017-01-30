@@ -6,6 +6,7 @@
 #include "../plot/line_plot.hpp"
 #include "../plot/heat_map.hpp"
 #include "../io/hdf5.hpp"
+#include <project/project.pb.h>
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -20,6 +21,8 @@
 #include <QMenu>
 #include <QDialog>
 #include <QDialogButtonBox>
+
+#include <fstream>
 
 namespace datavis {
 
@@ -79,6 +82,16 @@ void MainWindow::makeMenu()
 
     auto fileMenu = menuBar->addMenu("File");
 
+    {
+        auto action = fileMenu->addAction("Open Project...");
+        connect(action, &QAction::triggered,
+                this, &MainWindow::openProject);
+    }
+    {
+        auto action = fileMenu->addAction("Save Project...");
+        connect(action, &QAction::triggered,
+                this, &MainWindow::saveProject);
+    }
     {
         auto action = fileMenu->addAction("Open Data...");
         connect(action, &QAction::triggered,
@@ -369,6 +382,162 @@ bool MainWindow::eventFilter(QObject * object, QEvent * event)
     }
 
     return false;
+}
+
+void MainWindow::saveProject()
+{
+    auto file_path = QFileDialog::getSaveFileName(this, "Save Project");
+
+    if (file_path.isEmpty())
+        return;
+
+    ofstream file(file_path.toStdString());
+    if (!file.is_open())
+    {
+        QMessageBox::warning(this, "Save Project Failed",
+                             "Failed to save the project"
+                             " because the file could not be accessed.");
+        return;
+    }
+
+    datavis::project::Project project_data;
+
+    for (int source_idx = 0; source_idx < m_lib->sourceCount(); ++source_idx)
+    {
+        auto source = m_lib->source(source_idx);
+
+        auto source_data = project_data.add_source();
+        source_data->set_path(source->id());
+    }
+
+    for (auto plot_view : m_plot_views)
+    {
+        auto plot_view_data = project_data.add_plot_view();
+
+        auto geometry = plot_view->geometry();
+
+        auto pos_data = plot_view_data->mutable_position();
+        pos_data->set_x(geometry.x());
+        pos_data->set_y(geometry.y());
+        pos_data->set_width(geometry.width());
+        pos_data->set_height(geometry.height());
+
+        for (auto plot : plot_view->plots())
+        {
+            auto plot_data = plot_view_data->add_plot();
+
+            auto data_set = plot->dataSet();
+
+            plot_data->set_data_source(data_set->source()->id());
+            plot_data->set_data_set(data_set->id());
+
+            if (auto line = dynamic_cast<LinePlot*>(plot))
+            {
+                plot_data->add_dimension(line->dimension());
+            }
+            else if (auto map = dynamic_cast<HeatMap*>(plot))
+            {
+                auto dims = map->dimensions();
+                for (auto & dim : dims)
+                    plot_data->add_dimension(dim);
+            }
+        }
+    }
+
+    if (!project_data.SerializeToOstream(&file))
+    {
+        QMessageBox::warning(this, "Save Project Failed",
+                             "Failed to save the project"
+                             " because the data could not be written.");
+        return;
+    }
+}
+
+void MainWindow::openProject()
+{
+    auto file_path = QFileDialog::getOpenFileName(this, "Open Project");
+
+    if (file_path.isEmpty())
+        return;
+
+    ifstream file(file_path.toStdString());
+    if (!file.is_open())
+    {
+        QMessageBox::warning(this, "Open Project Failed",
+                             "Failed to open the project"
+                             " because the file could not be accessed:\n"
+                             + file_path);
+        return;
+    }
+
+    datavis::project::Project project_data;
+
+    if (!project_data.ParseFromIstream(&file))
+    {
+        QMessageBox::warning(this, "Open Project Failed",
+                             "Failed to parse the project file:\n"
+                             + file_path);
+        return;
+    }
+
+    for (auto & source_data : project_data.source())
+    {
+        auto file_path = QString::fromStdString(source_data.path());
+
+        m_lib->open(file_path);
+    }
+
+    for (auto & plot_view_data : project_data.plot_view())
+    {
+        QRect geometry;
+        geometry.setX(plot_view_data.position().x());
+        geometry.setY(plot_view_data.position().y());
+        geometry.setWidth(plot_view_data.position().width());
+        geometry.setHeight(plot_view_data.position().height());
+
+        auto plot_view = addPlotView();
+        plot_view->setGeometry(geometry);
+
+        m_selected_plot_view = plot_view;
+
+        for (auto & plot_data : plot_view_data.plot())
+        {
+            auto source_path = plot_data.data_source();
+            DataSource * source = m_lib->source(QString::fromStdString(source_path));
+            if (!source)
+            {
+                cerr << "Failed to find data source: " << source_path << endl;
+                continue;
+            }
+
+            auto set_id = plot_data.data_set();
+
+            int set_index = -1;
+
+            for (int i = 0; i < source->count(); ++i)
+            {
+                auto info = source->info(i);
+                if (info.id == set_id)
+                {
+                    set_index = i;
+                    break;
+                }
+            }
+
+            if (set_index < 0)
+            {
+                cerr << "Failed to find data set " << set_id
+                     << " in source " << source_path << endl;
+                continue;
+            }
+
+            vector<int> dimensions;
+            for (auto dim : plot_data.dimension())
+                dimensions.push_back(dim);
+
+            plot(source, set_index, dimensions);
+        }
+    }
 }
 
 }

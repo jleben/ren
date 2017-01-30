@@ -16,6 +16,8 @@ struct Dimension
     Mapping1d map;
 };
 
+class DataSource;
+
 class DataSet : public QObject
 {
     Q_OBJECT
@@ -46,6 +48,9 @@ public:
         m_dimensions(data.size().size()),
         m_selection(data.size().size(), 0)
     {}
+
+    DataSource * source() { return m_source; }
+    void setSource(DataSource * source) { m_source = source; }
 
     string id() const { return m_id; }
 
@@ -89,6 +94,7 @@ signals:
     void selectionChanged();
 
 private:
+    DataSource * m_source;
     string m_id;
     array<double> m_data;
     vector<Dimension> m_dimensions;

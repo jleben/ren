@@ -49,6 +49,8 @@ public:
     void addPlot(Plot*);
     void removePlot(Plot*);
 
+    const vector<Plot*> plots() { return m_canvas->m_plots; }
+
     bool isStacked() const { return m_canvas->m_stacked; }
     void setStacked(bool value);
 

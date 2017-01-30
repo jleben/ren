@@ -14,5 +14,8 @@ find_package(Qt5Widgets REQUIRED)
 include_directories("/usr/include/hdf5/serial")
 link_directories("/usr/lib/x86_64-linux-gnu/hdf5/serial")
 
+include_directories(${CMAKE_BINARY_DIR})
+
 add_subdirectory(app)
+add_subdirectory(project)
 add_subdirectory(test)

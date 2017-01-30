@@ -23,6 +23,7 @@ public:
     void close(DataSource * source);
     int sourceCount() const { return m_sources.size(); }
     DataSource * source(int index) { return m_sources[index]; }
+    DataSource * source(const QString & path);
 
 signals:
     void sourcesChanged();

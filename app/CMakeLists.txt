@@ -18,8 +18,11 @@ set(app_src
   ../io/hdf5.cpp
   ../data/data_set.cpp
   ${plot_src}
+  ${CMAKE_BINARY_DIR}/project/project.pb.cc
 )
 
 add_executable(datavis ${app_src})
 
-target_link_libraries(datavis Qt5::Widgets hdf5_cpp hdf5)
+target_link_libraries(datavis Qt5::Widgets hdf5_cpp hdf5 protobuf)
+
+add_dependencies(datavis project_protobuf)

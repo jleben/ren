@@ -1,6 +1,8 @@
 #include "data_library.hpp"
 #include "../io/hdf5.hpp"
 
+#include <algorithm>
+
 namespace datavis {
 
 DataLibrary::DataLibrary(QObject * parent):
@@ -35,6 +37,20 @@ void DataLibrary::close(DataSource * source)
     m_sources.erase(pos);
 
     emit sourcesChanged();
+}
+
+DataSource * DataLibrary::source(const QString & path)
+{
+    auto std_path = path.toStdString();
+
+    auto it = find_if(m_sources.begin(), m_sources.end(), [&std_path](DataSource * source) {
+        return source->id() == std_path;
+    });
+
+    if (it == m_sources.end())
+        return nullptr;
+
+    return *it;
 }
 
 }
