@@ -460,6 +460,11 @@ void MainWindow::openProject()
     if (file_path.isEmpty())
         return;
 
+    openProjectFile(file_path);
+}
+
+void MainWindow::openProjectFile(const QString & file_path)
+{
     ifstream file(file_path.toStdString());
     if (!file.is_open())
     {

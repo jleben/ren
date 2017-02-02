@@ -30,6 +30,10 @@ public:
     void openData();
     void openDataFile(const QString & file_path);
 
+    void saveProject();
+    void openProject();
+    void openProjectFile(const QString & file_path);
+
 private:
     void makeMenu();
     void onOpenFailed(const QString & path);
@@ -46,8 +50,6 @@ private:
     bool eventFilter(QObject*, QEvent*) override;
     void showPlotContextMenu(Plot*, const QPoint & pos);
 
-    void saveProject();
-    void openProject();
 
     DataLibrary * m_lib = nullptr;
     DataLibraryView * m_lib_view = nullptr;
