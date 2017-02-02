@@ -21,6 +21,8 @@ public:
 private:
     using PrivateDataSetPtr = std::weak_ptr<DataSet>;
 
+    vector<double> readAttribute(const string & name, H5::DataSet &);
+
     string m_file_path;
     H5::H5File m_file;
     vector<hsize_t> m_dataset_indices;

@@ -156,9 +156,45 @@ DataSetPtr Hdf5Source::dataset(int index)
 
     dataset.read(client_dataset->data()->data(), hdf5_type<double>::native_type());
 
+    auto dim_offset = readAttribute("dimension-offset", dataset);
+    auto dim_step = readAttribute("dimension-step", dataset);
+
+    for (int d = 0; d < dim_count; ++d)
+    {
+        Dimension dim;
+        if (d < dim_offset.size())
+            dim.map.offset = dim_offset[d];
+        if (d < dim_step.size())
+            dim.map.scale = dim_step[d];
+        client_dataset->setDimension(d, dim);
+    }
+
     m_datasets[index] = client_dataset;
 
     return client_dataset;
+}
+
+vector<double> Hdf5Source::readAttribute(const string & name, H5::DataSet & dataset)
+{
+    vector<double> data;
+
+    if (!dataset.attrExists(name.c_str()))
+        return data;
+
+    auto attribute = dataset.openAttribute(name.c_str());
+    auto space = attribute.getSpace();
+
+    if (!space.isSimple())
+        return data;
+
+    if (space.getSimpleExtentNdims() != 1)
+        return data;
+
+    data.resize(space.getSimpleExtentNpoints());
+
+    attribute.read(H5::PredType::NATIVE_DOUBLE, data.data());
+
+    return data;
 }
 
 }
