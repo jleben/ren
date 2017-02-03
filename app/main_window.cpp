@@ -271,6 +271,8 @@ void MainWindow::plot(DataSource * source, int index, vector<int> dimensions)
         return;
     }
 
+    cout << "Reading dataset." << endl;
+
     DataSetPtr data;
     try {
         data = source->dataset(index);
@@ -281,20 +283,20 @@ void MainWindow::plot(DataSource * source, int index, vector<int> dimensions)
         return;
     }
 
+    cout << "Reading dataset finished." << endl;
+
     Plot * plot;
 
     if (dimensions.size() == 1)
     {
         auto line = new LinePlot;
-        line->setDataSet(data);
-        line->setDimension(dimensions[0]);
+        line->setDataSet(data, dimensions[0]);
         plot = line;
     }
     else
     {
         auto map = new HeatMap;
-        map->setDataSet(data);
-        map->setDimensions({dimensions[0], dimensions[1]});
+        map->setDataSet(data, { dimensions[0], dimensions[1] });
         plot = map;
     }
 

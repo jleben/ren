@@ -15,26 +15,42 @@ HeatMap::HeatMap(QObject * parent):
     Plot(parent)
 {}
 
-void HeatMap::setDataSet(DataSetPtr source)
+void HeatMap::setDataSet(DataSetPtr dataset)
+{
+    setDataSet(dataset, { 0, 1 });
+}
+
+void HeatMap::setDataSet(DataSetPtr dataset, const vector_t & dims)
 {
     if (m_dataset)
         m_dataset->disconnect(this);
 
-    m_dataset = source;
+    m_dataset = dataset;
 
     if (m_dataset)
     {
         connect(m_dataset.get(), &DataSet::selectionChanged,
                 this, &HeatMap::onSelectionChanged);
 
-        auto size = source->data()->size();
+        auto size = dataset->data()->size();
 
-        m_dim = { 0, 1 };
+        m_dim = dims;
+
         m_start = { 0, 0 };
-        if (size.size() >= 2)
-            m_size = { size[0], size[1] };
-        else
-            m_size = { 0, 0 };
+
+        for (int i = 0; i < 2; ++i)
+        {
+            int dim = dims[i];
+            if (dim >= 0 && dim < m_size.size())
+            {
+                m_size[i] = size[dims[i]];
+            }
+            else
+            {
+                m_size[i] = 0;
+                cerr << "HeatMap: Warning: Dimension out of range: " << dims[i] << endl;
+            }
+        }
     }
 
     update_selected_region();
@@ -42,19 +58,27 @@ void HeatMap::setDataSet(DataSetPtr source)
     generate_image();
 }
 
-void HeatMap::setDimensions(const vector_t & dim)
+void HeatMap::setDimensions(const vector_t & dims)
 {
+    if (m_dim == dims)
+        return;
+
     auto data_size = m_dataset->data()->size();
 
-    m_dim = dim;
+    m_dim = dims;
     m_start = { 0, 0 };
-    for (int d = 0; d < 2; ++d)
+    for (int i = 0; i < 2; ++i)
     {
-        int src_d = dim[d];
-        if (src_d < 0 || src_d >= data_size.size())
-            m_size[d] = 0;
+        int dim = dims[i];
+        if (dim >= 0 && dim < m_size.size())
+        {
+            m_size[i] = data_size[dims[i]];
+        }
         else
-            m_size[d] = data_size[src_d];
+        {
+            m_size[i] = 0;
+            cerr << "HeatMap: Warning: Dimension out of range: " << dims[i] << endl;
+        }
     }
 
     update_selected_region();
@@ -125,14 +149,33 @@ void HeatMap::update_value_range()
     if (!m_data_region.is_valid())
         return;
 
-    auto min_it = std::min_element(m_data_region.begin(), m_data_region.end());
-    auto max_it = std::max_element(m_data_region.begin(), m_data_region.end());
-    m_value_range.first = min_it.value();
-    m_value_range.second = max_it.value();
+    qDebug() << "Computing value range.";
+
+    double min = 0;
+    double max = 0;
+
+    auto it = m_data_region.begin();
+    if (it != m_data_region.end())
+    {
+        min = max = (*it).value();
+        while(++it != m_data_region.end())
+        {
+            auto value = (*it).value();
+            min = std::min(value, min);
+            max = std::max(value, max);
+        }
+    }
+
+    m_value_range.first = min;
+    m_value_range.second = max;
+
+    qDebug() << "Done computing value range.";
 }
 
 void HeatMap::generate_image()
 {
+    qDebug() << "Generating image";
+
     if (!m_data_region.is_valid())
     {
         m_pixmap = QPixmap();
@@ -160,7 +203,11 @@ void HeatMap::generate_image()
         image.setPixel(x,y,qRgb(c,c,c));
     }
 
+    qDebug() << "Image generated.";
+
     m_pixmap = QPixmap::fromImage(image);
+
+    qDebug() << "Pixmap generated.";
 }
 
 Plot::Range HeatMap::xRange()

@@ -15,12 +15,17 @@ LinePlot::LinePlot(QObject * parent):
     Plot(parent)
 {}
 
-void LinePlot::setDataSet(DataSetPtr source)
+void LinePlot::setDataSet(DataSetPtr dataset)
+{
+    setDataSet(dataset, 0);
+}
+
+void LinePlot::setDataSet(DataSetPtr dataset, int dim)
 {
     if (m_dataset)
         m_dataset->disconnect(this);
 
-    m_dataset = source;
+    m_dataset = dataset;
 
     if (m_dataset)
     {
@@ -28,7 +33,7 @@ void LinePlot::setDataSet(DataSetPtr source)
                 this, &LinePlot::onSelectionChanged);
     }
 
-    if (!source || source->data()->size().empty())
+    if (!dataset || dataset->data()->size().empty())
     {
         m_dim = -1;
         m_start = 0;
@@ -36,11 +41,11 @@ void LinePlot::setDataSet(DataSetPtr source)
     }
     else
     {
-        auto size = source->data()->size();
+        auto size = dataset->data()->size();
 
-        if (size.size() > 1)
+        if (size.size() > dim)
         {
-            m_dim = 1;
+            m_dim = dim;
         }
         else
         {
@@ -48,7 +53,7 @@ void LinePlot::setDataSet(DataSetPtr source)
         }
 
         m_start = 0;
-        m_end = size[m_dim];
+        m_end = size[dim];
     }
 
     findEntireValueRange();

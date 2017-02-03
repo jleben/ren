@@ -20,6 +20,7 @@ public:
     HeatMap(QObject * parent = 0);
 
     void setDataSet(DataSetPtr);
+    void setDataSet(DataSetPtr, const vector_t & dim);
     void setDimensions(const vector_t & dim);
     void setRange(const vector_t & start, const vector_t & size);
 

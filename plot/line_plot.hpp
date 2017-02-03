@@ -20,6 +20,7 @@ public:
 
     DataSetPtr dataSet() const { return m_dataset; }
     void setDataSet(DataSetPtr data);
+    void setDataSet(DataSetPtr data, int dimension);
 
     int dimension() const { return m_dim; }
     void setDimension(int dim);
