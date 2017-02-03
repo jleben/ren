@@ -43,8 +43,7 @@ void PlotView::addPlot(Plot * plot)
     connect(plot, &Plot::contentChanged,
             this, &PlotView::onPlotContentChanged);
 
-    m_canvas->updatePlotMap();
-    m_canvas->updateViewMap();
+    m_canvas->updateDataRange();
 
     m_canvas->update();
 }
@@ -63,8 +62,7 @@ void PlotView::removePlot(Plot * plot)
         m_canvas->m_plots.erase(handle);
     }
 
-    m_canvas->updatePlotMap();
-    m_canvas->updateViewMap();
+    m_canvas->updateDataRange();
 
     m_canvas->update();
 }
@@ -89,8 +87,7 @@ void PlotView::setCommonY(bool value)
 
 void PlotView::onPlotRangeChanged()
 {
-    m_canvas->updatePlotMap();
-    m_canvas->updateViewMap();
+    m_canvas->updateDataRange();
     m_canvas->update();
 }
 
@@ -145,20 +142,7 @@ QPointF PlotCanvas::mapToPlot(int plotIndex, const QPointF & pos)
     return QPointF(x,y);
 }
 
-void PlotCanvas::updateViewMap()
-{
-    auto size = this->size();
-
-    int margin = 10;
-
-    QTransform map;
-    map.translate(margin, size.height() - margin);
-    map.scale(size.width() - 2 * margin, - (size.height() - 2 * margin));
-
-    m_view_map = m_plot_map * map;
-}
-
-void PlotCanvas::updatePlotMap()
+void PlotCanvas::updateDataRange()
 {
     {
         bool first = true;
@@ -186,39 +170,10 @@ void PlotCanvas::updatePlotMap()
             first = false;
         }
     }
-#if 0
-    cout << "View range: "
-         << "(" << total_range.min.x() << "," << total_range.max.x() << ")"
-         << " -> "
-         << "(" << total_range.min.y() << "," << total_range.max.y() << ")"
-         << endl;
-#endif
-    QPointF max(total_x_range.max, total_y_range.max);
-    QPointF min(total_x_range.min, total_y_range.min);
-
-    QPointF offset = min;
-    QPointF extent = max - min;
-
-#if 0
-    qDebug() << "offset:" << offset;
-    qDebug() << "extent:" << extent;
-#endif
-    double x_scale = extent.x() == 0 ? 1 : 1.0 / extent.x();
-    double y_scale = extent.y() == 0 ? 1 : 1.0 / extent.y();
-#if 0
-    qDebug() << "x scale:" << x_scale;
-    qDebug() << "y scale:" << y_scale;
-#endif
-    QTransform transform;
-    transform.scale(x_scale, y_scale);
-    transform.translate(-offset.x(), -offset.y());
-
-    m_plot_map = transform;
 }
 
 void PlotCanvas::resizeEvent(QResizeEvent*)
 {
-    updateViewMap();
 }
 
 void PlotCanvas::enterEvent(QEvent*)

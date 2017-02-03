@@ -22,14 +22,12 @@ public:
     virtual void mousePressEvent(QMouseEvent*) override;
     virtual void paintEvent(QPaintEvent*) override;
 
-    void updateViewMap();
-    void updatePlotMap();
+    void updateDataRange();
     QRect plotRect(int index);
     QPointF mapToPlot(int plotIndex, const QPointF & pos);
 
     vector<Plot*> m_plots;
-    QTransform m_view_map;
-    QTransform m_plot_map;
+
     int m_margin = 10;
     bool m_stacked = false;
     bool m_common_x = true;
@@ -37,6 +35,11 @@ public:
 
     Plot::Range total_x_range;
     Plot::Range total_y_range;
+
+    double view_x_offset;
+    double view_x_size;
+
+    Plot::Range view_x_range;
 };
 
 class PlotView : public QWidget
