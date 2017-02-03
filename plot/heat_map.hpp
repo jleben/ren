@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QTransform>
+#include <QImage>
 #include <array>
 
 #include "plot.hpp"
@@ -38,12 +39,16 @@ private:
     void onSelectionChanged();
     void update_selected_region();
     void update_value_range();
+    void generate_image();
+
     DataSetPtr m_dataset = nullptr;
     data_region_type m_data_region;
     pair<double,double> m_value_range;
     vector_t m_dim;
     vector_t m_start;
     vector_t m_size;
+
+    QPixmap m_pixmap;
 
     QPen m_pen { Qt::black };
 };

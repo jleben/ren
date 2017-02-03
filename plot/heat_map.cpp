@@ -2,6 +2,8 @@
 
 #include <QPainter>
 #include <QPainterPath>
+#include <QDebug>
+
 #include <algorithm>
 #include <iostream>
 
@@ -37,6 +39,7 @@ void HeatMap::setDataSet(DataSetPtr source)
 
     update_selected_region();
     update_value_range();
+    generate_image();
 }
 
 void HeatMap::setDimensions(const vector_t & dim)
@@ -56,6 +59,7 @@ void HeatMap::setDimensions(const vector_t & dim)
 
     update_selected_region();
     update_value_range();
+    generate_image();
 }
 
 void HeatMap::setRange(const vector_t & start, const vector_t & size)
@@ -65,6 +69,7 @@ void HeatMap::setRange(const vector_t & start, const vector_t & size)
 
     update_selected_region();
     update_value_range();
+    generate_image();
 }
 
 void HeatMap::onSelectionChanged()
@@ -72,6 +77,7 @@ void HeatMap::onSelectionChanged()
     // FIXME: Optimize: only update if needed
 
     update_selected_region();
+    generate_image();
 }
 
 void HeatMap::update_selected_region()
@@ -123,6 +129,38 @@ void HeatMap::update_value_range()
     auto max_it = std::max_element(m_data_region.begin(), m_data_region.end());
     m_value_range.first = min_it.value();
     m_value_range.second = max_it.value();
+}
+
+void HeatMap::generate_image()
+{
+    if (!m_data_region.is_valid())
+    {
+        m_pixmap = QPixmap();
+        return;
+    }
+
+    double value_range = m_value_range.second - m_value_range.first;
+    double value_scale = value_range != 0 ? 1 / value_range : 1;
+    double value_offset = -m_value_range.first;
+
+    QImage image(m_size[0], m_size[1], QImage::Format_RGB888);
+
+    for (auto & element : m_data_region)
+    {
+        auto loc = element.location();
+        int x = loc[m_dim[0]];
+        int y = image.height() - 1 - loc[m_dim[1]];
+
+        double v = element.value();
+        v += value_offset;
+        v *= value_scale;
+
+        int c = 255 * v;
+
+        image.setPixel(x,y,qRgb(c,c,c));
+    }
+
+    m_pixmap = QPixmap::fromImage(image);
 }
 
 Plot::Range HeatMap::xRange()
@@ -180,32 +218,13 @@ void HeatMap::plot(QPainter * painter,  const Mapping2d & transform)
 
     painter->save();
 
-    painter->setPen(Qt::black);
+    auto x_range = xRange();
+    auto y_range = yRange();
 
-    double value_range = m_value_range.second - m_value_range.first;
-    double value_scale = value_range != 0 ? 1 / value_range : 1;
-    double value_offset = -m_value_range.first;
+    auto topLeft = transform * QPointF(x_range.min, y_range.max);
+    auto bottomRight = transform * QPointF(x_range.max, y_range.min);
 
-    for (auto & element : m_data_region)
-    {
-        auto & loc = element.location();
-        double x = loc[m_dim[0]];
-        double y = loc[m_dim[1]];
-
-        double v = element.value();
-        v += value_offset;
-        v *= value_scale;
-
-        int c = 255 * v;
-
-        auto a = transform * QPointF(x_dim.map * (x-0.5),
-                                     y_dim.map * (y-0.5));
-
-        auto b = transform * QPointF(x_dim.map * (x+0.5),
-                                     y_dim.map * (y+0.5));
-
-        painter->fillRect(QRectF(a,b), QColor(c,c,c));
-    }
+    painter->drawPixmap(QRectF(topLeft, bottomRight), m_pixmap, m_pixmap.rect());
 
     painter->restore();
 }
