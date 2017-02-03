@@ -20,11 +20,20 @@ public:
     virtual void leaveEvent(QEvent*) override;
     virtual void mouseMoveEvent(QMouseEvent*) override;
     virtual void mousePressEvent(QMouseEvent*) override;
+    virtual void wheelEvent(QWheelEvent*) override;
     virtual void paintEvent(QPaintEvent*) override;
 
     void updateDataRange();
     QRect plotRect(int index);
     QPointF mapToPlot(int plotIndex, const QPointF & pos);
+
+    double position();
+    void setPosition(double value);
+    void setOffset(double value);
+
+    double range();
+    void setRange(double value);
+    void setSize(double value);
 
     vector<Plot*> m_plots;
 
@@ -35,9 +44,6 @@ public:
 
     Plot::Range total_x_range;
     Plot::Range total_y_range;
-
-    double view_x_offset;
-    double view_x_size;
 
     Plot::Range view_x_range;
 };
@@ -64,6 +70,12 @@ public:
     void setCommonY(bool value);
 
     Plot * plotAt(const QPoint & pos);
+
+    double position() { return m_canvas->position(); }
+    void setPosition(double value) { m_canvas->setPosition(value); }
+
+    double range() { return m_canvas->range(); }
+    void setRange(double value) { m_canvas->setRange(value); }
 
     QSize sizeHint() const override { return QSize(600,400); }
 

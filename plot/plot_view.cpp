@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QCursor>
 #include <QMouseEvent>
+#include <QWheelEvent>
 #include <algorithm>
 #include <iostream>
 #include <iterator>
@@ -129,47 +130,49 @@ QPointF PlotCanvas::mapToPlot(int plotIndex, const QPointF & pos)
         return pos;
 
     auto plot = m_plots[plotIndex];
-    auto xRange = m_common_x ? total_x_range : plot->xRange();
+
+    auto xRange = m_common_x ? view_x_range : plot->xRange();
     auto yRange = m_common_y ? total_y_range : plot->yRange();
 
     auto rect = plotRect(plotIndex);
     if (rect.isEmpty())
         return QPointF(0,0);
 
-    double x = (pos.x() - rect.x()) * (xRange.extent() / rect.width());
-    double y = (rect.y() + rect.height() - pos.y()) * (yRange.extent() / rect.height());
+    double x = (pos.x() - rect.x()) * (xRange.extent() / rect.width()) + xRange.min;
+    double y = (rect.y() + rect.height() - pos.y()) * (yRange.extent() / rect.height()) + yRange.min;
 
     return QPointF(x,y);
 }
 
 void PlotCanvas::updateDataRange()
 {
+    bool first = true;
+    for (auto plot : m_plots)
     {
-        bool first = true;
-        for (auto plot : m_plots)
+        if (plot->isEmpty())
+            continue;
+
+        auto x_range = plot->xRange();
+        auto y_range = plot->yRange();
+
+        if (first)
         {
-            if (plot->isEmpty())
-                continue;
-
-            auto x_range = plot->xRange();
-            auto y_range = plot->yRange();
-
-            if (first)
-            {
-                total_x_range = x_range;
-                total_y_range = y_range;
-            }
-            else
-            {
-                total_x_range.min = min(total_x_range.min, x_range.min);
-                total_x_range.max = max(total_x_range.max, x_range.max);
-
-                total_y_range.min = min(total_y_range.min, y_range.min);
-                total_y_range.max = max(total_y_range.max, y_range.max);
-            }
-            first = false;
+            total_x_range = x_range;
+            total_y_range = y_range;
         }
+        else
+        {
+            total_x_range.min = min(total_x_range.min, x_range.min);
+            total_x_range.max = max(total_x_range.max, x_range.max);
+
+            total_y_range.min = min(total_y_range.min, y_range.min);
+            total_y_range.max = max(total_y_range.max, y_range.max);
+        }
+        first = false;
     }
+
+    // Reset view
+    view_x_range = total_x_range;
 }
 
 void PlotCanvas::resizeEvent(QResizeEvent*)
@@ -208,6 +211,27 @@ void PlotCanvas::mousePressEvent(QMouseEvent* event)
     }
 }
 
+void PlotCanvas::wheelEvent(QWheelEvent* event)
+{
+    if (event->phase() != Qt::ScrollUpdate)
+        return;
+
+    double degrees = event->angleDelta().y() / 8.0;
+
+    if (event->modifiers() & Qt::ControlModifier)
+    {
+        double new_size = view_x_range.extent() * pow(2.0, -degrees/90.0);
+        //qDebug() << "new size = " << new_size;
+        setSize(new_size);
+    }
+    else if (event->modifiers() & Qt::ShiftModifier)
+    {
+        double new_offset = view_x_range.min + view_x_range.extent() * degrees/180.0;
+        //qDebug() << "new offset = " << new_offset;
+        setOffset(new_offset);
+    }
+}
+
 void PlotCanvas::paintEvent(QPaintEvent* event)
 {
     auto mouse_pos = mapFromGlobal(QCursor::pos());
@@ -243,11 +267,13 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
 
         Mapping2d map;
 
-        Plot::Range x_range = m_common_x ? total_x_range : plot->xRange();
+        Plot::Range x_range = m_common_x ? view_x_range : plot->xRange();
         Plot::Range y_range = m_common_y ? total_y_range : plot->yRange();
 
-        double x_extent = x_range.max - x_range.min;
-        double y_extent = y_range.max - y_range.min;
+        QRectF region(x_range.min, y_range.min, x_range.extent(), y_range.extent());
+
+        double x_extent = x_range.extent();
+        double y_extent = y_range.extent();
         double x_scale = x_extent == 0 ? 1 : 1.0 / x_extent;
         double y_scale = y_extent == 0 ? 1 : 1.0 / y_extent;
 
@@ -256,10 +282,14 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
         map.scale(plot_rect.width(), -plot_rect.height());
         map.translate(plot_rect.x(), plot_rect.y() + plot_rect.height());
 
-        plot->plot(&painter, map);
+        painter.setClipRect(plot_rect);
+
+        plot->plot(&painter, map, region);
 
         ++plot_index;
     }
+
+    painter.setClipping(false);
 
     if (underMouse())
     {
@@ -298,7 +328,7 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
             }
 
             QStringList coord_strings;
-            for (auto & i : dataPos)
+            for (auto & i : dataIndex)
                 coord_strings << QString::number(i, 'f', 2);
 
             text += "@ ";
@@ -343,6 +373,73 @@ Plot * PlotView::plotAt(const QPoint & view_pos)
     auto iter = m_canvas->m_plots.begin();
     advance(iter, plot_index);
     return *iter;
+}
+
+double PlotCanvas::position()
+{
+    double data_extent = total_x_range.extent();
+    double offset = view_x_range.min - total_x_range.min;
+    if (data_extent > 0)
+        return offset / data_extent;
+    else
+        return 0;
+}
+
+void PlotCanvas::setPosition(double value)
+{
+    double extent = total_x_range.extent();
+    double offset = value * extent + total_x_range.min;
+    setOffset(offset);
+}
+
+void PlotCanvas::setOffset(double offset)
+{
+    double extent = view_x_range.extent();
+    double max_offset = total_x_range.max - extent;
+    offset = std::max(total_x_range.min, offset);
+    offset = std::min(max_offset, offset);
+
+    if (offset == view_x_range.min)
+        return;
+
+    view_x_range.min = offset;
+    view_x_range.max = offset + extent;
+
+    update();
+}
+
+double PlotCanvas::range()
+{
+    double data_extent = total_x_range.extent();
+    double view_extent = view_x_range.extent();
+    if (data_extent > 0)
+        return view_extent / data_extent;
+    else
+        return 0;
+}
+
+void PlotCanvas::setRange(double value)
+{
+    double extent = total_x_range.extent();
+    double size = value * extent;
+    setSize(size);
+}
+
+void PlotCanvas::setSize(double size)
+{
+    double extent = total_x_range.extent();
+
+    size = std::min(extent, size);
+    size = std::max(0.0, size);
+
+    if (size == view_x_range.extent())
+        return;
+
+    double max_offset = total_x_range.max - size;
+    view_x_range.min = std::min(view_x_range.min, max_offset);
+    view_x_range.max = view_x_range.min + size;
+
+    update();
 }
 
 }

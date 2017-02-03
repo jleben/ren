@@ -6,6 +6,7 @@
 #include <string>
 #include <memory>
 #include <QObject>
+#include <cmath>
 
 namespace datavis {
 
@@ -64,7 +65,7 @@ public:
     {
         vector<int> index(point.size());
         for (int d = 0; d < point.size(); ++d)
-            index[d] = int(point[d] / m_dimensions[d].map);
+            index[d] = std::round(point[d] / m_dimensions[d].map);
         return index;
     }
 

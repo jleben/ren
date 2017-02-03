@@ -255,7 +255,7 @@ vector<double> HeatMap::dataLocation(const QPointF & point)
     return location;
 }
 
-void HeatMap::plot(QPainter * painter,  const Mapping2d & transform)
+void HeatMap::plot(QPainter * painter,  const Mapping2d & transform, const QRectF & region)
 {
     if (!m_data_region.is_valid())
         return;

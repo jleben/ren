@@ -252,7 +252,7 @@ vector<double> LinePlot::dataLocation(const QPointF & point)
     return location;
 }
 
-void LinePlot::plot(QPainter * painter,  const Mapping2d & transform)
+void LinePlot::plot(QPainter * painter,  const Mapping2d & transform, const QRectF & region)
 {
     if (!m_data_region.is_valid())
         return;

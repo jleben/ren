@@ -40,7 +40,7 @@ public:
     virtual bool isEmpty() const = 0;
     virtual Range xRange() = 0;
     virtual Range yRange() = 0;
-    virtual void plot(QPainter *, const Mapping2d &) = 0;
+    virtual void plot(QPainter *, const Mapping2d &, const QRectF & region) = 0;
     virtual vector<double> dataLocation(const QPointF & point) = 0;
 
 signals:

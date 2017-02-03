@@ -34,7 +34,7 @@ public:
     virtual Range yRange() override;
     virtual vector<double> dataLocation(const QPointF & point) override;
 
-    virtual void plot(QPainter *,  const Mapping2d &) override;
+    virtual void plot(QPainter *,  const Mapping2d &, const QRectF & region) override;
 
 private:
     void onSelectionChanged();
