@@ -254,35 +254,106 @@ void LinePlot::plot(QPainter * painter,  const Mapping2d & transform)
 
     auto dim = m_dataset->dimension(m_dim);
 
+    auto x_range = xRange();
+    auto min_x = transform.x_scale * x_range.min + transform.x_offset;
+    auto max_x = transform.x_scale * x_range.max + transform.x_offset;
+
+    int elem_count = m_end - m_start;
+
     painter->save();
 
-    QPen line_pen;
-    line_pen.setWidth(2);
-    line_pen.setColor(m_color);
-
-    painter->setPen(line_pen);
-    painter->setBrush(Qt::NoBrush);
-    painter->setRenderHint(QPainter::Antialiasing, true);
-
-    QPainterPath path;
-    bool first = true;
-    for (auto & element : m_data_region)
+    if (max_x - min_x < elem_count * 0.8)
     {
-        double loc = element.location()[m_dim];
-        loc = dim.map * loc;
+        QPen line_pen;
+        line_pen.setWidth(1);
+        line_pen.setColor(m_color);
 
-        double value = element.value();
+        painter->setPen(line_pen);
+        painter->setBrush(Qt::NoBrush);
+        painter->setRenderHint(QPainter::Antialiasing, false);
 
-        auto point = transform * QPointF(loc, value);
+        auto it = m_data_region.begin();
 
-        if (first)
-            path.moveTo(point);
-        else
-            path.lineTo(point);
+        bool first = true;
+        double max_y;
+        double min_y;
+        double last_y;
 
-        first = false;
+        for (int x = min_x; x <= max_x; ++x)
+        {
+            while(it != m_data_region.end())
+            {
+                const auto & element = *it;
+
+                double loc = element.location()[m_dim];
+                loc = dim.map * loc;
+
+                double value = element.value();
+
+                auto point = transform * QPointF(loc, value);
+
+                if (point.x() >= x + 1)
+                    break;
+
+                if (first)
+                {
+                    min_y = max_y = point.y();
+                }
+                else
+                {
+                    if (point.y() > max_y)
+                        max_y = point.y();
+                    else if (point.y() < min_y)
+                        min_y = point.y();
+                }
+
+                last_y = point.y();
+
+                ++it;
+                first = false;
+            }
+
+            int min_y_pixel = round(min_y);
+            int max_y_pixel = round(max_y);
+            if (max_y_pixel == min_y_pixel)
+                max_y_pixel += 1;
+
+            painter->drawLine(x, min_y_pixel, x, max_y_pixel);
+
+            // Include last point to connect old and new line
+            max_y = min_y = last_y;
+        }
     }
-    painter->drawPath(path);
+    else
+    {
+        QPen line_pen;
+        line_pen.setWidth(1);
+        line_pen.setColor(m_color);
+
+        painter->setPen(line_pen);
+        painter->setBrush(Qt::NoBrush);
+        painter->setRenderHint(QPainter::Antialiasing, true);
+
+        QPainterPath path;
+        bool first = true;
+        for (auto & element : m_data_region)
+        {
+            double loc = element.location()[m_dim];
+            loc = dim.map * loc;
+
+            double value = element.value();
+
+            auto point = transform * QPointF(loc, value);
+
+            if (first)
+                path.moveTo(point);
+            else
+                path.lineTo(point);
+
+            first = false;
+        }
+        painter->drawPath(path);
+    }
 
     painter->restore();
 }
