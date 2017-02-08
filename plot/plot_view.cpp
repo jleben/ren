@@ -328,7 +328,7 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
             }
 
             QStringList coord_strings;
-            for (auto & i : dataIndex)
+            for (auto & i : dataPos)
                 coord_strings << QString::number(i, 'f', 2);
 
             text += "@ ";
