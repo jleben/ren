@@ -247,8 +247,21 @@ vector<double> LinePlot::dataLocation(const QPointF & point)
 
     auto offset = m_data_region.offset();
 
-    vector<double> location(offset.begin(), offset.end());
-    location[m_dim] = point.x();
+    vector<double> location(offset.size());
+
+    for (int d = 0; d < offset.size(); ++d)
+    {
+      if (d == m_dim)
+      {
+        location[d] = point.x();
+      }
+      else
+      {
+        auto dim = m_dataset->dimension(d);
+        location[d] = dim.map * offset[d];
+      }
+    }
+
     return location;
 }
 

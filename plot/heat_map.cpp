@@ -249,9 +249,17 @@ vector<double> HeatMap::dataLocation(const QPointF & point)
 
     auto offset = m_data_region.offset();
 
-    vector<double> location(offset.begin(), offset.end());
+    vector<double> location(offset.size());
+
+    for (int d = 0; d < offset.size(); ++d)
+    {
+        auto dim = m_dataset->dimension(d);
+        location[d] = dim.map * offset[d];
+    }
+
     location[m_dim[0]] = point.x();
     location[m_dim[1]] = point.y();
+
     return location;
 }
 
