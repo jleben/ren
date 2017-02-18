@@ -1,5 +1,6 @@
 #include "plot_view.hpp"
 #include "plot.hpp"
+#include "../utility/vector.hpp"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -284,7 +285,11 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
 
         painter.setClipRect(plot_rect);
 
+        painter.save();
+
         plot->plot(&painter, map, region);
+
+        painter.restore();
 
         ++plot_index;
     }
@@ -336,6 +341,7 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
 
             auto fm = fontMetrics();
             auto rect = fm.boundingRect(text);
+            rect.setWidth(rect.width() + 10);
 
             int x, y;
 
@@ -345,11 +351,15 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
                 x = pos.x() - 20 - rect.width();
 
             if (pos.y() < height() / 2)
-                y = pos.y() + 20;
+                y = pos.y() + 20 + fm.ascent();
             else
                 y = pos.y() - 20 - fm.descent();
 
-            painter.drawText(QPoint(x,y), text);
+            rect.translate(x, y);
+
+            painter.fillRect(rect.adjusted(-2,0,2,0), QColor(255,255,255,230));
+
+            painter.drawText(QPoint(x, y), text);
         }
     }
 }
