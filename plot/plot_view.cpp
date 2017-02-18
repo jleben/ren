@@ -221,13 +221,13 @@ void PlotCanvas::wheelEvent(QWheelEvent* event)
 
     if (event->modifiers() & Qt::ControlModifier)
     {
-        double new_size = view_x_range.extent() * pow(2.0, -degrees/90.0);
+        double new_size = view_x_range.extent() * pow(2.0, -1.0 * degrees/360.0);
         //qDebug() << "new size = " << new_size;
         setSize(new_size);
     }
     else if (event->modifiers() & Qt::ShiftModifier)
     {
-        double new_offset = view_x_range.min + view_x_range.extent() * degrees/180.0;
+        double new_offset = view_x_range.min + 0.5 * view_x_range.extent() * degrees/360.0;
         //qDebug() << "new offset = " << new_offset;
         setOffset(new_offset);
     }
