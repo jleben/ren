@@ -6,7 +6,13 @@
 #include "../data/array.hpp"
 #include "../data/data_set.hpp"
 
+#include <list>
+#include <vector>
+
 namespace datavis {
+
+using std::list;
+using std::vector;
 
 class LinePlot : public Plot
 {
@@ -43,9 +49,28 @@ signals:
     void colorChanged();
 
 private:
+    struct DataRange
+    {
+        DataRange() {}
+        DataRange(double min, double max): min(min), max(max) {}
+        double min = 0;
+        double max = 0;
+    };
+
+    struct DataCache
+    {
+        int block_size = 0;
+        vector<DataRange> data;
+    };
+
     void onSelectionChanged();
     void findEntireValueRange();
     void update_selected_region();
+    data_region_type getDataRegion(int start, int size);
+
+
+    DataCache * getCache(double dataPerPixel);
+    void makeCache(DataCache &, int blockSize);
 
     DataSetPtr m_dataset = nullptr;
     data_region_type m_data_region;
@@ -56,6 +81,10 @@ private:
     QColor m_color { Qt::black };
 
     Range m_value_range;
+
+    double m_cache_use_factor = 5;
+    double m_cache_factor = 10;
+    list<DataCache> m_cache;
 };
 
 }

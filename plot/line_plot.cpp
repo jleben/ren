@@ -1,10 +1,12 @@
 #include "line_plot.hpp"
 
-#include <QPainter>
-#include <QPainterPath>
+#include <cmath>
 #include <algorithm>
 #include <iostream>
 #include <cassert>
+
+#include <QPainter>
+#include <QPainterPath>
 #include <QDebug>
 
 using namespace std;
@@ -169,16 +171,20 @@ void LinePlot::findEntireValueRange()
 
 void LinePlot::update_selected_region()
 {
+    m_data_region = getDataRegion(m_start, m_end - m_start);
+    m_cache.clear();
+}
+
+LinePlot::data_region_type LinePlot::getDataRegion(int region_start, int region_size)
+{
     if (!m_dataset)
     {
-        m_data_region = data_region_type();
-        return;
+        return data_region_type();
     }
 
     if (m_dim < 0)
     {
-        m_data_region = data_region_type();
-        return;
+        return data_region_type();
     }
 
     auto data_size = m_dataset->data()->size();
@@ -198,8 +204,8 @@ void LinePlot::update_selected_region()
     {
         if (dim == m_dim)
         {
-            offset[dim] = m_start;
-            size[dim] = m_end - m_start;
+            offset[dim] = region_start;
+            size[dim] = region_size;
         }
         else
         {
@@ -207,7 +213,7 @@ void LinePlot::update_selected_region()
         }
     }
 
-    m_data_region = get_region(*m_dataset->data(), offset, size);
+    return get_region(*m_dataset->data(), offset, size);
 }
 
 Plot::Range LinePlot::xRange()
@@ -265,6 +271,70 @@ vector<double> LinePlot::dataLocation(const QPointF & point)
     return location;
 }
 
+LinePlot::DataCache * LinePlot::getCache(double dataPerPixel)
+{
+    //cout << "Requested cache for resolution: " << dataPerPixel << endl;
+
+    double required_data_per_pixel = dataPerPixel / m_cache_use_factor;
+
+    int cache_level = int(std::log(required_data_per_pixel) / std::log(m_cache_factor));
+
+    if (cache_level < 1)
+        return nullptr;
+
+    int required_block_size = std::pow(m_cache_factor, cache_level);
+
+    //cout << "Block size: " << required_block_size << endl;
+
+    auto cache_iter = m_cache.begin();
+    for(; cache_iter != m_cache.end(); ++cache_iter)
+    {
+        if (cache_iter->block_size == required_block_size)
+            return &(*cache_iter);
+        else if (cache_iter->block_size < required_block_size)
+            break;
+    }
+
+    cache_iter = m_cache.emplace(cache_iter);
+
+    makeCache(*cache_iter, required_block_size);
+
+    return &(*cache_iter);
+}
+
+void LinePlot::makeCache(DataCache & cache, int blockSize)
+{
+    //cout << "Making cache with block size: " << blockSize << endl;
+
+    cache.data.clear();
+    cache.block_size = blockSize;
+
+    if (!m_data_region.is_valid())
+        return;
+
+    auto it = m_data_region.begin();
+
+    while(it != m_data_region.end())
+    {
+        double min, max;
+        for(int i = 0; i < blockSize && it != m_data_region.end(); ++i, ++it)
+        {
+            auto & element = *it;
+            auto value = element.value();
+            if (i == 0)
+            {
+                min = max = value;
+            }
+            else
+            {
+                min = std::min(min, value);
+                max = std::max(max, value);
+            }
+        }
+        cache.data.emplace_back(min, max);
+    }
+}
+
 void LinePlot::plot(QPainter * painter,  const Mapping2d & transform, const QRectF & region)
 {
     if (!m_data_region.is_valid())
@@ -272,15 +342,33 @@ void LinePlot::plot(QPainter * painter,  const Mapping2d & transform, const QRec
 
     auto dim = m_dataset->dimension(m_dim);
 
-    auto x_range = xRange();
-    auto min_x = transform.x_scale * x_range.min + transform.x_offset;
-    auto max_x = transform.x_scale * x_range.max + transform.x_offset;
+    int region_start = int(region.x() / dim.map);
+    int region_size = int(region.width() / dim.map);
 
-    int elem_count = m_end - m_start;
+    region_start = std::max(region_start, m_start);
+    region_size = std::min(region_size, m_end - m_start);
+
+    //cout << "Region: " << region_start << " + " << region_size << endl;
+    if (region_size <= 0)
+        return;
+
+    auto min_x = transform.x_scale * region.x() + transform.x_offset;
+    auto max_x = transform.x_scale * (region.x() + region.width()) + transform.x_offset;
+
+    //cout << "View X range: " << min_x << ", " << max_x << endl;
+
+    if (max_x <= min_x)
+        return;
+
+    data_region_type data_region = getDataRegion(region_start, region_size);
+
+    double data_per_pixel = region_size / double(max_x - min_x);
+
+    auto cache = getCache(data_per_pixel);
 
     painter->save();
 
-    if (max_x - min_x < elem_count * 0.8)
+    if (cache)
     {
         QPen line_pen;
         line_pen.setWidth(1);
@@ -290,16 +378,66 @@ void LinePlot::plot(QPainter * painter,  const Mapping2d & transform, const QRec
         painter->setBrush(Qt::NoBrush);
         painter->setRenderHint(QPainter::Antialiasing, false);
 
-        auto it = m_data_region.begin();
+        int cache_index = 0;
+
+        double min_y, max_y;
+
+        for (int x = min_x; x < max_x; ++x)
+        {
+            bool first = true;
+
+            for(; cache_index < cache->data.size(); ++cache_index)
+            {
+                int data_index = cache_index * cache->block_size;
+
+                QPointF data_point(dim.map * data_index, 0);
+
+                auto point = transform * data_point;
+                if (point.x() >= x + 1)
+                    break;
+
+                auto & data = cache->data[cache_index];
+
+                if (first)
+                {
+                    min_y = data.min;
+                    max_y = data.max;
+                }
+                else
+                {
+                    min_y = std::min(min_y, data.min);
+                    max_y = std::max(max_y, data.max);
+                }
+
+                first = false;
+            }
+
+            auto min_point = transform * QPointF(0, min_y);
+            auto max_point = transform * QPointF(0, max_y);
+
+            painter->drawLine(x, min_point.y(), x, max_point.y());
+        }
+    }
+    else if (max_x - min_x < region_size * 0.8)
+    {
+        QPen line_pen;
+        line_pen.setWidth(1);
+        line_pen.setColor(m_color);
+
+        painter->setPen(line_pen);
+        painter->setBrush(Qt::NoBrush);
+        painter->setRenderHint(QPainter::Antialiasing, false);
+
+        auto it = data_region.begin();
 
         bool first = true;
         double max_y;
         double min_y;
         double last_y;
 
-        for (int x = min_x; x <= max_x; ++x)
+        for (int x = min_x; x < max_x; ++x)
         {
-            while(it != m_data_region.end())
+            while(it != data_region.end())
             {
                 const auto & element = *it;
 
@@ -331,8 +469,8 @@ void LinePlot::plot(QPainter * painter,  const Mapping2d & transform, const QRec
                 first = false;
             }
 
-            int min_y_pixel = round(min_y);
-            int max_y_pixel = round(max_y);
+            int min_y_pixel = int(round(min_y));
+            int max_y_pixel = int(round(max_y));
             if (max_y_pixel == min_y_pixel)
                 max_y_pixel += 1;
 
@@ -353,8 +491,9 @@ void LinePlot::plot(QPainter * painter,  const Mapping2d & transform, const QRec
         painter->setRenderHint(QPainter::Antialiasing, true);
 
         QPainterPath path;
+
         bool first = true;
-        for (auto & element : m_data_region)
+        for (auto & element : data_region)
         {
             double loc = element.location()[m_dim];
             loc = dim.map * loc;
@@ -370,6 +509,7 @@ void LinePlot::plot(QPainter * painter,  const Mapping2d & transform, const QRec
 
             first = false;
         }
+
         painter->drawPath(path);
     }
 
