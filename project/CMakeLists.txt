@@ -1,6 +1,6 @@
  
 add_custom_command(
-  OUTPUT project.pb.h
+  OUTPUT project.pb.h project.pb.cc
   DEPENDS project.proto
   COMMAND protoc
     -I${CMAKE_CURRENT_SOURCE_DIR}
@@ -8,4 +8,4 @@ add_custom_command(
     ${CMAKE_CURRENT_SOURCE_DIR}/project.proto
 )
 
-add_custom_target(project_protobuf DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/project.pb.h)
+add_library(datavis_project STATIC project.pb.cc)
