@@ -5,6 +5,7 @@
 #include <QTreeWidgetItem>
 #include <QStringList>
 #include <QVBoxLayout>
+#include <QHeaderView>
 
 Q_DECLARE_METATYPE(datavis::DataSource*);
 
@@ -16,6 +17,7 @@ DataLibraryView::DataLibraryView(QWidget * parent):
     m_lib_tree = new QTreeWidget;
 
     m_lib_tree->setHeaderLabels(QStringList() << "Name" << "Size");
+    m_lib_tree->header()->setSectionHidden(1,true);
 
     auto layout = new QVBoxLayout(this);
     layout->addWidget(m_lib_tree);
