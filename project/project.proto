@@ -1,30 +1,31 @@
+syntax = "proto3";
 
 package datavis.project;
 
 message Project {
   repeated DataSource source = 1;
   repeated PlotView plot_view = 2;
-  optional Rectangle main_window_position = 3;
+  Rectangle main_window_position = 3;
 }
 
 message DataSource {
-  optional string path = 1;
+  string path = 1;
 }
 
 message PlotView {
-  optional Rectangle position = 1;
+  Rectangle position = 1;
   repeated Plot plot = 2;
 }
 
 message Plot {
-  optional string data_source = 1;
-  optional string data_set = 2;
+  string data_source = 1;
+  string data_set = 2;
   repeated uint32 dimension = 3;
 }
 
 message Rectangle {
-  optional int64 x = 1;
-  optional int64 y = 2;
-  optional int64 width = 3;
-  optional int64 height = 4;
+  int64 x = 1;
+  int64 y = 2;
+  int64 width = 3;
+  int64 height = 4;
 }
