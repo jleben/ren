@@ -190,14 +190,28 @@ void PlotCanvas::leaveEvent(QEvent*)
     update();
 }
 
-void PlotCanvas::mouseMoveEvent(QMouseEvent*)
+void PlotCanvas::mouseMoveEvent(QMouseEvent * event)
 {
+    if ( event->modifiers() & Qt::ControlModifier &&
+         event->buttons() & Qt::LeftButton &&
+         !m_plots.empty() )
+    {
+        auto plot_rect = plotRect(0);
+        auto mouse_distance = event->pos() - m_last_mouse_pos;
+        auto rel_distance = plot_rect.width() > 0 ?
+                    mouse_distance.x() / double(plot_rect.width()) : 0;
+        setOffset(view_x_range.min - rel_distance * view_x_range.extent());
+    }
+
+    m_last_mouse_pos = event->pos();
+
     update();
 }
 
 void PlotCanvas::mousePressEvent(QMouseEvent* event)
 {
     auto pos = event->pos();
+
     for (int i = 0; i < m_plots.size(); ++i)
     {
         auto plot = m_plots[i];

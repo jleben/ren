@@ -46,6 +46,8 @@ public:
     Plot::Range total_y_range;
 
     Plot::Range view_x_range;
+
+    QPoint m_last_mouse_pos;
 };
 
 class PlotView : public QWidget
