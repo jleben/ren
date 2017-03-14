@@ -217,13 +217,24 @@ void PlotCanvas::wheelEvent(QWheelEvent* event)
     if (event->phase() != Qt::ScrollUpdate)
         return;
 
+    if (m_plots.empty())
+        return;
+
     double degrees = event->angleDelta().y() / 8.0;
 
     if (event->modifiers() & Qt::ControlModifier)
     {
+        auto plot_rect = plotRect(0);
+        auto mouse_rel_x = plot_rect.width() > 0
+                ? (event->pos().x() - plot_rect.x()) / double(plot_rect.width())
+                : 0;
+        auto mouse_x =  mouse_rel_x * view_x_range.extent() + view_x_range.min;
+
         double new_size = view_x_range.extent() * pow(2.0, -1.0 * degrees/360.0);
-        //qDebug() << "new size = " << new_size;
         setSize(new_size);
+
+        auto new_x = mouse_x - mouse_rel_x * view_x_range.extent();
+        setOffset(new_x);
     }
     else if (event->modifiers() & Qt::ShiftModifier)
     {
