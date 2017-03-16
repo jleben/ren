@@ -11,9 +11,12 @@ namespace datavis {
 using std::list;
 class Plot;
 class PlotCanvas;
+class RangeBar;
 
 class PlotCanvas : public QWidget
 {
+    Q_OBJECT
+
 public:
     virtual void resizeEvent(QResizeEvent*) override;
     virtual void enterEvent(QEvent*) override;
@@ -48,6 +51,9 @@ public:
     Plot::Range view_x_range;
 
     QPoint m_last_mouse_pos;
+
+signals:
+    void rangeChanged();
 };
 
 class PlotView : public QWidget
@@ -84,8 +90,10 @@ public:
 private:
     void onPlotRangeChanged();
     void onPlotContentChanged();
+    void onCanvasRangeChanged();
 
     PlotCanvas * m_canvas;
+    RangeBar * m_range_bar;
 };
 
 }

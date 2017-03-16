@@ -1,4 +1,5 @@
 #include "plot_view.hpp"
+#include "range_bar.hpp"
 #include "plot.hpp"
 #include "../utility/vector.hpp"
 
@@ -25,8 +26,15 @@ PlotView::PlotView(QWidget * parent):
     m_canvas = new PlotCanvas;
     m_canvas->setMouseTracking(true);
 
+    m_range_bar = new RangeBar;
+
     auto layout = new QVBoxLayout(this);
+    layout->setSpacing(0);
     layout->addWidget(m_canvas);
+    layout->addWidget(m_range_bar);
+
+    connect(m_canvas, &PlotCanvas::rangeChanged,
+            this, &PlotView::onCanvasRangeChanged);
 }
 
 void PlotView::addPlot(Plot * plot)
@@ -96,6 +104,11 @@ void PlotView::onPlotRangeChanged()
 void PlotView::onPlotContentChanged()
 {
     m_canvas->update();
+}
+
+void PlotView::onCanvasRangeChanged()
+{
+    m_range_bar->setRange(m_canvas->position(), m_canvas->range());
 }
 
 QRect PlotCanvas::plotRect(int index)
@@ -174,6 +187,8 @@ void PlotCanvas::updateDataRange()
 
     // Reset view
     view_x_range = total_x_range;
+
+    emit rangeChanged();
 }
 
 void PlotCanvas::resizeEvent(QResizeEvent*)
@@ -440,6 +455,8 @@ void PlotCanvas::setOffset(double offset)
     view_x_range.min = offset;
     view_x_range.max = offset + extent;
 
+    emit rangeChanged();
+
     update();
 }
 
@@ -473,6 +490,8 @@ void PlotCanvas::setSize(double size)
     double max_offset = total_x_range.max - size;
     view_x_range.min = std::min(view_x_range.min, max_offset);
     view_x_range.max = view_x_range.min + size;
+
+    emit rangeChanged();
 
     update();
 }

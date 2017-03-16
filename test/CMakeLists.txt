@@ -7,6 +7,7 @@ set(plot_src
   ../plot/line_plot.cpp
   ../plot/heat_map.cpp
   ../plot/plot_view.cpp
+  ../plot/range_bar.cpp
   ../io/hdf5.cpp
   ../data/data_set.cpp
 )
