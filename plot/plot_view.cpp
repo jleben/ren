@@ -243,7 +243,7 @@ void PlotCanvas::mousePressEvent(QMouseEvent* event)
 
 void PlotCanvas::wheelEvent(QWheelEvent* event)
 {
-    if (event->phase() != Qt::ScrollUpdate)
+    if (event->phase() != Qt::ScrollUpdate && event->phase() != Qt::NoScrollPhase)
         return;
 
     if (m_plots.empty())
