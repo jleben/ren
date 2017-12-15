@@ -52,6 +52,9 @@ public:
 
     QPoint m_last_mouse_pos;
 
+private:
+    void selectDataAt(const QPoint &);
+
 signals:
     void rangeChanged();
 };

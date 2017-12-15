@@ -191,6 +191,18 @@ void PlotCanvas::updateDataRange()
     emit rangeChanged();
 }
 
+void PlotCanvas::selectDataAt(const QPoint & pos)
+{
+    for (int i = 0; i < m_plots.size(); ++i)
+    {
+        auto plot = m_plots[i];
+        auto plotPos = mapToPlot(i, pos);
+        auto dataPos = plot->dataLocation(plotPos);
+        auto dataIndex = plot->dataSet()->indexForPoint(dataPos);
+        plot->dataSet()->selectIndex(dataIndex);
+    }
+}
+
 void PlotCanvas::resizeEvent(QResizeEvent*)
 {
 }
@@ -217,6 +229,10 @@ void PlotCanvas::mouseMoveEvent(QMouseEvent * event)
                     mouse_distance.x() / double(plot_rect.width()) : 0;
         setOffset(view_x_range.min - rel_distance * view_x_range.extent());
     }
+    else if (event->buttons() & Qt::LeftButton)
+    {
+        selectDataAt(event->pos());
+    }
 
     m_last_mouse_pos = event->pos();
 
@@ -225,16 +241,7 @@ void PlotCanvas::mouseMoveEvent(QMouseEvent * event)
 
 void PlotCanvas::mousePressEvent(QMouseEvent* event)
 {
-    auto pos = event->pos();
-
-    for (int i = 0; i < m_plots.size(); ++i)
-    {
-        auto plot = m_plots[i];
-        auto plotPos = mapToPlot(i, pos);
-        auto dataPos = plot->dataLocation(plotPos);
-        auto dataIndex = plot->dataSet()->indexForPoint(dataPos);
-        plot->dataSet()->selectIndex(dataIndex);
-    }
+    selectDataAt(event->pos());
 }
 
 void PlotCanvas::wheelEvent(QWheelEvent* event)
