@@ -98,18 +98,19 @@ void HeatMap::setRange(const vector_t & start, const vector_t & size)
 
 void HeatMap::onSelectionChanged()
 {
-    // FIXME: Optimize: only update if needed
+    if (!m_dataset)
+        return;
 
-    update_selected_region();
-    generate_image();
+    if (update_selected_region())
+        generate_image();
 }
 
-void HeatMap::update_selected_region()
+bool HeatMap::update_selected_region()
 {
     if (!m_dataset)
     {
         m_data_region = data_region_type();
-        return;
+        return true;
     }
 
     auto data_size = m_dataset->data()->size();
@@ -125,7 +126,7 @@ void HeatMap::update_selected_region()
         {
             cerr << "Selected dimension is invalid: " << data_dim << endl;
             m_data_region = data_region_type();
-            return;
+            return true;
         }
 
         if (m_start[d] < 0 || m_size[d] < 0 || m_start[d] + m_size[d] > data_size[data_dim])
@@ -134,14 +135,22 @@ void HeatMap::update_selected_region()
                  << m_start[d] << "," << (m_start[d] + m_size[d])
                  << endl;
             m_data_region = data_region_type();
-            return;
+            return true;
         }
 
         offset[data_dim] = m_start[d];
         size[data_dim] = m_size[d];
     }
 
-    m_data_region = get_region(*m_dataset->data(), offset, size);
+    auto region = get_region(*m_dataset->data(), offset, size);
+
+    if (m_data_region != region)
+    {
+        m_data_region = region;
+        return true;
+    }
+
+    return false;
 }
 
 void HeatMap::update_value_range()
@@ -149,7 +158,7 @@ void HeatMap::update_value_range()
     if (!m_data_region.is_valid())
         return;
 
-    qDebug() << "Computing value range.";
+    // qDebug() << "Computing value range.";
 
     double min = 0;
     double max = 0;
@@ -169,12 +178,12 @@ void HeatMap::update_value_range()
     m_value_range.first = min;
     m_value_range.second = max;
 
-    qDebug() << "Done computing value range.";
+    // qDebug() << "Done computing value range.";
 }
 
 void HeatMap::generate_image()
 {
-    qDebug() << "Generating image";
+    // qDebug() << "Generating image";
 
     if (!m_data_region.is_valid())
     {
@@ -203,11 +212,11 @@ void HeatMap::generate_image()
         image.setPixel(x,y,qRgb(c,c,c));
     }
 
-    qDebug() << "Image generated.";
+    // qDebug() << "Image generated.";
 
     m_pixmap = QPixmap::fromImage(image);
 
-    qDebug() << "Pixmap generated.";
+    // qDebug() << "Pixmap generated.";
 }
 
 Plot::Range HeatMap::xRange()

@@ -38,7 +38,7 @@ public:
 
 private:
     void onSelectionChanged();
-    void update_selected_region();
+    bool update_selected_region();
     void update_value_range();
     void generate_image();
 

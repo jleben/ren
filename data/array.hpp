@@ -90,6 +90,19 @@ public:
         m_region_size(size)
     {}
 
+    bool operator==(const array_region<T> & other) const
+    {
+        return m_data == other.m_data &&
+                m_data_size == other.m_data_size &&
+                m_region_offset == other.m_region_offset &&
+                m_region_size == other.m_region_size;
+    }
+
+    bool operator!=(const array_region<T> & other) const
+    {
+        return !(*this == other);
+    }
+
     bool is_valid() const { return m_data != nullptr; }
 
     const vector<int> & offset() const { return m_region_offset; }
