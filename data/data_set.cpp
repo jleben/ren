@@ -28,11 +28,10 @@ void DataSet::selectIndex(const vector<int> & index)
     for (int d = 0; d < index.size(); ++d)
     {
         if (index[d] < 0 || index[d] >= m_data.size()[d])
-            return;
+            continue;
         m_changed |= (index[d] != m_selection[d]);
+        m_selection[d] = index[d];
     }
-
-    m_selection = index;
 
     if (m_changed)
         emit selectionChanged();

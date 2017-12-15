@@ -230,14 +230,10 @@ void PlotCanvas::mousePressEvent(QMouseEvent* event)
     for (int i = 0; i < m_plots.size(); ++i)
     {
         auto plot = m_plots[i];
-        if (plotRect(i).contains(pos))
-        {
-            auto plotPos = mapToPlot(i, pos);
-            auto dataPos = plot->dataLocation(plotPos);
-            auto dataIndex = plot->dataSet()->indexForPoint(dataPos);
-            plot->dataSet()->selectIndex(dataIndex);
-            return;
-        }
+        auto plotPos = mapToPlot(i, pos);
+        auto dataPos = plot->dataLocation(plotPos);
+        auto dataIndex = plot->dataSet()->indexForPoint(dataPos);
+        plot->dataSet()->selectIndex(dataIndex);
     }
 }
 
