@@ -69,6 +69,14 @@ public:
         return index;
     }
 
+    vector<double> pointForIndex(const vector<int> & index)
+    {
+        vector<double> point(index.size());
+        for (int d = 0; d < index.size(); ++d)
+            point[d] = m_dimensions[d].map * index[d];
+        return point;
+    }
+
     void selectIndex(int dim, int index);
     void selectIndex(const vector<int> & index);
 

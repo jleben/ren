@@ -358,6 +358,7 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
             auto plotPos = mapToPlot(plot_under_mouse_index, pos);
             auto dataPos = plot->dataLocation(plotPos);
             auto dataIndex = plot->dataSet()->indexForPoint(dataPos);
+            dataPos = plot->dataSet()->pointForIndex(dataIndex);
 
             vector<int> dataSize = plot->dataSet()->data()->size();
 
