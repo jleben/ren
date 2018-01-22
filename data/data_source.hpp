@@ -15,7 +15,7 @@ class DataSetInfo
 public:
     string id;
     vector<int> size;
-    vector<Dimension> dimensions;
+    vector<DataSet::Dimension> dimensions;
     int dimensionCount() const { return int(size.size()); }
     double minimum(int dim_idx) const { return dimensions[dim_idx].map * 0; }
     double maximum(int dim_idx) const { return dimensions[dim_idx].map * (size[dim_idx] - 1); }

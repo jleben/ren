@@ -161,7 +161,7 @@ DataSetPtr Hdf5Source::dataset(int index)
 
     for (int d = 0; d < dim_count; ++d)
     {
-        Dimension dim;
+        DataSet::Dimension dim;
         if (d < dim_offset.size())
             dim.map.offset = dim_offset[d];
         if (d < dim_step.size())

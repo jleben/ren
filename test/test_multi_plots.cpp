@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 
     auto source2 = make_shared<DataSet>(vector<int>({data_size}));
 
-    Dimension dim;
+    DataSet::Dimension dim;
     dim.map.offset = 100;
     dim.map.scale = 0.5;
     source2->setDimension(0, dim);

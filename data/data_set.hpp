@@ -12,11 +12,6 @@ namespace datavis {
 
 using std::string;
 
-struct Dimension
-{
-    Mapping1d map;
-};
-
 class DataSource;
 
 class DataSet : public QObject
@@ -24,6 +19,12 @@ class DataSet : public QObject
     Q_OBJECT
 
 public:
+    struct Dimension
+    {
+        string name;
+        Mapping1d map;
+    };
+
     DataSet(const vector<int> & size):
         DataSet(string(), size)
     {}
