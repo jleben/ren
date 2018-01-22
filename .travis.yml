@@ -9,6 +9,8 @@ env:
    - secure: "eFcFKa78YCvK3ruvBYMDoWglRxtwgoamCfEjzYwhOsr8oFYhJFkvw7L4tXfWhcIEAOKD5xvx3YbwLffHDHgBgw74iJCOMBGtHposukkU98VwhbzZu3V9aBe0k9tyD9FXscj8fxdDpxihtJwECOmyScZzFNqKC81l/aOLNKFI9BCLzKYt74O4QNq1c1VTRCqHOEUoqD0Eqd2RRuhjKSjrmVxNQM1C8gATu+JGNltvPRr2EaYovmSvzBklR3bKUal5NIbVUUP1NFCNan/a54P5JQmCAeuePnvr1UYwX+nQ+9WGk5Bk2EGbTly8NjiLB7eAUKLagnqxVxcxQxM5P+lYsBrRQDi1R08NVsV9jfS7Z2PcX5L+7cqezhyEWlKI6/87W8pZJfK10tEolQMouO9+O72d3OW1SFj9Ebosb5164mtQwAoBAUtaq4KGNp78QaOKkEWu6pPnizvktY+POyjKLX3qgUnvfLsKYwVUj62gvPL6xrwf5IXJS+jhLOcehBw9+uqOmKnfuRYmh2FaYb1CXVX7vPXINL9ZpgFCmzWIAnV5QZcXYtvIJ/7J/Af7R40xKptsQMFmBDfXHnU4OsXyYbWXCpRd8qWZQ2yc3OBJzLMqsKkIZvWSwQYkBQ0sQ6+sAAhE/j2Rf1PtRxKIBgu76RQFcZ2U3mnLkLSgGz0V4O8="
 
 before_install:
+      - sudo apt-get -qq update
+      - sudo apt-get install -y libhdf5-dev qtbase5-dev protobuf-compiler libprotobuf-dev
       - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
 addons:
