@@ -1,0 +1,22 @@
+language: cpp
+
+script: if [ "${COVERITY_SCAN_BRANCH}" != 1 ]; then cmake . && make ; fi
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "eFcFKa78YCvK3ruvBYMDoWglRxtwgoamCfEjzYwhOsr8oFYhJFkvw7L4tXfWhcIEAOKD5xvx3YbwLffHDHgBgw74iJCOMBGtHposukkU98VwhbzZu3V9aBe0k9tyD9FXscj8fxdDpxihtJwECOmyScZzFNqKC81l/aOLNKFI9BCLzKYt74O4QNq1c1VTRCqHOEUoqD0Eqd2RRuhjKSjrmVxNQM1C8gATu+JGNltvPRr2EaYovmSvzBklR3bKUal5NIbVUUP1NFCNan/a54P5JQmCAeuePnvr1UYwX+nQ+9WGk5Bk2EGbTly8NjiLB7eAUKLagnqxVxcxQxM5P+lYsBrRQDi1R08NVsV9jfS7Z2PcX5L+7cqezhyEWlKI6/87W8pZJfK10tEolQMouO9+O72d3OW1SFj9Ebosb5164mtQwAoBAUtaq4KGNp78QaOKkEWu6pPnizvktY+POyjKLX3qgUnvfLsKYwVUj62gvPL6xrwf5IXJS+jhLOcehBw9+uqOmKnfuRYmh2FaYb1CXVX7vPXINL9ZpgFCmzWIAnV5QZcXYtvIJ/7J/Af7R40xKptsQMFmBDfXHnU4OsXyYbWXCpRd8qWZQ2yc3OBJzLMqsKkIZvWSwQYkBQ0sQ6+sAAhE/j2Rf1PtRxKIBgu76RQFcZ2U3mnLkLSgGz0V4O8="
+
+before_install:
+      - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+
+addons:
+  coverity_scan:
+    project:
+      name: "jleben/datavis"
+      description: "Data visualization"
+    notification_email: jakob.leben@gmail.com
+    build_command_prepend: cmake .
+    build_command: make
+    branch_pattern: coverity-scan
