@@ -49,6 +49,7 @@ struct Mapping2d
         x_offset *= x;
         y_scale *= y;
         y_offset *= y;
+        return *this;
     }
 
     Mapping2d inverse()
@@ -58,6 +59,7 @@ struct Mapping2d
         m.x_offset = - x_offset / x_scale;
         m.y_scale = 1.0 / y_scale;
         m.y_offset = - y_offset / y_scale;
+        return m;
     }
 };
 
