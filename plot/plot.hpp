@@ -51,7 +51,7 @@ signals:
 private:
     friend class PlotView;
     void setView(PlotView *view) { m_view = view; }
-    PlotView * m_view;
+    PlotView * m_view = nullptr;
 };
 
 inline
