@@ -116,7 +116,7 @@ public:
         vector<int> m_end;
         vector<int> m_stride;
         vector<int> m_location;
-        int m_index;
+        int m_index = -1;
 
     public:
 #if 0
