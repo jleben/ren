@@ -115,8 +115,6 @@ QRect PlotCanvas::plotRect(int index)
 {
     int plot_count = (int) m_plots.size();
 
-    double plot_width = width() - 2 * m_margin;
-
     int plot_left = m_margin;
     int plot_right = width() - m_margin;
 
