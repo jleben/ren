@@ -11,6 +11,8 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Qt5Widgets REQUIRED)
 
+add_compile_options(-Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Werror=return-type)
+
 include_directories("/usr/include/hdf5/serial")
 link_directories("/usr/lib/x86_64-linux-gnu/hdf5/serial")
 
