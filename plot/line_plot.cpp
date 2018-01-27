@@ -412,10 +412,13 @@ void LinePlot::plot(QPainter * painter,  const Mapping2d & transform, const QRec
                 first = false;
             }
 
-            auto min_point = transform * QPointF(0, min_y);
-            auto max_point = transform * QPointF(0, max_y);
+            if (!first) // Make sure we got at least one item
+            {
+                auto min_point = transform * QPointF(0, min_y);
+                auto max_point = transform * QPointF(0, max_y);
 
-            painter->drawLine(x, min_point.y(), x, max_point.y());
+                painter->drawLine(x, min_point.y(), x, max_point.y());
+            }
         }
     }
     else if (max_x - min_x < region_size * 0.8)
@@ -469,15 +472,18 @@ void LinePlot::plot(QPainter * painter,  const Mapping2d & transform, const QRec
                 first = false;
             }
 
-            int min_y_pixel = int(round(min_y));
-            int max_y_pixel = int(round(max_y));
-            if (max_y_pixel == min_y_pixel)
-                max_y_pixel += 1;
+            if (!first) // Just in case, make sure we got at least one item
+            {
+                int min_y_pixel = int(round(min_y));
+                int max_y_pixel = int(round(max_y));
+                if (max_y_pixel == min_y_pixel)
+                    max_y_pixel += 1;
 
-            painter->drawLine(x, min_y_pixel, x, max_y_pixel);
+                painter->drawLine(x, min_y_pixel, x, max_y_pixel);
 
-            // Include last point to connect old and new line
-            max_y = min_y = last_y;
+                // Include last point to connect old and new line
+                max_y = min_y = last_y;
+            }
         }
     }
     else
