@@ -188,7 +188,7 @@ PlotView * MainWindow::addPlotView()
 
 void MainWindow::removePlotView(PlotView * view)
 {
-    if (m_selected_plot_view = view)
+    if (m_selected_plot_view == view)
         m_selected_plot_view = nullptr;
 
     m_plot_views.remove(view);
