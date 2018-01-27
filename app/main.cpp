@@ -6,26 +6,35 @@
 using namespace std;
 using namespace datavis;
 
+namespace datavis {
+
+enum File_Type
+{
+    Unknown_File_Type,
+    Data_File_Type,
+    Project_File_Type
+};
+
+}
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    auto main_win = new MainWindow;
-
     auto args = app.arguments();
+
+    QString file_path;
+    File_Type file_type = Unknown_File_Type;
 
     if (args.size() > 1)
     {
-        auto file_path = args[1];
+        file_path = args[1];
         if (file_path.endsWith(".h5"))
         {
-            cout << "Opening data file: " << file_path.toStdString() << endl;
-            main_win->openDataFile(file_path);
+            file_type = Data_File_Type;
         }
         else if (file_path.endsWith(".datavis"))
         {
-            cout << "Opening project file: " << file_path.toStdString() << endl;
-            main_win->openProjectFile(file_path);
+            file_type = Project_File_Type;
         }
         else
         {
@@ -34,9 +43,38 @@ int main(int argc, char *argv[])
         }
     }
 
+    auto main_win = new MainWindow;
+
+    if (!file_path.isEmpty())
+    {
+        switch(file_type)
+        {
+        case Data_File_Type:
+        {
+            cout << "Opening data file: " << file_path.toStdString() << endl;
+            main_win->openDataFile(file_path);
+            break;
+        }
+        case Project_File_Type:
+        {
+            cout << "Opening project file: " << file_path.toStdString() << endl;
+            main_win->openProjectFile(file_path);
+            break;
+        }
+        default:
+        {
+            cerr << "Error: Unexpected file type " << file_type << " for file: " << file_path.toStdString() << endl;
+        }
+        }
+    }
+
     main_win->resize(400,500);
     main_win->move(50,50);
     main_win->show();
 
-    return app.exec();
+    int status = app.exec();
+
+    delete main_win;
+
+    return status;
 }
