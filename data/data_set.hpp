@@ -104,7 +104,7 @@ signals:
     void selectionChanged();
 
 private:
-    DataSource * m_source;
+    DataSource * m_source = nullptr;
     string m_id;
     array<double> m_data;
     vector<Dimension> m_dimensions;
