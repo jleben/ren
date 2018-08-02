@@ -10,7 +10,6 @@ set(plot_src
 
 set(app_src
   main.cpp
-  data_library.cpp
   data_library_view.cpp
   color_box.cpp
   settings_view.cpp
@@ -18,6 +17,7 @@ set(app_src
   main_window.cpp
   ../io/hdf5.cpp
   ../data/data_set.cpp
+  ../data/data_library.cpp
   ${plot_src}
 )
 

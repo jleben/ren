@@ -1,5 +1,5 @@
 #include "main_window.hpp"
-#include "data_library.hpp"
+#include "../data/data_library.hpp"
 #include "data_library_view.hpp"
 #include "plot_data_settings_view.hpp"
 #include "../plot/plot_view.hpp"
