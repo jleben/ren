@@ -7,10 +7,12 @@
 
 namespace datavis {
 
+class DataLibrary;
+
 class Hdf5Source : public DataSource
 {
 public:
-    Hdf5Source(const string & file_path);
+    Hdf5Source(const string & file_path, DataLibrary *);
 
     string id() const override { return m_file_path; }
     int count() const override;
@@ -20,8 +22,6 @@ public:
 
 private:
     using PrivateDataSetPtr = std::weak_ptr<DataSet>;
-
-    vector<double> readAttribute(const string & name, H5::DataSet &);
 
     string m_file_path;
     H5::H5File m_file;

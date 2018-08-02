@@ -1,6 +1,17 @@
 #pragma once
 
+#include <tuple>
+
 namespace datavis {
+
+template <size_t D>
+struct Vector
+{
+    double operator[] (size_t d) const { return d_values[d]; }
+    double d_values[D];
+};
+
+using Vector2d = Vector<2>;
 
 struct Point2d
 {
@@ -77,6 +88,14 @@ Point2d operator* (const Mapping2d & m, const Point2d & v)
 {
     return  Point2d(v.x * m.x_scale + m.x_offset,
                     v.y * m.y_scale + m.y_offset);
+}
+
+using Range = std::tuple<double, double>;
+inline auto & minimum(Range & r) { return std::get<0>(r); }
+inline auto & maximum(Range & r) { return std::get<1>(r); }
+inline Range join(Range & a, Range & b)
+{
+    return { std::min(minimum(a), minimum(b)), std::max(maximum(a), maximum(b)) };
 }
 
 }

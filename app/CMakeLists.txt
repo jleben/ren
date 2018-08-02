@@ -18,6 +18,7 @@ set(app_src
   ../io/hdf5.cpp
   ../data/data_set.cpp
   ../data/data_library.cpp
+  ../data/dimension.cpp
   ${plot_src}
 )
 

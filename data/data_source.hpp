@@ -10,26 +10,30 @@ namespace datavis {
 
 using std::string;
 
+class DataLibrary;
+
 class DataSetInfo
 {
 public:
     string id;
-    vector<int> size;
     vector<DataSet::Dimension> dimensions;
-    int dimensionCount() const { return int(size.size()); }
-    double minimum(int dim_idx) const { return dimensions[dim_idx].map * 0; }
-    double maximum(int dim_idx) const { return dimensions[dim_idx].map * (size[dim_idx] - 1); }
+    int dimensionCount() const { return int(dimensions.size()); }
 };
 
 class DataSource
 {
 public:
+    DataSource(DataLibrary * lib): d_lib(lib) {}
+    DataLibrary * library() const { return d_lib; }
     virtual ~DataSource() {}
     virtual string id() const = 0;
     virtual int count() const = 0;
     virtual int index(const string & id) const = 0;
     virtual DataSetInfo info(int index) const = 0;
     virtual DataSetPtr dataset(int index) = 0;
+
+private:
+    DataLibrary * d_lib = nullptr;
 };
 
 }

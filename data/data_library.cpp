@@ -14,13 +14,15 @@ void DataLibrary::open(const QString & path)
     DataSource * source = nullptr;
 
     try {
-        source = new Hdf5Source(path.toStdString());
+        source = new Hdf5Source(path.toStdString(), this);
     } catch (...) {
         emit openFailed(path);
         return;
     }
 
     m_sources.push_back(source);
+
+    updateDimensions();
 
     emit sourcesChanged();
 }
@@ -35,6 +37,8 @@ void DataLibrary::close(DataSource * source)
         return;
 
     m_sources.erase(pos);
+
+    updateDimensions();
 
     emit sourcesChanged();
 }
@@ -52,5 +56,73 @@ DataSource * DataLibrary::source(const QString & path)
 
     return *it;
 }
+
+DimensionPtr DataLibrary::dimension(const string & name)
+{
+    auto it = d_dimensions.find(name);
+    if (it == d_dimensions.end())
+        return nullptr;
+    else
+        return it->second;
+}
+
+void DataLibrary::updateDimensions()
+{
+    unordered_map<string, Range> ranges;
+
+    for (DataSource * source : m_sources)
+    {
+        int data_count = source->count();
+        for (int i = 0; i < data_count; ++i)
+        {
+            auto info = source->info(i);
+            for (int d = 0; d < info.dimensionCount(); ++d)
+            {
+                const auto & dim = info.dimensions[d];
+                Range source_range = { dim.minimum(), dim.maximum() };
+                string name = dim.name;
+                if (name.empty())
+                    continue;
+
+                auto range_it = ranges.find(name);
+                if (range_it == ranges.end())
+                {
+                    ranges[name] = source_range;
+                }
+                else
+                {
+                    range_it->second = join(range_it->second, source_range);
+                }
+            }
+        }
+    }
+
+    // Erase unused dimensions
+    {
+        auto it = d_dimensions.begin();
+        while(it != d_dimensions.end())
+        {
+            const auto & name = it->first;
+            if (ranges.find(name) == ranges.end())
+                it = d_dimensions.erase(it);
+            else
+                ++it;
+        }
+    }
+
+    // Store new dimension ranges
+    for (auto & entry : ranges)
+    {
+        auto & name = entry.first;
+        auto & range = entry.second;
+
+        auto & dim = d_dimensions[name];
+        if (!dim)
+            dim = make_shared<Dimension>();
+
+        dim->range() = range;
+    }
+}
+
 
 }

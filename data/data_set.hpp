@@ -2,6 +2,7 @@
 
 #include "array.hpp"
 #include "math.hpp"
+#include "dimension.hpp"
 
 #include <string>
 #include <memory>
@@ -22,7 +23,10 @@ public:
     struct Dimension
     {
         string name;
+        size_t size;
         Mapping1d map;
+        double minimum() const { return map * 0; }
+        double maximum() const { return map * (size - 1); }
     };
 
     DataSet(const vector<int> & size):
@@ -33,6 +37,7 @@ public:
         m_id(id),
         m_data(size),
         m_dimensions(size.size()),
+        m_global_dimensions(size.size()),
         m_selection(size.size(), 0)
     {}
 
@@ -40,6 +45,7 @@ public:
         m_id(id),
         m_data(data),
         m_dimensions(data.size().size()),
+        m_global_dimensions(data.size().size()),
         m_selection(data.size().size(), 0)
     {}
 
@@ -48,6 +54,7 @@ public:
         m_id(id),
         m_data(data),
         m_dimensions(data.size().size()),
+        m_global_dimensions(data.size().size()),
         m_selection(data.size().size(), 0)
     {}
 
@@ -59,8 +66,13 @@ public:
     array<double> * data() { return & m_data; }
     const array<double> * data() const { return & m_data; }
 
+    int dimensionCount() const { return m_dimensions.size(); }
+
     Dimension dimension(int idx) const { return m_dimensions[idx]; }
     void setDimension(int idx, const Dimension & dim) { m_dimensions[idx] = dim; }
+
+    DimensionPtr globalDimension(int idx) const { return m_global_dimensions[idx]; }
+    void setGlobalDimension(int idx, const DimensionPtr & dim);
 
     vector<int> indexForPoint(const vector<double> & point)
     {
@@ -104,10 +116,13 @@ signals:
     void selectionChanged();
 
 private:
+    void onDimensionFocusChanged();
+
     DataSource * m_source = nullptr;
     string m_id;
     array<double> m_data;
     vector<Dimension> m_dimensions;
+    vector<DimensionPtr> m_global_dimensions;
     vector<int> m_selection;
 
 };

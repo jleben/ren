@@ -25,9 +25,11 @@ signals:
 
 private:
     void updateLibraryTree();
+    void updateDimTree();
 
     DataLibrary * m_lib = nullptr;
     QTreeWidget * m_lib_tree = nullptr;
+    QTreeWidget * m_dim_tree = nullptr;
 };
 
 }

@@ -19,8 +19,12 @@ DataLibraryView::DataLibraryView(QWidget * parent):
     m_lib_tree->setHeaderLabels(QStringList() << "Name" << "Size");
     m_lib_tree->header()->setSectionHidden(1,true);
 
+    m_dim_tree = new QTreeWidget;
+    m_dim_tree->setHeaderLabels(QStringList() << "Name" << "Range");
+
     auto layout = new QVBoxLayout(this);
     layout->addWidget(m_lib_tree);
+    layout->addWidget(m_dim_tree);
 
     connect(m_lib_tree, &QTreeWidget::currentItemChanged,
             this, &DataLibraryView::selectionChanged);
@@ -37,6 +41,8 @@ void DataLibraryView::setLibrary(DataLibrary * lib)
     {
         connect(lib, &DataLibrary::sourcesChanged,
                 this, &DataLibraryView::updateLibraryTree);
+        connect(lib, &DataLibrary::sourcesChanged,
+                this, &DataLibraryView::updateDimTree);
     }
 
     updateLibraryTree();
@@ -72,8 +78,8 @@ void DataLibraryView::updateLibraryTree()
             QString name = QString::fromStdString(object.id);
 
             QStringList size_texts;
-            for (auto & s : object.size)
-                size_texts << QString::number(s);
+            for (auto & dim : object.dimensions)
+                size_texts << QString::number(dim.size);
             QString size_text = size_texts.join(" ");
 
             QStringList texts;
@@ -87,6 +93,44 @@ void DataLibraryView::updateLibraryTree()
 
         m_lib_tree->addTopLevelItem(source_item);
         source_item->setExpanded(true);
+    }
+}
+
+void DataLibraryView::updateDimTree()
+{
+    const auto & dimensions = m_lib->dimensions();
+
+    // Remove unused dimensions
+#if 0
+
+    int i = 0;
+    while(i < m_dim_tree->topLevelItemCount())
+    {
+        auto * item = m_dim_tree->topLevelItem(i);
+        string name = item->text(0).toStdString();
+        if (dimensions.find(name) == dimensions.end())
+            delete item;
+        else
+            ++i;
+    }
+#endif
+
+    m_dim_tree->clear();
+
+    // Update items
+
+    for (const auto & entry : dimensions)
+    {
+        const string & name = entry.first;
+        const auto & dim = entry.second;
+
+        auto range_text = QString("[%1, %2]")
+                .arg(minimum(dim->range()))
+                .arg(maximum(dim->range()));
+
+        auto item = new QTreeWidgetItem(QStringList() << QString::fromStdString(name) << range_text);
+
+        m_dim_tree->addTopLevelItem(item);
     }
 }
 

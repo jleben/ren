@@ -23,6 +23,8 @@ void PlotDataSettingsView::setDataInfo(const DataSetInfo & info)
 
     for (int i = 0; i < info.dimensionCount(); ++i)
     {
+        auto & dim = info.dimensions[i];
+
         auto item = new QListWidgetItem;
 
         m_dimension_list->addItem(item);
@@ -39,14 +41,13 @@ void PlotDataSettingsView::setDataInfo(const DataSetInfo & info)
 
         text += QString::number(i);
         text += ": ";
-        text += QString::number(info.size[i]);
+        text += QString::number(dim.size);
 
-        auto dim = info.dimensions[i];
-        if (info.size[i] > 0)
+        if (dim.size > 0)
         {
             text += QString(" (%1, %2) @ %3")
-                    .arg(dim.map * 0)
-                    .arg(dim.map * (info.size[i]-1))
+                    .arg(dim.minimum())
+                    .arg(dim.maximum())
                     .arg(dim.map.scale);
         }
 

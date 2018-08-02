@@ -196,8 +196,13 @@ void PlotCanvas::selectDataAt(const QPoint & pos)
         auto plot = m_plots[i];
         auto plotPos = mapToPlot(i, pos);
         auto dataPos = plot->dataLocation(plotPos);
-        auto dataIndex = plot->dataSet()->indexForPoint(dataPos);
-        plot->dataSet()->selectIndex(dataIndex);
+        DataSetPtr dataset = plot->dataSet();
+        for (int d = 0; d < dataset->dimensionCount(); ++d)
+        {
+            DimensionPtr dim = dataset->globalDimension(d);
+            if (!dim) continue;
+            dim->setFocus(dataPos[d]);
+        }
     }
 }
 
