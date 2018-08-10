@@ -27,7 +27,7 @@ void DataSet::selectIndex(const vector<int> & index)
 
     for (int d = 0; d < index.size(); ++d)
     {
-        if (index[d] < 0 || index[d] >= m_data.size()[d])
+        if (index[d] < 0 || index[d] >= m_dimensions[d].size)
             continue;
         changed |= (index[d] != m_selection[d]);
         m_selection[d] = index[d];
@@ -62,7 +62,7 @@ void DataSet::onDimensionFocusChanged()
         double focus = gdim->focus();
 
         int index = std::round(focus / m_dimensions[d].map);
-        if (index < 0 || index >= m_data.size()[d])
+        if (index < 0 || index >= m_dimensions[d].size)
             continue;
 
         changed |= (index != m_selection[d]);
