@@ -16,6 +16,7 @@ set(app_src
   plot_data_settings_view.cpp
   main_window.cpp
   ../io/hdf5.cpp
+  ../io/text.cpp
   ../data/data_set.cpp
   ../data/data_library.cpp
   ../data/dimension.cpp

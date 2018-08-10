@@ -28,18 +28,13 @@ int main(int argc, char *argv[])
     if (args.size() > 1)
     {
         file_path = args[1];
-        if (file_path.endsWith(".h5"))
-        {
-            file_type = Data_File_Type;
-        }
-        else if (file_path.endsWith(".datavis"))
+        if (file_path.endsWith(".datavis"))
         {
             file_type = Project_File_Type;
         }
         else
         {
-            cout << "Unknown file type: " << file_path.toStdString() << endl;
-            return 1;
+            file_type = Data_File_Type;
         }
     }
 

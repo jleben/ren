@@ -1,5 +1,6 @@
 #include "data_library.hpp"
 #include "../io/hdf5.hpp"
+#include "../io/text.hpp"
 
 #include <algorithm>
 
@@ -13,9 +14,21 @@ void DataLibrary::open(const QString & path)
 {
     DataSource * source = nullptr;
 
-    try {
-        source = new Hdf5Source(path.toStdString(), this);
-    } catch (...) {
+    try
+    {
+        if (path.endsWith(".h5"))
+            source = new Hdf5Source(path.toStdString(), this);
+        else
+            source = new TextSource(path.toStdString(), this);
+    }
+    catch (std::runtime_error & e)
+    {
+        cerr << "ERROR: Failed to open file " << path.toStdString() << ": " << e.what() << endl;
+        emit openFailed(path);
+        return;
+    }
+    catch (...)
+    {
         emit openFailed(path);
         return;
     }
