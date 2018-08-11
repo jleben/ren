@@ -17,6 +17,7 @@ class DataSetInfo
 public:
     string id;
     vector<DataSet::Dimension> dimensions;
+    vector<DataSet::Attribute> attributes;
     int dimensionCount() const { return int(dimensions.size()); }
 };
 

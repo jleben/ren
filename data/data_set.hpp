@@ -69,13 +69,15 @@ public:
     array<double> * data() { return & m_data[0]; }
     const array<double> * data() const { return & m_data[0]; }
 
-    double * data(int idx) { return m_data[idx].data(); }
-    const double * data(int idx) const { return m_data[idx].data(); }
+    array<double> & data(int idx) { return m_data[idx]; }
+    const array<double> & data(int idx) const { return m_data[idx]; }
 
     int dimensionCount() const { return m_dimensions.size(); }
     Dimension dimension(int idx) const { return m_dimensions[idx]; }
     void setDimension(int idx, const Dimension & dim) { m_dimensions[idx] = dim; }
 
+    vector<Attribute> attributes() const { return m_attributes; }
+    int attributeCount() const { return m_attributes.size(); }
     Attribute & attribute(int idx) { return m_attributes[idx]; }
     const Attribute & attribute(int idx) const { return m_attributes[idx]; }
 

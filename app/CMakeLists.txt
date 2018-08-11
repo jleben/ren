@@ -4,6 +4,7 @@ set(plot_src
   ../plot/plot.hpp
   ../plot/line_plot.cpp
   ../plot/heat_map.cpp
+  ../plot/scatter_plot.cpp
   ../plot/plot_view.cpp
   ../plot/range_bar.cpp
 )
@@ -14,6 +15,7 @@ set(app_src
   color_box.cpp
   settings_view.cpp
   plot_data_settings_view.cpp
+  plot_settings_view2.cpp
   main_window.cpp
   ../io/hdf5.cpp
   ../io/text.cpp

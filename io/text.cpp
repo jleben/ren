@@ -69,7 +69,7 @@ TextSource::TextSource(const string & file_path, DataLibrary * lib):
         {
             if (!(stream >> value))
                 throw std::runtime_error("Invalid format.");
-            dataset->data(col)[row] = value;
+            dataset->data(col).data()[row] = value;
         }
     }
 #endif
@@ -81,6 +81,8 @@ DataSetInfo TextSource::info(int) const
     DataSetInfo info;
     info.id = "data";
     info.dimensions.push_back(m_dataset->dimension(0));
+    info.attributes = m_dataset->attributes();
+
     return info;
 }
 

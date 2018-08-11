@@ -2,9 +2,11 @@
 #include "../data/data_library.hpp"
 #include "data_library_view.hpp"
 #include "plot_data_settings_view.hpp"
+#include "plot_settings_view2.hpp"
 #include "../plot/plot_view.hpp"
 #include "../plot/line_plot.hpp"
 #include "../plot/heat_map.hpp"
+#include "../plot/scatter_plot.hpp"
 #include "../io/hdf5.hpp"
 #include <project/project.pb.h>
 
@@ -221,7 +223,7 @@ void MainWindow::plotCustom(DataSource * source, int index)
     auto dialog = new QDialog;
     dialog->setWindowTitle("Select Plot Data");
 
-    auto settings = new PlotDataSettingsView;
+    auto settings = new PlotSettingsView;
     settings->setDataInfo(info);
 
     auto buttons = new QDialogButtonBox
@@ -240,6 +242,53 @@ void MainWindow::plotCustom(DataSource * source, int index)
 
     vector<int> selected_dimensions;
 
+    dialog->exec();
+
+
+    cout << "Reading dataset." << endl;
+
+    // Get data
+
+    DataSetPtr data;
+    try {
+        data = source->dataset(index);
+    } catch (...) {
+        QMessageBox::warning(this, "Read Failed",
+                             QString("Failed to read data for object %1.")
+                             .arg(data->id().c_str()));
+        return;
+    }
+
+    cout << "Reading dataset finished." << endl;
+
+    // Create plot
+
+    cout << "Creating plot." << endl;
+
+    auto plot = new ScatterPlot;
+    plot->setData(data, settings->x(), settings->y());
+
+    cout << "Creating plot finished." << endl;
+
+    // Add plot to view
+
+    if (!m_selected_plot_view)
+    {
+        if(m_plot_views.empty())
+        {
+            m_selected_plot_view = addPlotView();
+        }
+        else
+        {
+            m_selected_plot_view = m_plot_views.front();
+        }
+    }
+
+    m_selected_plot_view->addPlot(plot);
+
+    m_selected_plot_view->show();
+
+#if 0
     while (!ok)
     {
         auto result = dialog->exec();
@@ -260,6 +309,7 @@ void MainWindow::plotCustom(DataSource * source, int index)
     }
 
     plot(source, index, selected_dimensions);
+#endif
 }
 
 void MainWindow::plot(DataSource * source, int index, vector<int> dimensions)
