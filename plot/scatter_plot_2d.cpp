@@ -1,12 +1,12 @@
-#include "scatter_plot.hpp"
+#include "scatter_plot_2d.hpp"
 
 namespace datavis {
 
-ScatterPlot::ScatterPlot(QObject * parent):
+ScatterPlot2d::ScatterPlot2d(QObject * parent):
     Plot(parent)
 {}
 
-void ScatterPlot::setData(DataSetPtr data, int xDim, int yDim)
+void ScatterPlot2d::setData(DataSetPtr data, int xDim, int yDim)
 {
     m_dataset = data;
 
@@ -22,7 +22,7 @@ void ScatterPlot::setData(DataSetPtr data, int xDim, int yDim)
     make_points();
 }
 
-void ScatterPlot::make_points()
+void ScatterPlot2d::make_points()
 {
     auto data_region = get_region(*m_dataset->data(),
                                   vector<int>(m_dataset->dimensionCount(), 0),
@@ -39,17 +39,17 @@ void ScatterPlot::make_points()
 }
 
 
-Plot::Range ScatterPlot::xRange()
+Plot::Range ScatterPlot2d::xRange()
 {
     return m_x_range;
 }
 
-Plot::Range ScatterPlot::yRange()
+Plot::Range ScatterPlot2d::yRange()
 {
     return m_y_range;
 }
 
-vector<double> ScatterPlot::dataLocation(const QPointF & point)
+vector<double> ScatterPlot2d::dataLocation(const QPointF & point)
 {
     if (m_dataset)
     {
@@ -61,7 +61,7 @@ vector<double> ScatterPlot::dataLocation(const QPointF & point)
     }
 }
 
-Plot::Range ScatterPlot::range(int dim_index)
+Plot::Range ScatterPlot2d::range(int dim_index)
 {
     if (dim_index < m_dataset->dimensionCount())
     {
@@ -81,7 +81,7 @@ Plot::Range ScatterPlot::range(int dim_index)
     }
 }
 
-inline double ScatterPlot::value(int dim_index,  const array_region<double>::iterator & iter)
+inline double ScatterPlot2d::value(int dim_index,  const array_region<double>::iterator & iter)
 {
     if (dim_index < m_dataset->dimensionCount())
     {
@@ -95,7 +95,7 @@ inline double ScatterPlot::value(int dim_index,  const array_region<double>::ite
     }
 }
 
-void ScatterPlot::plot(QPainter * painter,  const Mapping2d & view_map, const QRectF & region)
+void ScatterPlot2d::plot(QPainter * painter,  const Mapping2d & view_map, const QRectF & region)
 {
 #if 0
     int ndim = m_dataset->dimensionCount();

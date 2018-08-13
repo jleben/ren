@@ -4,7 +4,7 @@ set(plot_src
   ../plot/plot.hpp
   ../plot/line_plot.cpp
   ../plot/heat_map.cpp
-  ../plot/scatter_plot.cpp
+  ../plot/scatter_plot_2d.cpp
   ../plot/plot_view.cpp
   ../plot/range_bar.cpp
 )

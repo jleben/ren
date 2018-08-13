@@ -13,12 +13,12 @@ namespace datavis {
 using std::list;
 using std::vector;
 
-class ScatterPlot : public Plot
+class ScatterPlot2d : public Plot
 {
     Q_OBJECT
 
 public:
-    ScatterPlot(QObject * parent = 0);
+    ScatterPlot2d(QObject * parent = 0);
 
     void setData(DataSetPtr data, int xDim, int yDim);
 

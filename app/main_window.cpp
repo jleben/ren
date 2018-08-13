@@ -6,7 +6,7 @@
 #include "../plot/plot_view.hpp"
 #include "../plot/line_plot.hpp"
 #include "../plot/heat_map.hpp"
-#include "../plot/scatter_plot.hpp"
+#include "../plot/scatter_plot_2d.hpp"
 #include "../io/hdf5.hpp"
 #include <project/project.pb.h>
 
@@ -265,7 +265,7 @@ void MainWindow::plotCustom(DataSource * source, int index)
 
     cout << "Creating plot." << endl;
 
-    auto plot = new ScatterPlot;
+    auto plot = new ScatterPlot2d;
     plot->setData(data, settings->x(), settings->y());
 
     cout << "Creating plot finished." << endl;
