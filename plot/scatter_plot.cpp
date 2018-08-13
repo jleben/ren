@@ -16,9 +16,28 @@ void ScatterPlot::setData(DataSetPtr data, int xDim, int yDim)
     m_x_range = range(m_x_dim);
     m_y_range = range(m_y_dim);
 
-    cerr << "X range: " << m_x_range.min << ", " << m_x_range.max << endl;
-    cerr << "Y range: " << m_y_range.min << ", " << m_y_range.max << endl;
+    //cerr << "X range: " << m_x_range.min << ", " << m_x_range.max << endl;
+    //cerr << "Y range: " << m_y_range.min << ", " << m_y_range.max << endl;
+
+    make_points();
 }
+
+void ScatterPlot::make_points()
+{
+    auto data_region = get_region(*m_dataset->data(),
+                                  vector<int>(m_dataset->dimensionCount(), 0),
+                                  m_dataset->data()->size());
+
+    for(auto item : data_region)
+    {
+        Point2d p;
+        p.x = value(m_x_dim, item);
+        p.y = value(m_y_dim, item);
+
+        m_points.push_back(p);
+    }
+}
+
 
 Plot::Range ScatterPlot::xRange()
 {
@@ -78,11 +97,14 @@ inline double ScatterPlot::value(int dim_index,  const array_region<double>::ite
 
 void ScatterPlot::plot(QPainter * painter,  const Mapping2d & view_map, const QRectF & region)
 {
+#if 0
     int ndim = m_dataset->dimensionCount();
 
     auto data_region = get_region(*m_dataset->data(), vector<int>(ndim, 0),  m_dataset->data()->size());
 
     QColor c;
+
+    int count = 0;
 
     for(auto item : data_region)
     {
@@ -93,10 +115,26 @@ void ScatterPlot::plot(QPainter * painter,  const Mapping2d & view_map, const QR
 
         p = view_map * p;
 
-        QRectF r(0, 0, 4, 4);
-        r.moveCenter(QPointF(p.x, p.y));
+        //if (++count % 1000 == 0)
+        {
+            QRectF r(0, 0, 1, 1);
+            r.moveCenter(QPointF(p.x, p.y));
+            painter->fillRect(r, c);
+        }
+    }
+#endif
+
+#if 1
+    QColor c;
+
+    for (auto & point : m_points)
+    {
+        auto p = view_map * point;
+
+        QRectF r(p.x - 2, p.y - 2, 4, 4);
         painter->fillRect(r, c);
     }
+#endif
 }
 
 }
