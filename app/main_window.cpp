@@ -223,8 +223,7 @@ void MainWindow::plotCustom(DataSource * source, int index)
     auto dialog = new QDialog;
     dialog->setWindowTitle("Select Plot Data");
 
-    auto settings = new PlotSettingsView;
-    settings->setDataInfo(info);
+    auto settings = new PlotSettingsView(info);
 
     auto buttons = new QDialogButtonBox
             ( QDialogButtonBox::Ok | QDialogButtonBox::Cancel );
@@ -243,7 +242,6 @@ void MainWindow::plotCustom(DataSource * source, int index)
     vector<int> selected_dimensions;
 
     dialog->exec();
-
 
     cout << "Reading dataset." << endl;
 
@@ -265,8 +263,14 @@ void MainWindow::plotCustom(DataSource * source, int index)
 
     cout << "Creating plot." << endl;
 
-    auto plot = new ScatterPlot2d;
-    plot->setData(data, settings->x(), settings->y());
+    auto plot = settings->makePlot(data);
+
+    if (!plot)
+    {
+        QMessageBox::warning(this, "Creating Plot Failed",
+                             QString("Invalid options."));
+        return;
+    }
 
     cout << "Creating plot finished." << endl;
 
