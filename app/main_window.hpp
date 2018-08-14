@@ -42,12 +42,9 @@ private:
     void onSelectedDataChanged();
     bool hasSelectedObject();
     void plotSelectedObject();
-    void customPlotSelectedObject();
     PlotView * addPlotView();
     void removePlotView(PlotView*);
     void plot(DataSource *, int index);
-    void plotCustom(DataSource *, int index);
-    void plot(DataSource *, int index, vector<int> dimensions);
     void restorePlot(PlotView *, const json & state);
     void removeSelectedPlot();
     bool eventFilter(QObject*, QEvent*) override;

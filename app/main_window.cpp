@@ -47,11 +47,6 @@ MainWindow::MainWindow(QWidget * parent):
         connect(action, &QAction::triggered,
                 this, &MainWindow::plotSelectedObject);
     }
-    {
-        auto action = lib_action_bar->addAction("Custom...");
-        connect(action, &QAction::triggered,
-                this, &MainWindow::customPlotSelectedObject);
-    }
 
     lib_action_bar->addSeparator();
 
@@ -153,32 +148,10 @@ void MainWindow::plotSelectedObject()
         return;
 
     auto object_idx = m_lib_view->selectedDatasetIndex();
-
-    if (object_idx < 0)
-    {
-        for (object_idx = 0; object_idx < source->count(); ++object_idx)
-        {
-            plot(source, object_idx);
-        }
-        return;
-    }
-    else
-    {
-        plot(source, object_idx);
-    }
-}
-
-void MainWindow::customPlotSelectedObject()
-{
-    auto source = m_lib_view->selectedSource();
-    if (!source)
-        return;
-
-    auto object_idx = m_lib_view->selectedDatasetIndex();
     if (object_idx < 0)
         return;
 
-    plotCustom(source, object_idx);
+    plot(source, object_idx);
 }
 
 PlotView * MainWindow::addPlotView()
@@ -204,24 +177,6 @@ void MainWindow::removePlotView(PlotView * view)
 }
 
 void MainWindow::plot(DataSource * source, int index)
-{
-    auto info = source->info(index);
-
-    if (info.dimensionCount() < 1)
-    {
-        return;
-    }
-    else if (info.dimensionCount() == 1)
-    {
-        plot(source, index, {0});
-    }
-    else
-    {
-        plot(source, index, {0, 1});
-    }
-}
-
-void MainWindow::plotCustom(DataSource * source, int index)
 {
     auto info = source->info(index);
 
@@ -280,84 +235,6 @@ void MainWindow::plotCustom(DataSource * source, int index)
     cout << "Creating plot finished." << endl;
 
     // Add plot to view
-
-    if (!m_selected_plot_view)
-    {
-        if(m_plot_views.empty())
-        {
-            m_selected_plot_view = addPlotView();
-        }
-        else
-        {
-            m_selected_plot_view = m_plot_views.front();
-        }
-    }
-
-    m_selected_plot_view->addPlot(plot);
-
-    m_selected_plot_view->show();
-
-#if 0
-    while (!ok)
-    {
-        auto result = dialog->exec();
-        if (result == QDialog::Rejected)
-            return;
-
-        selected_dimensions = settings->selectedDimensions();
-        if ( selected_dimensions.size() < 1 ||
-             selected_dimensions.size() > 2 )
-        {
-            QMessageBox::warning(this, "Invalid Selection.",
-                                 "Please select at least 1 and at most 2 dimensions.");
-        }
-        else
-        {
-            ok = true;
-        }
-    }
-
-    plot(source, index, selected_dimensions);
-#endif
-}
-
-void MainWindow::plot(DataSource * source, int index, vector<int> dimensions)
-{
-    if (dimensions.size() < 1 || dimensions.size() > 2)
-    {
-        cerr << "Unexpected: Invalid number of dimension selected for plotting: "
-             << dimensions.size() << endl;
-        return;
-    }
-
-    cout << "Reading dataset." << endl;
-
-    DataSetPtr data;
-    try {
-        data = source->dataset(index);
-    } catch (...) {
-        QMessageBox::warning(this, "Read Failed",
-                             QString("Failed to read data for object %1.")
-                             .arg(data->id().c_str()));
-        return;
-    }
-
-    cout << "Reading dataset finished." << endl;
-
-    Plot * plot;
-
-    if (dimensions.size() == 1)
-    {
-        auto line = new LinePlot;
-        line->setDataSet(data, dimensions[0]);
-        plot = line;
-    }
-    else
-    {
-        auto map = new HeatMap;
-        map->setDataSet(data, { dimensions[0], dimensions[1] });
-        plot = map;
-    }
 
     if (!m_selected_plot_view)
     {
