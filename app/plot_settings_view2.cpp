@@ -95,6 +95,10 @@ LinePlotSettings::LinePlotSettings(const DataSetInfo & info, QWidget * parent):
 
 Plot * LinePlotSettings::makePlot(const DataSetPtr & dataset)
 {
+    int dim = m_dimension->currentIndex();
+    if (dim < 0)
+        return nullptr;
+
     auto plot = new LinePlot;
     plot->setDataSet(dataset, m_dimension->currentIndex());
     return plot;
@@ -149,9 +153,13 @@ ScatterPlot1dSettings::ScatterPlot1dSettings(const DataSetInfo & info, QWidget *
 
 Plot * ScatterPlot1dSettings::makePlot(const DataSetPtr & dataset)
 {
-    auto plot = new ScatterPlot1d;
     auto orientation = m_orientation->currentIndex() == 0 ? ScatterPlot1d::Horizontal : ScatterPlot1d::Vertical;
-    plot->setData(dataset, m_attribute->currentIndex(), orientation);
+    int attribute = m_attribute->currentIndex();
+    if (attribute < 0)
+        return nullptr;
+
+    auto plot = new ScatterPlot1d;
+    plot->setData(dataset, attribute, orientation);
     return plot;
 }
 
@@ -166,23 +174,37 @@ ScatterPlot2dSettings::ScatterPlot2dSettings(const DataSetInfo & info, QWidget *
     m_dots = new QCheckBox;
     m_line = new QCheckBox;
 
-    fillAttributes(m_x_source);
+    fillDimensionsAndAttributes(m_x_source);
 
     form->addRow(new QLabel("X:"), m_x_source);
     form->addRow(new QLabel("Y:"), m_y_source);
     form->addRow(new QLabel("Dots:"), m_dots);
     form->addRow(new QLabel("Line:"), m_line);
 
-    m_x_source->setCurrentIndex(0);
-    m_y_source->setCurrentIndex(1);
+    int first_attribute = info.dimensionCount();
+
+    if (info.attributes.size() >= 2)
+    {
+        m_x_source->setCurrentIndex(first_attribute);
+        m_y_source->setCurrentIndex(first_attribute+1);
+    }
+    else
+    {
+        m_x_source->setCurrentIndex(0);
+        m_y_source->setCurrentIndex(first_attribute);
+    }
+
     m_dots->setChecked(true);
 }
 
 Plot * ScatterPlot2dSettings::makePlot(const DataSetPtr & dataset)
 {
+    int x = m_x_source->currentIndex();
+    int y = m_y_source->currentIndex();
+    if (x < 0 || y < 0)
+        return nullptr;
+
     auto plot = new ScatterPlot2d();
-    int x = m_x_source->currentIndex() + dataset->dimensionCount();
-    int y = m_y_source->currentIndex() + dataset->dimensionCount();
     plot->setData(dataset, x, y);
     plot->setShowDot(m_dots->isChecked());
     plot->setShowLine(m_line->isChecked());
