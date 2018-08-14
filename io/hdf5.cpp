@@ -227,8 +227,8 @@ DataSetInfo Hdf5Source::info(int index) const
     DataSetInfo info;
 
     info.id = dataset_name;
-
     info.dimensions = readDimensions(dataset);
+    info.attributes.resize(1);
 
     return info;
 }
