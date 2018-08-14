@@ -58,15 +58,19 @@ Plot::Range ScatterPlot1d::yRange()
         return Range(0,1);
 }
 
-vector<double> ScatterPlot1d::dataLocation(const QPointF & point)
+tuple<vector<double>, vector<double>> ScatterPlot1d::dataLocation(const QPointF & point)
 {
     if (m_dataset)
     {
-        return vector<double>(m_dataset->dimensionCount(), 0);
+        double value = m_orientation == Horizontal ? point.x() : point.y();
+        vector<double> loc(m_dataset->dimensionCount(), 0);
+        vector<double> att(m_dataset->attributeCount(), 0);
+        att[m_attribute] = value;
+        return { loc, att };
     }
     else
     {
-        return vector<double>();
+        return {};
     }
 }
 

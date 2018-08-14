@@ -8,10 +8,12 @@
 #include <QPointF>
 
 #include <vector>
+#include <tuple>
 
 namespace datavis {
 
 using std::vector;
+using std::tuple;
 
 class Selector;
 class PlotView;
@@ -41,7 +43,7 @@ public:
     virtual Range xRange() = 0;
     virtual Range yRange() = 0;
     virtual void plot(QPainter *, const Mapping2d &, const QRectF & region) = 0;
-    virtual vector<double> dataLocation(const QPointF & point) = 0;
+    virtual tuple<vector<double>, vector<double>> dataLocation(const QPointF & point) = 0;
 
 signals:
     void xRangeChanged();

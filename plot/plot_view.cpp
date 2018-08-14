@@ -201,7 +201,7 @@ void PlotCanvas::selectDataAt(const QPoint & pos)
         {
             DimensionPtr dim = dataset->globalDimension(d);
             if (!dim) continue;
-            dim->setFocus(dataPos[d]);
+            dim->setFocus(get<0>(dataPos)[d]);
         }
     }
 }
@@ -360,31 +360,20 @@ void PlotCanvas::paintEvent(QPaintEvent* event)
             auto plot = m_plots[plot_under_mouse_index];
             auto plotPos = mapToPlot(plot_under_mouse_index, pos);
             auto dataPos = plot->dataLocation(plotPos);
-            auto dataIndex = plot->dataSet()->indexForPoint(dataPos);
-            dataPos = plot->dataSet()->pointForIndex(dataIndex);
-
-            vector<int> dataSize = plot->dataSet()->data()->size();
-
-            bool in_bounds = true;
-            for (int d = 0; d < dataSize.size(); ++d)
-                in_bounds &= (dataIndex[d] >= 0 && dataIndex[d] < dataSize[d]);
 
             QString text;
 
-            if (in_bounds)
+            QStringList dim_strings;
+            for (double v : get<0>(dataPos))
             {
-                double value = (*plot->dataSet()->data())(dataIndex);
-
-                text += QString::number(value);
-                text += " ";
+                dim_strings << QString::number(v, 'f', 2);
             }
 
-            QStringList coord_strings;
-            for (auto & i : dataPos)
-                coord_strings << QString::number(i, 'f', 2);
+            QStringList att_string;
+            for (auto & v : get<1>(dataPos))
+                att_string << QString::number(v);
 
-            text += "@ ";
-            text += coord_strings.join(" ");
+            text = att_string.join(" ") + " @ " + dim_strings.join(" ");
 
             auto fm = fontMetrics();
             auto rect = fm.boundingRect(text);

@@ -251,14 +251,14 @@ Plot::Range HeatMap::yRange()
     return Range(y_dim.map * y_min, y_dim.map * y_max);
 }
 
-vector<double> HeatMap::dataLocation(const QPointF & point)
+tuple<vector<double>, vector<double>> HeatMap::dataLocation(const QPointF & point)
 {
     if (isEmpty())
-        return vector<double>();
+        return {};
 
     auto offset = m_data_region.offset();
 
-    vector<double> location(offset.size());
+    vector<double> location(m_dataset->dimensionCount(), 0);
 
     for (int d = 0; d < offset.size(); ++d)
     {
@@ -269,7 +269,24 @@ vector<double> HeatMap::dataLocation(const QPointF & point)
     location[m_dim[0]] = point.x();
     location[m_dim[1]] = point.y();
 
-    return location;
+    auto index = m_dataset->indexForPoint(location);
+
+    auto size = m_dataset->data()->size();
+    bool in_bounds = true;
+    for (int d = 0; d < size.size(); ++d)
+        in_bounds &= (index[d] >= 0 && index[d] < size[d]);
+
+    vector<double> attributes(m_dataset->attributeCount(), 0);
+
+    if (in_bounds)
+    {
+        for (int a = 0; a < m_dataset->attributeCount(); ++a)
+        {
+            attributes[a] = m_dataset->data(0)(index);
+        }
+    }
+
+    return { location, attributes };
 }
 
 void HeatMap::plot(QPainter * painter,  const Mapping2d & transform, const QRectF & region)

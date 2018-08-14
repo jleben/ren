@@ -49,15 +49,28 @@ Plot::Range ScatterPlot2d::yRange()
     return m_y_range;
 }
 
-vector<double> ScatterPlot2d::dataLocation(const QPointF & point)
+tuple<vector<double>, vector<double>> ScatterPlot2d::dataLocation(const QPointF & point)
 {
     if (m_dataset)
     {
-        return vector<double>(m_dataset->dimensionCount(), 0);
+        vector<double> loc(m_dataset->dimensionCount(), 0);
+        vector<double> att(m_dataset->attributeCount(), 0);
+
+        if (m_x_dim < m_dataset->dimensionCount())
+            loc[m_x_dim] = point.x();
+        else
+            att[m_x_dim - m_dataset->dimensionCount()] = point.x();
+
+        if (m_y_dim < m_dataset->dimensionCount())
+            loc[m_y_dim] = point.y();
+        else
+            att[m_y_dim - m_dataset->dimensionCount()] = point.y();
+
+        return { loc, att };
     }
     else
     {
-        return vector<double>();
+        return {};
     }
 }
 

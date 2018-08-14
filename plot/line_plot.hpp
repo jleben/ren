@@ -40,7 +40,7 @@ public:
     virtual bool isEmpty() const override { return !m_data_region.is_valid(); }
     virtual Range xRange() override;
     virtual Range yRange() override;
-    virtual vector<double> dataLocation(const QPointF & point) override;
+    virtual tuple<vector<double>, vector<double>> dataLocation(const QPointF & point) override;
     virtual void plot(QPainter *,  const Mapping2d &, const QRectF & region) override;
 
 signals:

@@ -246,15 +246,14 @@ Plot::Range LinePlot::yRange()
 #endif
 }
 
-vector<double> LinePlot::dataLocation(const QPointF & point)
+tuple<vector<double>, vector<double>> LinePlot::dataLocation(const QPointF & point)
 {
     if (isEmpty())
-        return vector<double>();
+        return {};
 
     auto offset = m_data_region.offset();
 
-    vector<double> location(offset.size());
-
+    vector<double> location(m_dataset->dimensionCount());
     for (int d = 0; d < offset.size(); ++d)
     {
       if (d == m_dim)
@@ -268,7 +267,10 @@ vector<double> LinePlot::dataLocation(const QPointF & point)
       }
     }
 
-    return location;
+    vector<double> attributes(m_dataset->attributeCount(), 0);
+    attributes[0] = point.y();
+
+    return { location, attributes };
 }
 
 LinePlot::DataCache * LinePlot::getCache(double dataPerPixel)
