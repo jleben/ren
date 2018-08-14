@@ -6,6 +6,24 @@ ScatterPlot1d::ScatterPlot1d(QObject * parent):
     Plot(parent)
 {}
 
+json ScatterPlot1d::save()
+{
+    json d;
+    d["type"] = "scatter_1d";
+    d["attribute"] = m_attribute;
+    d["orientation"] = m_orientation == Horizontal ? "horizontal" : "vertical";
+    return d;
+}
+
+void ScatterPlot1d::restore(const DataSetPtr & dataset, const json & options)
+{
+    int attribute = options.at("attribute");
+    string orientation_text = options.at("orientation");
+    Orientation orientation = orientation_text == "horizontal" ? Horizontal : Vertical;
+
+    setData(dataset, attribute, orientation);
+}
+
 void ScatterPlot1d::setData(DataSetPtr data, int attribute, Orientation orientation)
 {
     m_dataset = data;

@@ -7,12 +7,14 @@
 
 #include "../data/array.hpp"
 #include "../data/data_source.hpp"
+#include "../json/json.hpp"
 
 #include <list>
 
 namespace datavis {
 
 using std::list;
+using nlohmann::json;
 
 class DataSet;
 class PlotView;
@@ -46,6 +48,7 @@ private:
     void plot(DataSource *, int index);
     void plotCustom(DataSource *, int index);
     void plot(DataSource *, int index, vector<int> dimensions);
+    void restorePlot(PlotView *, const json & state);
     void removeSelectedPlot();
     bool eventFilter(QObject*, QEvent*) override;
     void showPlotContextMenu(Plot*, const QPoint & pos);

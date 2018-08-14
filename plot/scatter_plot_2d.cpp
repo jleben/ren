@@ -6,6 +6,29 @@ ScatterPlot2d::ScatterPlot2d(QObject * parent):
     Plot(parent)
 {}
 
+json ScatterPlot2d::save()
+{
+    json d;
+    d["type"] = "scatter_2d";
+    d["x_dim"] = m_x_dim;
+    d["y_dim"] = m_y_dim;
+    d["dots"] = m_show_dot;
+    d["line"] = m_show_line;
+    return d;
+}
+
+void ScatterPlot2d::restore(const DataSetPtr & dataset, const json & options)
+{
+    int x_dim = options.at("x_dim");
+    int y_dim = options.at("y_dim");
+    bool dots = options.at("dots");
+    bool line = options.at("line");
+
+    setData(dataset, x_dim, y_dim );
+    setShowDot(dots);
+    setShowLine(line);
+}
+
 void ScatterPlot2d::setData(DataSetPtr data, int xDim, int yDim)
 {
     m_dataset = data;

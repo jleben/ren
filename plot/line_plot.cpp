@@ -17,6 +17,20 @@ LinePlot::LinePlot(QObject * parent):
     Plot(parent)
 {}
 
+json LinePlot::save()
+{
+    json d;
+    d["type"] = "line";
+    d["dim"] = m_dim;
+    return d;
+}
+
+void LinePlot::restore(const DataSetPtr & dataset, const json & options)
+{
+    int dim = options.at("dim");
+    setDataSet(dataset, dim);
+}
+
 void LinePlot::setDataSet(DataSetPtr dataset)
 {
     setDataSet(dataset, 0);

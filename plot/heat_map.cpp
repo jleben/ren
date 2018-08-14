@@ -15,6 +15,22 @@ HeatMap::HeatMap(QObject * parent):
     Plot(parent)
 {}
 
+json HeatMap::save()
+{
+    json d;
+    d["type"] = "heat_map";
+    d["x_dim"] = m_dim[0];
+    d["y_dim"] = m_dim[1];
+    return d;
+}
+
+void HeatMap::restore(const DataSetPtr & dataset, const json & options)
+{
+    int x_dim = options.at("x_dim");
+    int y_dim = options.at("y_dim");
+    setDataSet(dataset, { x_dim, y_dim });
+}
+
 void HeatMap::setDataSet(DataSetPtr dataset)
 {
     setDataSet(dataset, { 0, 1 });

@@ -2,6 +2,7 @@
 
 #include "../data/math.hpp"
 #include "../data/data_set.hpp"
+#include "../json/json.hpp"
 
 #include <QObject>
 #include <QPainter>
@@ -14,6 +15,7 @@ namespace datavis {
 
 using std::vector;
 using std::tuple;
+using nlohmann::json;
 
 class Selector;
 class PlotView;
@@ -44,6 +46,9 @@ public:
     virtual Range yRange() = 0;
     virtual void plot(QPainter *, const Mapping2d &, const QRectF & region) = 0;
     virtual tuple<vector<double>, vector<double>> dataLocation(const QPointF & point) = 0;
+
+    virtual json save() { return {}; }
+    virtual void restore(const DataSetPtr &, const json &) {}
 
 signals:
     void xRangeChanged();

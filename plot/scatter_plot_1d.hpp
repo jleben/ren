@@ -34,6 +34,9 @@ public:
     virtual tuple<vector<double>, vector<double>> dataLocation(const QPointF & point) override;
     virtual void plot(QPainter *,  const Mapping2d &, const QRectF & region) override;
 
+    virtual json save() override;
+    virtual void restore(const DataSetPtr &, const json &) override;
+
 public:
     Range find_range();
     double value(int dim, const array_region<double>::iterator &);

@@ -36,6 +36,9 @@ public:
 
     virtual void plot(QPainter *,  const Mapping2d &, const QRectF & region) override;
 
+    virtual json save() override;
+    virtual void restore(const DataSetPtr &, const json &) override;
+
 private:
     void onSelectionChanged();
     bool update_selected_region();

@@ -73,6 +73,9 @@ TextSource::TextSource(const string & file_path, DataLibrary * lib):
         }
     }
 #endif
+
+    dataset->setSource(this);
+
     m_dataset = dataset;
 }
 

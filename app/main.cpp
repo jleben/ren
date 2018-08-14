@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     if (args.size() > 1)
     {
         file_path = args[1];
-        if (file_path.endsWith(".datavis"))
+        if (file_path.endsWith(".json"))
         {
             file_type = Project_File_Type;
         }
@@ -39,6 +39,8 @@ int main(int argc, char *argv[])
     }
 
     auto main_win = new MainWindow;
+    main_win->resize(400,500);
+    main_win->move(50,50);
 
     if (!file_path.isEmpty())
     {
@@ -63,8 +65,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    main_win->resize(400,500);
-    main_win->move(50,50);
     main_win->show();
 
     int status = app.exec();

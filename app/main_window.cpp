@@ -6,9 +6,14 @@
 #include "../plot/plot_view.hpp"
 #include "../plot/line_plot.hpp"
 #include "../plot/heat_map.hpp"
+#include "../plot/scatter_plot_1d.hpp"
 #include "../plot/scatter_plot_2d.hpp"
 #include "../io/hdf5.hpp"
+#include "../json/json.hpp"
+#include "../json/utils.hpp"
+#include "../utility/error.hpp"
 #include <project/project.pb.h>
+#include <sstream>
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -456,55 +461,73 @@ void MainWindow::saveProject()
         return;
     }
 
-    datavis::project::Project project_data;
+    bool has_errors = false;
+
+    json project_json;
+
+    project_json["main_window_position"] << geometry();
+
+    auto & sources_json = project_json["sources"];
 
     for (int source_idx = 0; source_idx < m_lib->sourceCount(); ++source_idx)
     {
         auto source = m_lib->source(source_idx);
 
-        auto source_data = project_data.add_source();
-        source_data->set_path(source->id());
+        json source_json;
+        source_json["path"] = source->id();
+
+        sources_json.push_back(source_json);
     }
+
+    auto & plot_views_json = project_json["views"];
 
     for (auto plot_view : m_plot_views)
     {
-        auto plot_view_data = project_data.add_plot_view();
+        json plot_view_json;
 
         auto geometry = plot_view->geometry();
-
-        auto pos_data = plot_view_data->mutable_position();
-        pos_data->set_x(geometry.x());
-        pos_data->set_y(geometry.y());
-        pos_data->set_width(geometry.width());
-        pos_data->set_height(geometry.height());
+        plot_view_json["position"] << geometry;
 
         for (auto plot : plot_view->plots())
         {
-            auto plot_data = plot_view_data->add_plot();
-
             auto data_set = plot->dataSet();
 
-            plot_data->set_data_source(data_set->source()->id());
-            plot_data->set_data_set(data_set->id());
+            json plot_json;
+            plot_json["data_source"] = data_set->source()->id();
+            plot_json["data_set"] = data_set->id();
 
-            if (auto line = dynamic_cast<LinePlot*>(plot))
-            {
-                plot_data->add_dimension(line->dimension());
+            try {
+                plot_json["options"] = plot->save();
+            } catch (json::exception & e) {
+                cerr << "Failed to save plot: "
+                     << data_set->source()->id() << " : " << data_set->id()
+                     << endl;
+                has_errors = true;
+                continue;
             }
-            else if (auto map = dynamic_cast<HeatMap*>(plot))
-            {
-                auto dims = map->dimensions();
-                for (auto & dim : dims)
-                    plot_data->add_dimension(dim);
-            }
+
+            plot_view_json["plots"].push_back(plot_json);
         }
+
+        plot_views_json.push_back(plot_view_json);
     }
 
-    if (!project_data.SerializeToOstream(&file))
+    try
+    {
+        file << std::setw(4) << project_json << endl;
+    }
+    catch (json::exception & e)
     {
         QMessageBox::warning(this, "Save Project Failed",
-                             "Failed to save the project"
-                             " because the data could not be written.");
+                             QString("Failed to save the project: ")
+                             + e.what());
+        return;
+    }
+
+    if (has_errors)
+    {
+        QMessageBox::warning(this, "Save Project",
+                             QString("Something went wrong when saving one of the plots."));
         return;
     }
 }
@@ -531,74 +554,144 @@ void MainWindow::openProjectFile(const QString & file_path)
         return;
     }
 
-    datavis::project::Project project_data;
+    json project_json;
 
-    if (!project_data.ParseFromIstream(&file))
+    try
     {
-        QMessageBox::warning(this, "Open Project Failed",
-                             "Failed to parse the project file:\n"
-                             + file_path);
+        file >> project_json;
+    }
+    catch (json::exception & e)
+    {
+        QMessageBox::warning(this, "Open Project",
+                             QString("Failed to read the project file: ")
+                             + e.what());
         return;
     }
 
-    for (auto & source_data : project_data.source())
-    {
-        auto file_path = QString::fromStdString(source_data.path());
+    bool has_errors = false;
 
-        m_lib->open(file_path);
-    }
-
-    for (auto & plot_view_data : project_data.plot_view())
+    try
     {
         QRect geometry;
-        geometry.setX(plot_view_data.position().x());
-        geometry.setY(plot_view_data.position().y());
-        geometry.setWidth(plot_view_data.position().width());
-        geometry.setHeight(plot_view_data.position().height());
+        project_json.at("main_window_position") >> geometry;
+        setGeometry(geometry);
+    }
+    catch (json::exception & e) { has_errors = true; }
 
-        auto plot_view = addPlotView();
-        plot_view->setGeometry(geometry);
-
-        m_selected_plot_view = plot_view;
-
-        for (auto & plot_data : plot_view_data.plot())
+    try
+    {
+        for (auto & source_json : project_json.at("sources"))
         {
-            auto source_path = plot_data.data_source();
-            DataSource * source = m_lib->source(QString::fromStdString(source_path));
-            if (!source)
+            try
             {
-                cerr << "Failed to find data source: " << source_path << endl;
-                continue;
+                string path = source_json.at("path");
+                m_lib->open(QString::fromStdString(path));
             }
-
-            auto set_id = plot_data.data_set();
-
-            int set_index = -1;
-
-            for (int i = 0; i < source->count(); ++i)
-            {
-                auto info = source->info(i);
-                if (info.id == set_id)
-                {
-                    set_index = i;
-                    break;
-                }
-            }
-
-            if (set_index < 0)
-            {
-                cerr << "Failed to find data set " << set_id
-                     << " in source " << source_path << endl;
-                continue;
-            }
-
-            vector<int> dimensions;
-            for (auto dim : plot_data.dimension())
-                dimensions.push_back(dim);
-
-            plot(source, set_index, dimensions);
+            catch (json::exception &) { has_errors = true; }
         }
     }
+    catch (json::exception &) { has_errors = true; }
+
+    try
+    {
+        for (auto & plot_view_json : project_json.at("views"))
+        {
+            auto plot_view = addPlotView();
+
+            try
+            {
+                QRect geometry;
+                plot_view_json.at("position") >> geometry;
+                plot_view->setGeometry(geometry);
+            }
+            catch (json::exception &) { has_errors = true; }
+
+            m_selected_plot_view = plot_view;
+
+            for (auto & plot_json : plot_view_json.at("plots"))
+            {
+                try
+                {
+                    restorePlot(plot_view, plot_json);
+                }
+                catch(json::exception &) { has_errors = true; }
+                catch(Error &) { has_errors = true; }
+            }
+        }
+    }
+    catch (json::exception & e)
+    {
+        has_errors = true;
+    }
+
+    if (has_errors)
+    {
+        QMessageBox::warning(this, "Open Project",
+                             QString("Something went wrong while restoring plots."));
+    }
+}
+
+void MainWindow::restorePlot(PlotView * view, const json & state)
+{
+    string plot_type = state.at("options").at("type");
+
+    string source_path = state.at("data_source");
+    DataSource * source = m_lib->source(QString::fromStdString(source_path));
+    if (!source)
+    {
+        throw Error(string("Failed to find data source: ") + source_path);
+    }
+
+    auto dataset_id = state.at("data_set");
+    int dataset_index = source->index(dataset_id);
+    if (dataset_index < 0)
+    {
+        Error e;
+        e.reason() << "Failed to find data set " << dataset_id
+                   << " in source " << source_path;
+        throw e;
+    }
+
+    DataSetPtr data;
+    try {
+        data = source->dataset(dataset_index);
+    } catch (...) {
+        Error e;
+        e.reason() << "Failed to get dataset "
+                   << source_path << " : " << dataset_id << endl;
+        throw e;
+    }
+
+    Plot * plot = nullptr;
+
+    if (plot_type == "line")
+    {
+        plot = new LinePlot;
+    }
+    else if (plot_type == "heat_map")
+    {
+        plot = new HeatMap;
+    }
+    else if (plot_type == "scatter_1d")
+    {
+        plot = new ScatterPlot1d;
+    }
+    else if (plot_type == "scatter_2d")
+    {
+        plot = new ScatterPlot2d;
+    }
+
+    try
+    {
+        plot->restore(data, state.at("options"));
+    }
+    catch (json::exception &)
+    {
+        delete plot;
+        throw Error("Invalid plot state.");
+    }
+
+    view->addPlot(plot);
 }
 
 }
