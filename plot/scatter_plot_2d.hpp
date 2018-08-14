@@ -18,9 +18,17 @@ class ScatterPlot2d : public Plot
     Q_OBJECT
 
 public:
+    enum Mark
+    {
+        Dot,
+        Line
+    };
+
     ScatterPlot2d(QObject * parent = 0);
 
     void setData(DataSetPtr data, int xDim, int yDim);
+    void setShowDot(bool value);
+    void setShowLine(bool value);
 
     DataSetPtr dataSet() override { return m_dataset; }
     virtual bool isEmpty() const override { return !m_dataset; }
@@ -37,6 +45,8 @@ public:
     DataSetPtr m_dataset = nullptr;
     int m_x_dim;
     int m_y_dim;
+    bool m_show_dot;
+    bool m_show_line;
     Range m_x_range;
     Range m_y_range;
     vector<Point2d> m_points;

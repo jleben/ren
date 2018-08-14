@@ -22,6 +22,16 @@ void ScatterPlot2d::setData(DataSetPtr data, int xDim, int yDim)
     make_points();
 }
 
+void ScatterPlot2d::setShowDot(bool value)
+{
+    m_show_dot = value;
+}
+
+void ScatterPlot2d::setShowLine(bool value)
+{
+    m_show_line = value;
+}
+
 void ScatterPlot2d::make_points()
 {
     auto data_region = get_region(*m_dataset->data(),
@@ -137,17 +147,39 @@ void ScatterPlot2d::plot(QPainter * painter,  const Mapping2d & view_map, const 
     }
 #endif
 
-#if 1
+    if (m_points.empty())
+        return;
+
     QColor c;
 
-    for (auto & point : m_points)
+    if (m_show_line)
     {
-        auto p = view_map * point;
+        painter->setPen(c);
+        painter->setRenderHint(QPainter::Antialiasing, true);
 
-        QRectF r(p.x - 2, p.y - 2, 4, 4);
-        painter->fillRect(r, c);
+        auto p = view_map * m_points[0];
+
+        QPainterPath path;
+        path.moveTo(p.x, p.y);
+
+        for (int i = 1; i < m_points.size(); ++i)
+        {
+            auto p = view_map * m_points[i];
+            path.lineTo(p.x, p.y);
+        }
+
+        painter->drawPath(path);
     }
-#endif
+
+    if (m_show_dot)
+    {
+        for (auto & point : m_points)
+        {
+            auto p = view_map * point;
+            QRectF r(p.x - 2, p.y - 2, 4, 4);
+            painter->fillRect(r, c);
+        }
+    }
 }
 
 }

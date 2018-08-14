@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <QListWidget>
 #include <QComboBox>
+#include <QCheckBox>
 #include <QStackedLayout>
 
 namespace datavis {
@@ -76,6 +77,8 @@ public:
 private:
     QComboBox * m_x_source = nullptr;
     QComboBox * m_y_source = nullptr;
+    QCheckBox * m_dots = nullptr;
+    QCheckBox * m_line = nullptr;
 };
 
 }

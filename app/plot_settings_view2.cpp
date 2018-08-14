@@ -162,16 +162,20 @@ ScatterPlot2dSettings::ScatterPlot2dSettings(const DataSetInfo & info, QWidget *
 
     m_x_source = new QComboBox;
     m_y_source = new QComboBox;
-
     m_y_source->setModel(m_x_source->model());
+    m_dots = new QCheckBox;
+    m_line = new QCheckBox;
 
     fillAttributes(m_x_source);
 
     form->addRow(new QLabel("X:"), m_x_source);
     form->addRow(new QLabel("Y:"), m_y_source);
+    form->addRow(new QLabel("Dots:"), m_dots);
+    form->addRow(new QLabel("Line:"), m_line);
 
     m_x_source->setCurrentIndex(0);
     m_y_source->setCurrentIndex(1);
+    m_dots->setChecked(true);
 }
 
 Plot * ScatterPlot2dSettings::makePlot(const DataSetPtr & dataset)
@@ -180,6 +184,8 @@ Plot * ScatterPlot2dSettings::makePlot(const DataSetPtr & dataset)
     int x = m_x_source->currentIndex() + dataset->dimensionCount();
     int y = m_y_source->currentIndex() + dataset->dimensionCount();
     plot->setData(dataset, x, y);
+    plot->setShowDot(m_dots->isChecked());
+    plot->setShowLine(m_line->isChecked());
     return plot;
 }
 
