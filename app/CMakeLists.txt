@@ -20,6 +20,7 @@ set(app_src
   main_window.cpp
   ../io/hdf5.cpp
   ../io/text.cpp
+  ../io/sndfile.cpp
   ../data/data_set.cpp
   ../data/data_library.cpp
   ../data/dimension.cpp
@@ -28,5 +29,5 @@ set(app_src
 
 add_executable(datavis ${app_src})
 
-target_link_libraries(datavis datavis_project Qt5::Widgets hdf5_cpp hdf5 protobuf)
+target_link_libraries(datavis datavis_project Qt5::Widgets hdf5_cpp hdf5 protobuf sndfile)
 

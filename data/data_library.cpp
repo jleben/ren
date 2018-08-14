@@ -1,6 +1,7 @@
 #include "data_library.hpp"
 #include "../io/hdf5.hpp"
 #include "../io/text.hpp"
+#include "../io/sndfile.hpp"
 
 #include <algorithm>
 
@@ -14,12 +15,25 @@ void DataLibrary::open(const QString & path)
 {
     DataSource * source = nullptr;
 
+    auto std_path = path.toStdString();
+
     try
     {
         if (path.endsWith(".h5"))
-            source = new Hdf5Source(path.toStdString(), this);
+        {
+            cerr << "Opening data file " << std_path << " as HDF5." << endl;
+            source = new Hdf5Source(std_path, this);
+        }
+        else if (path.endsWith(".wav"))
+        {
+            cerr << "Opening data file " << std_path << " as sound." << endl;
+            source = new SoundFileSource(std_path, this);
+        }
         else
-            source = new TextSource(path.toStdString(), this);
+        {
+            cerr << "Opening data file " << std_path << " as text." << endl;
+            source = new TextSource(std_path, this);
+        }
     }
     catch (std::runtime_error & e)
     {
