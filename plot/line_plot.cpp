@@ -176,11 +176,24 @@ void LinePlot::findEntireValueRange()
 
     auto region = get_all(*m_dataset->data());
 
-    auto min_it = std::min_element(region.begin(), region.end());
-    auto max_it = std::max_element(region.begin(), region.end());
+    double min = 0;
+    double max = 0;
 
-    m_value_range.min = min_it.value();
-    m_value_range.max = max_it.value();
+    auto it = region.begin();
+    if (it != region.end())
+    {
+        min = max = it.value();
+    }
+
+    for(; it != region.end(); ++it)
+    {
+        double v = it.value();
+        min = std::min(min, v);
+        max = std::max(max, v);
+    }
+
+    m_value_range.min = min;
+    m_value_range.max = max;
 }
 
 void LinePlot::update_selected_region()
