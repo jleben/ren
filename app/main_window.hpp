@@ -35,8 +35,11 @@ public:
     void openDataFile(const QString & file_path);
 
     void saveProject();
+    void saveProjectAs();
+    void saveProjectFile(const QString & path);
     void openProject();
     void openProjectFile(const QString & file_path);
+    void closeProject();
 
 protected:
     virtual void dragEnterEvent(QDragEnterEvent *event);
@@ -56,6 +59,7 @@ private:
     bool eventFilter(QObject*, QEvent*) override;
     void showPlotContextMenu(Plot*, const QPoint & pos);
 
+    QString m_project_file_path;
 
     DataLibrary * m_lib = nullptr;
     DataLibraryView * m_lib_view = nullptr;

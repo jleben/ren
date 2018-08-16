@@ -63,7 +63,21 @@ void DataLibrary::close(DataSource * source)
     if (pos == m_sources.end())
         return;
 
+    delete *pos;
+
     m_sources.erase(pos);
+
+    updateDimensions();
+
+    emit sourcesChanged();
+}
+
+void DataLibrary::closeAll()
+{
+    for(DataSource * source : m_sources)
+        delete source;
+
+    m_sources.clear();
 
     updateDimensions();
 

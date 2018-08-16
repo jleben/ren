@@ -93,9 +93,19 @@ void MainWindow::makeMenu()
                 this, &MainWindow::openProject);
     }
     {
-        auto action = fileMenu->addAction("Save Project...");
+        auto action = fileMenu->addAction("Save Project");
         connect(action, &QAction::triggered,
                 this, &MainWindow::saveProject);
+    }
+    {
+        auto action = fileMenu->addAction("Save Project As...");
+        connect(action, &QAction::triggered,
+                this, &MainWindow::saveProjectAs);
+    }
+    {
+        auto action = fileMenu->addAction("Close Project.");
+        connect(action, &QAction::triggered,
+                this, &MainWindow::closeProject);
     }
     {
         auto action = fileMenu->addAction("Open Data...");
@@ -339,12 +349,33 @@ bool MainWindow::eventFilter(QObject * object, QEvent * event)
 
 void MainWindow::saveProject()
 {
+    if (m_project_file_path.isEmpty())
+    {
+        saveProjectAs();
+    }
+    else
+    {
+        saveProjectFile(m_project_file_path);
+    }
+}
+
+void MainWindow::saveProjectAs()
+{
     auto file_path = QFileDialog::getSaveFileName(this, "Save Project");
 
     if (file_path.isEmpty())
         return;
 
-    ofstream file(file_path.toStdString());
+    m_project_file_path = file_path;
+
+    qDebug() << "Setting project file path: " << file_path;
+
+    saveProjectFile(file_path);
+}
+
+void MainWindow::saveProjectFile(const QString & path)
+{
+    ofstream file(path.toStdString());
     if (!file.is_open())
     {
         QMessageBox::warning(this, "Save Project Failed",
@@ -421,6 +452,10 @@ void MainWindow::saveProject()
         QMessageBox::warning(this, "Save Project",
                              QString("Something went wrong when saving one of the plots."));
         return;
+    }
+    else
+    {
+        QMessageBox::information(this, "Save Project", "Project saved successfully.");
     }
 }
 
@@ -521,6 +556,11 @@ void MainWindow::openProjectFile(const QString & file_path)
         QMessageBox::warning(this, "Open Project",
                              QString("Something went wrong while restoring plots."));
     }
+    else
+    {
+        qDebug() << "Setting project file path: " << file_path;
+        m_project_file_path = file_path;
+    }
 }
 
 void MainWindow::restorePlot(PlotView * view, const json & state)
@@ -584,6 +624,32 @@ void MainWindow::restorePlot(PlotView * view, const json & state)
     }
 
     view->addPlot(plot);
+}
+
+void MainWindow::closeProject()
+{
+    auto msg = QString("Would you like to save the project before closing?");
+    auto button = QMessageBox::question(this, "Close Project",
+                                        msg, QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+    if (button == QMessageBox::Cancel)
+        return;
+
+    if (button == QMessageBox::Yes)
+        saveProject();
+
+    m_selected_plot = nullptr;
+    m_selected_plot_view = nullptr;
+
+    for (PlotView * view : m_plot_views)
+    {
+        delete view;
+    }
+
+    m_plot_views.clear();
+
+    m_lib->closeAll();
+
+    m_project_file_path.clear();
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)

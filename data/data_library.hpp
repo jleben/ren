@@ -27,6 +27,7 @@ public:
     DataLibrary(QObject * parent = 0);
     void open(const QString & path);
     void close(DataSource * source);
+    void closeAll();
     int sourceCount() const { return m_sources.size(); }
     DataSource * source(int index) { return m_sources[index]; }
     DataSource * source(const QString & path);
