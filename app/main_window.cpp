@@ -182,6 +182,7 @@ void MainWindow::plotSelectedObject()
 PlotView * MainWindow::addPlotView()
 {
     auto view = new PlotView;
+    view->setAcceptDrops(true);
     view->installEventFilter(this);
 
     m_plot_views.push_back(view);
@@ -339,6 +340,36 @@ bool MainWindow::eventFilter(QObject * object, QEvent * event)
         {
             removePlotView(plot_view);
             return false;
+        }
+        case QEvent::DragEnter:
+        {
+            auto drag_event = static_cast<QDragEnterEvent*>(event);
+            auto data = drag_event->mimeData();
+            if (qobject_cast<const DraggedDatasets*>(data))
+            {
+                drag_event->acceptProposedAction();
+                return true;
+            }
+            break;
+        }
+        case QEvent::Drop:
+        {
+            auto drop_event = static_cast<QDropEvent*>(event);
+
+            auto data = qobject_cast<const DraggedDatasets*>(drop_event->mimeData());
+            if (data)
+            {
+                m_selected_plot_view = plot_view;
+                for (auto & item : data->items)
+                {
+                    auto source = m_lib->source(QString::fromStdString(item.sourceId));
+                    if (!source) continue;
+                    plot(source, item.datasetIndex);
+                }
+                drop_event->acceptProposedAction();
+                return true;
+            }
+            break;
         }
         default:;
         }

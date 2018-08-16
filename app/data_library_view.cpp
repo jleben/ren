@@ -14,7 +14,8 @@ namespace datavis {
 DataLibraryView::DataLibraryView(QWidget * parent):
     QWidget(parent)
 {
-    m_lib_tree = new QTreeWidget;
+    m_lib_tree = new DataSetTree;
+    m_lib_tree->setDragEnabled(true);
 
     m_lib_tree->setHeaderLabels(QStringList() << "Name" << "Size");
     m_lib_tree->header()->setSectionHidden(1,true);
@@ -157,6 +158,33 @@ int DataLibraryView::selectedDatasetIndex()
         return -1;
 
     return parent->indexOfChild(item);
+}
+
+QMimeData * DataSetTree::mimeData(const QList<QTreeWidgetItem *> items) const
+{
+    vector<DraggedDatasets::Item> data_items;
+
+    for (auto item : items)
+    {
+        auto source_item = item->parent();
+        if (!source_item)
+            continue;
+
+        auto source = source_item->data(0, Qt::UserRole).value<DataSource*>();
+        auto index = source_item->indexOfChild(item);
+
+        DraggedDatasets::Item data_item;
+        data_item.sourceId = source->id();
+        data_item.datasetIndex = index;
+        data_items.push_back(data_item);
+    }
+
+    if (data_items.empty())
+        return nullptr;
+
+    auto data = new DraggedDatasets;
+    data->items = data_items;
+    return data;
 }
 
 }
