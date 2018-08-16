@@ -626,13 +626,13 @@ void MainWindow::restorePlot(PlotView * view, const json & state)
     view->addPlot(plot);
 }
 
-void MainWindow::closeProject()
+bool MainWindow::closeProject()
 {
     auto msg = QString("Would you like to save the project before closing?");
     auto button = QMessageBox::question(this, "Close Project",
                                         msg, QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
     if (button == QMessageBox::Cancel)
-        return;
+        return false;
 
     if (button == QMessageBox::Yes)
         saveProject();
@@ -650,6 +650,8 @@ void MainWindow::closeProject()
     m_lib->closeAll();
 
     m_project_file_path.clear();
+
+    return true;
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
@@ -678,6 +680,15 @@ void MainWindow::dropEvent(QDropEvent *event)
     }
 
     event->acceptProposedAction();
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    bool closed = closeProject();
+    if (closed)
+        event->accept();
+    else
+        event->ignore();
 }
 
 }

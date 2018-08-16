@@ -39,11 +39,12 @@ public:
     void saveProjectFile(const QString & path);
     void openProject();
     void openProjectFile(const QString & file_path);
-    void closeProject();
+    bool closeProject();
 
 protected:
     virtual void dragEnterEvent(QDragEnterEvent *event);
     virtual void dropEvent(QDropEvent *event);
+    virtual void closeEvent(QCloseEvent *event);
 
 private:
     void makeMenu();
