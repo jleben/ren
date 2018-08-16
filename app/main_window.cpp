@@ -28,6 +28,7 @@
 #include <QMenu>
 #include <QDialog>
 #include <QDialogButtonBox>
+#include <QMimeData>
 
 #include <fstream>
 
@@ -75,6 +76,8 @@ MainWindow::MainWindow(QWidget * parent):
             this, &MainWindow::onSelectedDataChanged);
 
     makeMenu();
+
+    setAcceptDrops(true);
 }
 
 void MainWindow::makeMenu()
@@ -106,6 +109,18 @@ void MainWindow::makeMenu()
         action->setShortcut(QKeySequence::Quit);
         connect(action, &QAction::triggered,
                 this, &MainWindow::close);
+    }
+}
+
+void MainWindow::openFile(const QString & path)
+{
+    if (path.endsWith(".json"))
+    {
+        openProjectFile(path);
+    }
+    else
+    {
+        openDataFile(path);
     }
 }
 
@@ -569,6 +584,34 @@ void MainWindow::restorePlot(PlotView * view, const json & state)
     }
 
     view->addPlot(plot);
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasUrls())
+        event->acceptProposedAction();
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    auto urls = event->mimeData()->urls();
+
+    for (auto & url : urls)
+    {
+        if (url.isLocalFile())
+        {
+            auto path = url.toLocalFile();
+            openFile(path);
+        }
+        else
+        {
+            QMessageBox::warning(this, "Open Failed",
+                                 QString("The URL is not a local file:\n")
+                                 + url.toString());
+        }
+    }
+
+    event->acceptProposedAction();
 }
 
 }

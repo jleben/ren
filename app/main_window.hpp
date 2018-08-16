@@ -29,12 +29,18 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget * parent = 0);
 
+    void openFile(const QString & path);
+
     void openData();
     void openDataFile(const QString & file_path);
 
     void saveProject();
     void openProject();
     void openProjectFile(const QString & file_path);
+
+protected:
+    virtual void dragEnterEvent(QDragEnterEvent *event);
+    virtual void dropEvent(QDropEvent *event);
 
 private:
     void makeMenu();
