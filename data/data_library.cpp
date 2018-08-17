@@ -5,6 +5,8 @@
 
 #include <algorithm>
 
+#include <QFileInfo>
+
 namespace datavis {
 
 DataLibrary::DataLibrary(QObject * parent):
@@ -19,7 +21,13 @@ void DataLibrary::open(const QString & path)
 
     try
     {
-        if (path.endsWith(".h5"))
+        QFileInfo info(path);
+        if (info.isDir() && QFile::exists(path + "/datapackage.json"))
+        {
+            cerr << "Opening dir " << std_path << " as Data Package." << endl;
+            source = new TextPackageSource(std_path, this);
+        }
+        else if (path.endsWith(".h5"))
         {
             cerr << "Opening data file " << std_path << " as HDF5." << endl;
             source = new Hdf5Source(std_path, this);

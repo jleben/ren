@@ -1,0 +1,50 @@
+{
+    "resources":
+    [
+        {
+            "path": "data1.txt",
+            "dimensions":
+            [
+                {
+                    "name": "time",
+                    "size": 5,
+                    "scale": 100,
+                    "offset": 500
+                }
+            ],
+            "fields":
+            [
+                { "name": "x" },
+                { "name": "y" }
+            ]
+        },
+        {
+            "path": "data2.txt",
+            "dimensions":
+            [
+                {
+                    "name": "time",
+                    "size": 5,
+                    "scale": 100,
+                    "offset": 500
+                }
+            ],
+            "fields":
+            [
+                { "name": "x" },
+                { "name": "y" }
+            ],
+            "format":
+            {
+                "delimiter": "|",
+                "quoted": true,
+                "quote_mark": "'"
+            }
+        },
+        {
+            "path": "data3.txt",
+            "dimensions": [ { "size": 5 }, { "size": 3 } ],
+            "fields": [ { }, { } ]
+        }
+    ]
+}

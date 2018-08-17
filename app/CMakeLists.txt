@@ -29,5 +29,5 @@ set(app_src
 
 add_executable(datavis ${app_src})
 
-target_link_libraries(datavis datavis_project Qt5::Widgets hdf5_cpp hdf5 protobuf sndfile)
+target_link_libraries(datavis ${datavis_linked_libs})
 

@@ -241,10 +241,11 @@ void MainWindow::plot(DataSource * source, int index)
     DataSetPtr data;
     try {
         data = source->dataset(index);
-    } catch (...) {
+    }
+    catch (std::exception & e) {
         QMessageBox::warning(this, "Read Failed",
-                             QString("Failed to read data for object %1.")
-                             .arg(data->id().c_str()));
+                             QString("Failed to read data for dataset index %1:\n%2")
+                             .arg(index).arg(e.what()));
         return;
     }
 
