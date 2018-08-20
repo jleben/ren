@@ -372,12 +372,12 @@ void LinePlot::plot(QPainter * painter,  const Mapping2d & transform, const QRec
     auto dim = m_dataset->dimension(m_dim);
 
     int region_start = int(region.x() / dim.map);
-    int region_size = int(region.width() / dim.map);
+    int region_end = int((region.x() + region.width()) / dim.map);
+    int region_size = region_end - region_start + 1;
 
     region_start = std::max(region_start, m_start);
     region_size = std::min(region_size, m_end - m_start);
 
-    //cout << "Region: " << region_start << " + " << region_size << endl;
     if (region_size <= 0)
         return;
 
