@@ -148,11 +148,16 @@ void MainWindow::openDataFile(const QString & file_path)
     m_lib->open(file_path);
 }
 
-void MainWindow::onOpenFailed(const QString & path)
+void MainWindow::onOpenFailed(const QString & path, const QString & reason)
 {
-    QMessageBox::warning(this, "Open Failed",
-                         QString("Failed to open file:\n")
-                         + path);
+    auto message = QString("Failed to open file:\n") + path;
+    if (!reason.isEmpty())
+    {
+        message += "\n\n";
+        message += reason;
+    }
+
+    QMessageBox::warning(this, "Open Failed", message);
 }
 
 void MainWindow::onSelectedDataChanged()

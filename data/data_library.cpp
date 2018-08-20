@@ -35,10 +35,10 @@ void DataLibrary::open(const QString & path)
             source = new TextSource(std_path, this);
         }
     }
-    catch (std::runtime_error & e)
+    catch (std::exception & e)
     {
         cerr << "ERROR: Failed to open file " << path.toStdString() << ": " << e.what() << endl;
-        emit openFailed(path);
+        emit openFailed(path, QString::fromStdString(e.what()));
         return;
     }
     catch (...)

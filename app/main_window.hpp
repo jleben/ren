@@ -48,7 +48,7 @@ protected:
 
 private:
     void makeMenu();
-    void onOpenFailed(const QString & path);
+    void onOpenFailed(const QString & path, const QString & reason);
     void onSelectedDataChanged();
     bool hasSelectedObject();
     void plotSelectedObject();

@@ -36,7 +36,7 @@ public:
 
 signals:
     void sourcesChanged();
-    void openFailed(const QString & path);
+    void openFailed(const QString & path, const QString & reason = QString());
 
 private:
     void updateDimensions();
