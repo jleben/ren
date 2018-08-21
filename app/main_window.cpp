@@ -228,11 +228,9 @@ void MainWindow::plot(DataSource * source, int index)
     connect(buttons, &QDialogButtonBox::rejected,
             dialog, &QDialog::reject);
 
-    bool ok = false;
-
-    vector<int> selected_dimensions;
-
-    dialog->exec();
+    auto result = dialog->exec();
+    if (result != QDialog::Accepted)
+        return;
 
     cout << "Reading dataset." << endl;
 
