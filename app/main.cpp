@@ -20,8 +20,12 @@ int main(int argc, char *argv[])
     }
 
     auto main_win = new MainWindow;
-    main_win->resize(400,500);
-    main_win->move(50,50);
+
+    {
+        auto fm = main_win->fontMetrics();
+        main_win->resize(fm.averageCharWidth() * 50, fm.height() * 30);
+        main_win->move(50,50);
+    }
 
     if (!file_path.isEmpty())
     {
