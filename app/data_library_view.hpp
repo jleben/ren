@@ -10,6 +10,7 @@ namespace datavis {
 
 class DataLibrary;
 class DataSource;
+class DataInfoView;
 
 using std::vector;
 using std::string;
@@ -45,10 +46,12 @@ signals:
 private:
     void updateLibraryTree();
     void updateDimTree();
+    void updateDataInfo();
 
     DataLibrary * m_lib = nullptr;
     QTreeWidget * m_lib_tree = nullptr;
     QTreeWidget * m_dim_tree = nullptr;
+    DataInfoView * m_dataset_info = nullptr;
 };
 
 class DataSetTree : public QTreeWidget

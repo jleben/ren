@@ -13,6 +13,7 @@ set(plot_src
 set(app_src
   main.cpp
   data_library_view.cpp
+  data_info_view.cpp
   color_box.cpp
   settings_view.cpp
   plot_data_settings_view.cpp

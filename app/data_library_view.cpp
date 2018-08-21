@@ -1,4 +1,5 @@
 #include "data_library_view.hpp"
+#include "data_info_view.hpp"
 #include "../data/data_library.hpp"
 #include "../data/data_source.hpp"
 
@@ -20,15 +21,20 @@ DataLibraryView::DataLibraryView(QWidget * parent):
     m_lib_tree->setHeaderLabels(QStringList() << "Name" << "Size");
     m_lib_tree->header()->setSectionHidden(1,true);
 
+    m_dataset_info = new DataInfoView;
+
     m_dim_tree = new QTreeWidget;
     m_dim_tree->setHeaderLabels(QStringList() << "Name" << "Range");
 
     auto layout = new QVBoxLayout(this);
     layout->addWidget(m_lib_tree);
+    layout->addWidget(m_dataset_info);
     layout->addWidget(m_dim_tree);
 
     connect(m_lib_tree, &QTreeWidget::currentItemChanged,
             this, &DataLibraryView::selectionChanged);
+    connect(m_lib_tree, &QTreeWidget::currentItemChanged,
+            this, &DataLibraryView::updateDataInfo);
 }
 
 void DataLibraryView::setLibrary(DataLibrary * lib)
@@ -133,6 +139,17 @@ void DataLibraryView::updateDimTree()
 
         m_dim_tree->addTopLevelItem(item);
     }
+}
+
+void DataLibraryView::updateDataInfo()
+{
+    auto source = selectedSource();
+    int index = selectedDatasetIndex();
+
+    if (source == nullptr || index < 0)
+        m_dataset_info->setInfo(DataSetInfo());
+    else
+        m_dataset_info->setInfo(source->info(index));
 }
 
 DataSource * DataLibraryView::selectedSource()
