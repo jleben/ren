@@ -5,7 +5,7 @@ Datavis is an application for visual exploration of numerical data. Rather than 
 
 On the more technical side, the goals of this software are:
 
-- Load numerical data from a variety of input formats.
+- Load numerical data from a variety of input formats (currently: `HDF5`_, `Data Package`_, `sound files`_)
 - Represent data with a simple, generic and intuitive data model.
 - Visualize data in a variety of ways, with an intuitive mapping between the data model and the visualization.
 - Navigate over the visualization quickly and efficiently (zooming, scrolling, etc.)
@@ -19,3 +19,7 @@ Here is a screenshot of Datavis in action - exploring and comparing data streams
 
 .. image:: doc/screenshot.png
     :width: 20cm
+
+.. _HDF5: https://portal.hdfgroup.org/display/HDF5/HDF5
+.. _Data Package: http://frictionlessdata.io/docs/data-package/
+.. _sound files: http://www.mega-nerd.com/libsndfile/#Features
