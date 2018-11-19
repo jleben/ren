@@ -15,7 +15,7 @@ On the more technical side, the goals of this software are:
 
 This project is still in an early stage of development. A lot of work remains to be done to meet these goals. To start with, the application needs a better name :).
 
-A screenshot of Datavis in action:
+A screenshot of Datavis in action - exploring and comparing data streams at different stages of extracting musical section from audio:
 
 .. image:: doc/screenshot.png
     :width: 20cm
