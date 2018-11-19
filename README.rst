@@ -13,7 +13,7 @@ On the more technical side, the goals of this software are:
 - Update visualization with new data easily.
 - Handle large data sets efficiently.
 
-This project is still in an early stage of development. A lot of work remains to be done to meet these goals.
+This project is still in an early stage of development. A lot of work remains to be done to meet these goals. To start with, the application needs a better name :).
 
 A screenshot of Datavis in action:
 
