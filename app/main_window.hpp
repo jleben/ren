@@ -18,6 +18,7 @@ using nlohmann::json;
 
 class DataSet;
 class PlotView;
+class PlotGridView;
 class Plot;
 class LinePlot;
 class DataLibrary;
@@ -52,10 +53,10 @@ private:
     void onSelectedDataChanged();
     bool hasSelectedObject();
     void plotSelectedObject();
-    PlotView * addPlotView();
-    void removePlotView(PlotView*);
+    PlotGridView * addPlotView();
+    void removePlotView(PlotGridView*);
     void plot(DataSource *, int index);
-    void restorePlot(PlotView *, const json & state);
+    void restorePlot(PlotGridView *, const json & state);
     void removeSelectedPlot();
     bool eventFilter(QObject*, QEvent*) override;
     void showPlotContextMenu(Plot*, const QPoint & pos);
@@ -65,9 +66,9 @@ private:
     DataLibrary * m_lib = nullptr;
     DataLibraryView * m_lib_view = nullptr;
 
-    list<PlotView*> m_plot_views;
+    list<PlotGridView*> m_plot_views;
 
-    PlotView * m_selected_plot_view = nullptr;
+    PlotGridView * m_selected_plot_view = nullptr;
     Plot * m_selected_plot = nullptr;
 
     QMenu * m_plot_context_menu = nullptr;

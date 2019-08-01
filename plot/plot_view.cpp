@@ -18,6 +18,233 @@ using namespace std;
 
 namespace datavis {
 
+PlotGridView::PlotGridView(QWidget * parent):
+    QWidget(parent)
+{
+    m_grid = new QGridLayout(this);
+}
+
+void PlotGridView::addPlot(Plot * plot, int row, int column)
+{
+    removePlot(row, column);
+
+    auto plot_view = new PlotView2(plot);
+
+    m_grid->addWidget(plot_view, row, column);
+
+    // TODO: update data range...
+}
+
+void PlotGridView::addPlotToColumn(Plot * plot, int column)
+{
+    int row = rowCount()-1;
+    if (plotAtCell(row, column))
+        ++row;
+
+    addPlot(plot, row, column);
+}
+
+void PlotGridView::removePlot(int row, int column)
+{
+    auto item = m_grid->itemAtPosition(row, column);
+    if (!item)
+        return;
+
+    auto plot_view = qobject_cast<PlotView2*>(item->widget());
+    if (!plot_view)
+        return;
+
+    delete plot_view;
+
+    //removeWidget(plot_view);
+
+    // TODO: disconnecting should be part of plot_view desctructor?
+    //disconnect(plot_view->plot());
+
+    // TODO: other stuff, update data range...
+}
+
+void PlotGridView::removePlot(Plot * plot)
+{
+    for (int i = 0; i < m_grid->count(); ++i)
+    {
+        auto item = m_grid->itemAt(i);
+        if (!item)
+            continue;
+
+        auto plot_view = qobject_cast<PlotView2*>(item->widget());
+        if (!plot_view)
+            return;
+
+        if (plot_view->plot() == plot)
+        {
+            delete plot_view;
+            // TODO:  other stuff...
+
+            return;
+        }
+    }
+}
+
+Plot * PlotGridView::plotAt(const QPoint & pos)
+{
+    for (int row = 0; row < m_grid->rowCount(); ++row)
+    {
+        for (int col = 0; col < m_grid->columnCount(); ++col)
+        {
+            if (m_grid->cellRect(row, col).contains(pos))
+            {
+                return plotAtCell(row, col);
+            }
+        }
+    }
+
+    return nullptr;
+}
+
+Plot * PlotGridView::plotAtCell(int row, int column)
+{
+    auto item = m_grid->itemAtPosition(row, column);
+    if (!item)
+        return nullptr;
+
+    auto plot_view = qobject_cast<PlotView2*>(item->widget());
+    if (!plot_view)
+        return nullptr;
+
+    return plot_view->plot();
+}
+
+////
+
+PlotView2::PlotView2(Plot * plot, QWidget * parent):
+    QWidget(parent),
+    m_plot(plot)
+{
+}
+
+PlotView2::~PlotView2()
+{
+    delete m_plot;
+}
+
+void PlotView2::paintEvent(QPaintEvent*)
+{
+    //auto mouse_pos = mapFromGlobal(QCursor::pos());
+
+    QPainter painter(this);
+
+    painter.fillRect(rect(), Qt::white);
+
+    painter.setBrush(Qt::NoBrush);
+
+    QPen frame_pen;
+    frame_pen.setColor(Qt::lightGray);
+
+    auto plot = m_plot;
+
+    auto plot_rect = this->rect().adjusted(10,10,-10,-10);
+
+    painter.setPen(frame_pen);
+    painter.drawRect(plot_rect);
+
+    if (plot->isEmpty())
+        return;
+
+    Mapping2d map;
+
+    //Plot::Range x_range = m_common_x ? view_x_range : plot->xRange();
+    //Plot::Range y_range = m_common_y ? total_y_range : plot->yRange();
+
+    Plot::Range x_range = plot->xRange();
+    Plot::Range y_range = plot->yRange();
+
+    QRectF region(x_range.min, y_range.min, x_range.extent(), y_range.extent());
+
+    double x_extent = x_range.extent();
+    double y_extent = y_range.extent();
+    double x_scale = x_extent == 0 ? 1 : 1.0 / x_extent;
+    double y_scale = y_extent == 0 ? 1 : 1.0 / y_extent;
+
+    map.translate(-x_range.min, -y_range.min);
+    map.scale(x_scale, y_scale);
+    map.scale(plot_rect.width(), -plot_rect.height());
+    map.translate(plot_rect.x(), plot_rect.y() + plot_rect.height());
+
+    painter.setClipRect(plot_rect);
+
+    painter.save();
+
+    plot->plot(&painter, map, region);
+
+    painter.restore();
+
+    painter.setClipping(false);
+
+#if 0
+    if (underMouse())
+    {
+        auto pos = mapFromGlobal(QCursor::pos());
+
+        QPen cursor_pen;
+        cursor_pen.setColor(Qt::red);
+        cursor_pen.setWidth(1);
+
+        painter.setPen(cursor_pen);
+
+        painter.drawLine(pos.x(), 0, pos.x(), height());
+        painter.drawLine(0, pos.y(), width(), pos.y());
+
+        if (plot_under_mouse_index >= 0)
+        {
+            auto plot = m_plots[plot_under_mouse_index];
+            auto plotPos = mapToPlot(plot_under_mouse_index, pos);
+            auto dataPos = plot->dataLocation(plotPos);
+
+            QString text;
+
+            QStringList dim_strings;
+            for (double v : get<0>(dataPos))
+            {
+                dim_strings << QString::number(v, 'f', 2);
+            }
+
+            QStringList att_string;
+            for (auto & v : get<1>(dataPos))
+                att_string << QString::number(v);
+
+            text = att_string.join(" ") + " @ " + dim_strings.join(" ");
+
+            auto fm = fontMetrics();
+            auto rect = fm.boundingRect(text);
+            rect.setWidth(rect.width() + 10);
+
+            int x, y;
+
+            if (pos.x() < width() / 2)
+                x = pos.x() + 20;
+            else
+                x = pos.x() - 20 - rect.width();
+
+            if (pos.y() < height() / 2)
+                y = pos.y() + 20 + fm.ascent();
+            else
+                y = pos.y() - 20 - fm.descent();
+
+            rect.translate(x, y);
+
+            painter.fillRect(rect.adjusted(-2,0,2,0), QColor(255,255,255,230));
+
+            painter.drawText(QPoint(x, y), text);
+        }
+    }
+#endif
+}
+
+
+
+////
+
 PlotView::PlotView(QWidget * parent):
     QWidget(parent)
 {

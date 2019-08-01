@@ -4,6 +4,7 @@
 
 #include <QWidget>
 #include <QSlider>
+#include <QGridLayout>
 #include <list>
 
 namespace datavis {
@@ -97,6 +98,46 @@ private:
 
     PlotCanvas * m_canvas;
     RangeBar * m_range_bar;
+};
+
+class PlotView2 : public QWidget
+{
+    Q_OBJECT
+
+public:
+    PlotView2(Plot *, QWidget * parent = nullptr);
+    ~PlotView2();
+
+    Plot * plot() const { return m_plot; }
+
+    virtual void paintEvent(QPaintEvent*) override;
+
+private:
+    Plot * m_plot = nullptr;
+};
+
+class PlotGridView : public QWidget
+{
+    Q_OBJECT
+public:
+    PlotGridView(QWidget * parent = nullptr);
+
+    int columnCount() const { return m_grid->columnCount(); }
+    int rowCount() const { return m_grid->rowCount(); }
+
+    // Adding a plot takes ownership
+    void addPlot(Plot*, int row, int column);
+    void addPlotToColumn(Plot *, int column);
+    void removePlot(Plot*);
+    void removePlot(int row, int column);
+
+    Plot * plotAt(const QPoint & pos);
+    Plot * plotAtCell(int row, int column);
+
+    QSize sizeHint() const override { return QSize(600,400); }
+
+private:
+    QGridLayout * m_grid = nullptr;
 };
 
 }

@@ -184,9 +184,9 @@ void MainWindow::plotSelectedObject()
     plot(source, object_idx);
 }
 
-PlotView * MainWindow::addPlotView()
+PlotGridView * MainWindow::addPlotView()
 {
-    auto view = new PlotView;
+    auto view = new PlotGridView;
     view->setAcceptDrops(true);
     view->installEventFilter(this);
 
@@ -197,7 +197,7 @@ PlotView * MainWindow::addPlotView()
     return view;
 }
 
-void MainWindow::removePlotView(PlotView * view)
+void MainWindow::removePlotView(PlotGridView * view)
 {
     if (m_selected_plot_view == view)
         m_selected_plot_view = nullptr;
@@ -278,19 +278,24 @@ void MainWindow::plot(DataSource * source, int index)
         }
     }
 
-    m_selected_plot_view->addPlot(plot);
+    {
+        auto * view = m_selected_plot_view;
 
-    m_selected_plot_view->show();
+        view->addPlotToColumn(plot, 0);
+
+        view->show();
+    }
+
+    //m_selected_plot_view->addPlot(plot);
+    //m_selected_plot_view->show();
 }
 
 void MainWindow::removeSelectedPlot()
 {
-    if (!m_selected_plot)
+    if (!m_selected_plot_view || !m_selected_plot)
         return;
 
-    auto plot = m_selected_plot;
-    plot->view()->removePlot(plot);
-    delete plot;
+    m_selected_plot_view->removePlot(m_selected_plot);
 
     m_selected_plot = nullptr;
 }
@@ -317,7 +322,7 @@ void MainWindow::showPlotContextMenu(Plot * plot, const QPoint & pos)
 
 bool MainWindow::eventFilter(QObject * object, QEvent * event)
 {
-    auto plot_view = qobject_cast<PlotView*>(object);
+    auto plot_view = qobject_cast<PlotGridView*>(object);
 
     if (plot_view)
     {
@@ -325,6 +330,8 @@ bool MainWindow::eventFilter(QObject * object, QEvent * event)
         {
         case QEvent::ContextMenu:
         {
+            m_selected_plot_view = plot_view;
+
             auto menuEvent = static_cast<QContextMenuEvent*>(event);
             if (menuEvent->reason() == QContextMenuEvent::Mouse)
             {
@@ -446,6 +453,8 @@ void MainWindow::saveProjectFile(const QString & path)
         auto geometry = plot_view->geometry();
         plot_view_json["position"] << geometry;
 
+        // TODO:
+#if 0
         for (auto plot : plot_view->plots())
         {
             auto data_set = plot->dataSet();
@@ -466,6 +475,7 @@ void MainWindow::saveProjectFile(const QString & path)
 
             plot_view_json["plots"].push_back(plot_json);
         }
+#endif
 
         plot_views_json.push_back(plot_view_json);
     }
@@ -598,7 +608,7 @@ void MainWindow::openProjectFile(const QString & file_path)
     }
 }
 
-void MainWindow::restorePlot(PlotView * view, const json & state)
+void MainWindow::restorePlot(PlotGridView * view, const json & state)
 {
     string plot_type = state.at("options").at("type");
 
@@ -658,7 +668,7 @@ void MainWindow::restorePlot(PlotView * view, const json & state)
         throw Error("Invalid plot state.");
     }
 
-    view->addPlot(plot);
+    view->addPlotToColumn(plot, 0);
 }
 
 bool MainWindow::closeProject()
@@ -675,7 +685,7 @@ bool MainWindow::closeProject()
     m_selected_plot = nullptr;
     m_selected_plot_view = nullptr;
 
-    for (PlotView * view : m_plot_views)
+    for (auto * view : m_plot_views)
     {
         delete view;
     }
