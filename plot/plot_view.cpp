@@ -22,6 +22,8 @@ PlotGridView::PlotGridView(QWidget * parent):
     QWidget(parent)
 {
     m_grid = new QGridLayout(this);
+
+    m_x_range = new PlotRangeController(this);
 }
 
 void PlotGridView::addPlot(Plot * plot, int row, int column)
@@ -30,7 +32,11 @@ void PlotGridView::addPlot(Plot * plot, int row, int column)
 
     auto plot_view = new PlotView2(plot);
 
+    plot_view->setRangeController(m_x_range, Qt::Horizontal);
+
     m_grid->addWidget(plot_view, row, column);
+
+    updateDataRange();
 
     // TODO: update data range...
 }
@@ -115,6 +121,58 @@ Plot * PlotGridView::plotAtCell(int row, int column)
     return plot_view->plot();
 }
 
+PlotView2 * PlotGridView::viewAtIndex(int index)
+{
+    auto item = m_grid->itemAt(index);
+    if (!item)
+        return nullptr;
+
+    return qobject_cast<PlotView2*>(item->widget());
+}
+
+void PlotGridView::updateDataRange()
+{
+    printf("updating data range");
+
+    Plot::Range total_x_range;
+    Plot::Range total_y_range;
+
+    bool first = true;
+    for (int i = 0; i < m_grid->count(); ++i)
+    {
+        auto view = viewAtIndex(i);
+        if (!view)
+            continue;
+
+        auto plot = view->plot();
+        if (plot->isEmpty())
+            continue;
+
+        auto x_range = plot->xRange();
+        auto y_range = plot->yRange();
+
+        if (first)
+        {
+            total_x_range = x_range;
+            total_y_range = y_range;
+        }
+        else
+        {
+            total_x_range.min = min(total_x_range.min, x_range.min);
+            total_x_range.max = max(total_x_range.max, x_range.max);
+
+            total_y_range.min = min(total_y_range.min, y_range.min);
+            total_y_range.max = max(total_y_range.max, y_range.max);
+        }
+        first = false;
+    }
+
+    cout << "X range: " << total_x_range.min << ", " << total_x_range.max << endl;
+
+    m_x_range->setLimit(total_x_range);
+    m_x_range->setValue(total_x_range);
+}
+
 ////
 
 PlotView2::PlotView2(Plot * plot, QWidget * parent):
@@ -126,6 +184,76 @@ PlotView2::PlotView2(Plot * plot, QWidget * parent):
 PlotView2::~PlotView2()
 {
     delete m_plot;
+}
+
+void PlotView2::setRangeController(PlotRangeController * ctl, Qt::Orientation orientation)
+{
+    PlotRangeController * old_ctl = nullptr;
+
+    if (orientation == Qt::Horizontal)
+    {
+        old_ctl = m_x_range;
+        m_x_range = ctl;
+    }
+    else
+    {
+        old_ctl = m_y_range;
+        m_y_range = ctl;
+    }
+
+    disconnect(old_ctl);
+
+    connect(ctl, SIGNAL(changed()),
+            this, SLOT(update()));
+
+    update();
+}
+
+void PlotView2::wheelEvent(QWheelEvent* event)
+{
+    printf("wheel\n");
+
+    if (event->phase() != Qt::ScrollUpdate && event->phase() != Qt::NoScrollPhase)
+        return;
+
+    double degrees = event->angleDelta().y() / 8.0;
+
+    if (!m_x_range)
+        return;
+
+    auto value = m_x_range->value();
+
+    double extent = value.extent();
+    extent *= std::pow(2.0, -degrees / 180.0);
+
+    value.max = value.min + extent;
+    value.max = std::min(value.max, m_x_range->limit().max);
+    value.max = std::max(value.max, 0.0);
+
+    m_x_range->setValue(value);
+
+#if 0
+    if (event->modifiers() & Qt::ControlModifier)
+    {
+        auto plot_rect = plotRect(0);
+        auto mouse_rel_x = plot_rect.width() > 0
+                ? (event->pos().x() - plot_rect.x()) / double(plot_rect.width())
+                : 0;
+        auto mouse_x =  mouse_rel_x * view_x_range.extent() + view_x_range.min;
+
+        double new_size = view_x_range.extent() * pow(2.0, -1.0 * degrees/360.0);
+        setSize(new_size);
+
+        auto new_x = mouse_x - mouse_rel_x * view_x_range.extent();
+        setOffset(new_x);
+    }
+    else if (event->modifiers() & Qt::ShiftModifier)
+    {
+        double new_offset = view_x_range.min + 0.5 * view_x_range.extent() * degrees/360.0;
+        //qDebug() << "new offset = " << new_offset;
+        setOffset(new_offset);
+    }
+#endif
 }
 
 void PlotView2::paintEvent(QPaintEvent*)
@@ -156,8 +284,11 @@ void PlotView2::paintEvent(QPaintEvent*)
     //Plot::Range x_range = m_common_x ? view_x_range : plot->xRange();
     //Plot::Range y_range = m_common_y ? total_y_range : plot->yRange();
 
-    Plot::Range x_range = plot->xRange();
-    Plot::Range y_range = plot->yRange();
+    Plot::Range x_range = m_x_range ? m_x_range->value() : plot->xRange();
+    Plot::Range y_range = m_y_range ? m_y_range->value() : plot->yRange();
+
+    cout << "X range: " << x_range.min << ", " << x_range.max << endl;
+    cout << "Y range: " << y_range.min << ", " << y_range.max << endl;
 
     QRectF region(x_range.min, y_range.min, x_range.extent(), y_range.extent());
 

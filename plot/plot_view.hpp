@@ -100,6 +100,36 @@ private:
     RangeBar * m_range_bar;
 };
 
+class PlotRangeController : public QObject
+{
+    Q_OBJECT
+
+public:
+    PlotRangeController(QObject * parent = nullptr): QObject(parent) {}
+
+    void setValue(const Plot::Range & range)
+    {
+        m_value = range;
+        emit changed();
+    }
+
+    void setLimit(const Plot::Range & range)
+    {
+        m_limit = range;
+        emit changed();
+    }
+
+    const Plot::Range & value() const { return m_value; }
+    const Plot::Range & limit() const { return m_limit; }
+
+signals:
+    void changed();
+
+private:
+    Plot::Range m_value;
+    Plot::Range m_limit;
+};
+
 class PlotView2 : public QWidget
 {
     Q_OBJECT
@@ -110,10 +140,15 @@ public:
 
     Plot * plot() const { return m_plot; }
 
+    virtual void wheelEvent(QWheelEvent*) override;
     virtual void paintEvent(QPaintEvent*) override;
+
+    void setRangeController(PlotRangeController * ctl, Qt::Orientation);
 
 private:
     Plot * m_plot = nullptr;
+    PlotRangeController * m_x_range = nullptr;
+    PlotRangeController * m_y_range = nullptr;
 };
 
 class PlotGridView : public QWidget
@@ -137,7 +172,11 @@ public:
     QSize sizeHint() const override { return QSize(600,400); }
 
 private:
+    PlotView2 * viewAtIndex(int index);
+    void updateDataRange();
+
     QGridLayout * m_grid = nullptr;
+    PlotRangeController * m_x_range = nullptr;
 };
 
 }
