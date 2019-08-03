@@ -408,6 +408,7 @@ void PlotGridView::paintEvent(QPaintEvent*)
 PlotView2::PlotView2(QWidget * parent):
     QWidget(parent)
 {
+    setMouseTracking(true);
 }
 
 PlotView2::~PlotView2()
@@ -483,6 +484,16 @@ QPointF PlotView2::mapDistanceToPlot(const QPointF & distance)
     return QPointF(x,y);
 }
 
+void PlotView2::enterEvent(QEvent*)
+{
+    update();
+}
+
+void PlotView2::leaveEvent(QEvent*)
+{
+    update();
+}
+
 void PlotView2::mousePressEvent(QMouseEvent* event)
 {
     if (event->buttons() & Qt::LeftButton)
@@ -514,9 +525,9 @@ void PlotView2::mouseMoveEvent(QMouseEvent * event)
             if (m_y_range)
                 m_y_range->moveTo(m_y_range_start.min - plot_distance.y());
         }
-
     }
 
+    update();
 }
 
 
@@ -656,7 +667,6 @@ void PlotView2::paintEvent(QPaintEvent*)
 
     painter.setClipping(false);
 
-#if 0
     if (underMouse())
     {
         auto pos = mapFromGlobal(QCursor::pos());
@@ -670,50 +680,46 @@ void PlotView2::paintEvent(QPaintEvent*)
         painter.drawLine(pos.x(), 0, pos.x(), height());
         painter.drawLine(0, pos.y(), width(), pos.y());
 
-        if (plot_under_mouse_index >= 0)
+        auto plot = this->plot();
+        auto plotPos = mapToPlot(pos);
+        auto dataPos = plot->dataLocation(plotPos);
+
+        QString text;
+
+        QStringList dim_strings;
+        for (double v : get<0>(dataPos))
         {
-            auto plot = m_plots[plot_under_mouse_index];
-            auto plotPos = mapToPlot(plot_under_mouse_index, pos);
-            auto dataPos = plot->dataLocation(plotPos);
-
-            QString text;
-
-            QStringList dim_strings;
-            for (double v : get<0>(dataPos))
-            {
-                dim_strings << QString::number(v, 'f', 2);
-            }
-
-            QStringList att_string;
-            for (auto & v : get<1>(dataPos))
-                att_string << QString::number(v);
-
-            text = att_string.join(" ") + " @ " + dim_strings.join(" ");
-
-            auto fm = fontMetrics();
-            auto rect = fm.boundingRect(text);
-            rect.setWidth(rect.width() + 10);
-
-            int x, y;
-
-            if (pos.x() < width() / 2)
-                x = pos.x() + 20;
-            else
-                x = pos.x() - 20 - rect.width();
-
-            if (pos.y() < height() / 2)
-                y = pos.y() + 20 + fm.ascent();
-            else
-                y = pos.y() - 20 - fm.descent();
-
-            rect.translate(x, y);
-
-            painter.fillRect(rect.adjusted(-2,0,2,0), QColor(255,255,255,230));
-
-            painter.drawText(QPoint(x, y), text);
+            dim_strings << QString::number(v, 'f', 2);
         }
+
+        QStringList att_string;
+        for (auto & v : get<1>(dataPos))
+            att_string << QString::number(v);
+
+        text = att_string.join(" ") + " @ " + dim_strings.join(" ");
+
+        auto fm = fontMetrics();
+        auto rect = fm.boundingRect(text);
+        rect.setWidth(rect.width() + 10);
+
+        int x, y;
+
+        if (pos.x() < width() / 2)
+            x = pos.x() + 20;
+        else
+            x = pos.x() - 20 - rect.width();
+
+        if (pos.y() < height() / 2)
+            y = pos.y() + 20 + fm.ascent();
+        else
+            y = pos.y() - 20 - fm.descent();
+
+        rect.translate(x, y);
+
+        painter.fillRect(rect.adjusted(-2,0,2,0), QColor(255,255,255,230));
+
+        painter.drawText(QPoint(x, y), text);
     }
-#endif
 }
 
 

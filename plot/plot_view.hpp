@@ -147,6 +147,8 @@ public:
     QPointF mapToPlot(const QPointF & pos);
     QPointF mapDistanceToPlot(const QPointF & distance);
 
+    virtual void enterEvent(QEvent*) override;
+    virtual void leaveEvent(QEvent*) override;
     virtual void mouseMoveEvent(QMouseEvent*) override;
     virtual void mousePressEvent(QMouseEvent*) override;
     virtual void wheelEvent(QWheelEvent*) override;
