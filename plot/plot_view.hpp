@@ -135,9 +135,10 @@ class PlotView2 : public QWidget
     Q_OBJECT
 
 public:
-    PlotView2(Plot *, QWidget * parent = nullptr);
+    PlotView2(QWidget * parent = nullptr);
     ~PlotView2();
 
+    void setPlot(Plot * plot);
     Plot * plot() const { return m_plot; }
 
     virtual void wheelEvent(QWheelEvent*) override;
@@ -161,6 +162,8 @@ public:
     int rowCount() const { return m_grid->rowCount(); }
 
     // Adding a plot takes ownership
+    void setColumnCount(int count);
+    void setRowCount(int count);
     void addPlot(Plot*, int row, int column);
     void addPlotToColumn(Plot *, int column);
     void removePlot(Plot*);
@@ -173,10 +176,13 @@ public:
 
 private:
     PlotView2 * viewAtIndex(int index);
+    PlotView2 * viewAtCell(int row, int column);
     void updateDataRange();
 
     QGridLayout * m_grid = nullptr;
-    PlotRangeController * m_x_range = nullptr;
+
+    vector<PlotRangeController*> m_x_range_ctls;
+    vector<PlotRangeController*> m_y_range_ctls;
 };
 
 }

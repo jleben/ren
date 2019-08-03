@@ -23,22 +23,109 @@ PlotGridView::PlotGridView(QWidget * parent):
 {
     m_grid = new QGridLayout(this);
 
-    m_x_range = new PlotRangeController(this);
+    m_x_range_ctls.push_back(new PlotRangeController(this));
+    m_y_range_ctls.push_back(new PlotRangeController(this));
+
+    auto view = new PlotView2;
+    view->setRangeController(m_x_range_ctls.front(), Qt::Horizontal);
+    view->setRangeController(m_y_range_ctls.front(), Qt::Vertical);
+
+    m_grid->addWidget(view, 0, 0);
+
+    //printf("Rows: %d, Columns: %d\n", rowCount(), columnCount());
+}
+
+void PlotGridView::setRowCount(int count)
+{
+    //cout << "Setting row count: " << count << endl;
+
+    if (count < 1)
+        return;
+
+    if (count < rowCount())
+    {
+        for (int row = count; row < rowCount(); ++row)
+        {
+            for (int col = 0; col < columnCount(); ++col)
+            {
+                auto * item = m_grid->itemAtPosition(row, col);
+                delete item;
+            }
+
+            delete m_y_range_ctls.back();
+            m_y_range_ctls.pop_back();
+        }
+    }
+    else if (count > rowCount())
+    {
+        for (int row = rowCount(); row < count; ++row)
+        {
+            auto y_ctl = new PlotRangeController;
+            m_y_range_ctls.push_back(y_ctl);
+
+            for (int col = 0; col < columnCount(); ++col)
+            {
+                auto x_ctl = m_x_range_ctls[col];
+
+                auto view = new PlotView2;
+                view->setRangeController(x_ctl, Qt::Horizontal);
+                view->setRangeController(y_ctl, Qt::Vertical);
+
+                m_grid->addWidget(view, row, col);
+            }
+        }
+    }
+}
+
+void PlotGridView::setColumnCount(int count)
+{
+    //cout << "Setting column count: " << count << endl;
+
+    if (count < 1)
+        return;
+
+    if (count < columnCount())
+    {
+        for (int col = count; col < columnCount(); ++col)
+        {
+            for (int row = 0; row < rowCount(); ++row)
+            {
+                auto item = m_grid->itemAtPosition(row, col);
+                delete item;
+            }
+        }
+    }
+    else if (count > columnCount())
+    {
+        for (int col = columnCount(); col < count; ++col)
+        {
+            for (int row = 0; row < rowCount(); ++row)
+            {
+                m_grid->addWidget(new PlotView2, row, col);
+            }
+        }
+    }
 }
 
 void PlotGridView::addPlot(Plot * plot, int row, int column)
 {
-    removePlot(row, column);
+    cout << "Adding plot at " << row << ", " << column << endl;
 
-    auto plot_view = new PlotView2(plot);
+    if (row < 0 or column < 0)
+        return;
 
-    plot_view->setRangeController(m_x_range, Qt::Horizontal);
+    //printf("Rows: %d, Columns: %d\n", rowCount(), columnCount());
 
-    m_grid->addWidget(plot_view, row, column);
+    if (row+1 > rowCount())
+        setRowCount(row+1);
+
+    if (column+1 > columnCount())
+        setColumnCount(column+1);
+
+    auto view = viewAtCell(row, column);
+    view->setPlot(plot);
 
     updateDataRange();
-
-    // TODO: update data range...
 }
 
 void PlotGridView::addPlotToColumn(Plot * plot, int column)
@@ -110,11 +197,7 @@ Plot * PlotGridView::plotAt(const QPoint & pos)
 
 Plot * PlotGridView::plotAtCell(int row, int column)
 {
-    auto item = m_grid->itemAtPosition(row, column);
-    if (!item)
-        return nullptr;
-
-    auto plot_view = qobject_cast<PlotView2*>(item->widget());
+    auto plot_view = viewAtCell(row, column);
     if (!plot_view)
         return nullptr;
 
@@ -130,60 +213,96 @@ PlotView2 * PlotGridView::viewAtIndex(int index)
     return qobject_cast<PlotView2*>(item->widget());
 }
 
+PlotView2 * PlotGridView::viewAtCell(int row, int column)
+{
+    auto item = m_grid->itemAtPosition(row, column);
+    if (!item)
+        return nullptr;
+
+    return qobject_cast<PlotView2*>(item->widget());
+}
+
 void PlotGridView::updateDataRange()
 {
     printf("updating data range");
 
-    Plot::Range total_x_range;
-    Plot::Range total_y_range;
-
-    bool first = true;
-    for (int i = 0; i < m_grid->count(); ++i)
+    for (int row = 0; row < rowCount(); ++row)
     {
-        auto view = viewAtIndex(i);
-        if (!view)
-            continue;
+        Plot::Range total_range;
 
-        auto plot = view->plot();
-        if (plot->isEmpty())
-            continue;
-
-        auto x_range = plot->xRange();
-        auto y_range = plot->yRange();
-
-        if (first)
+        bool first = true;
+        for (int col = 0; col < columnCount(); ++col)
         {
-            total_x_range = x_range;
-            total_y_range = y_range;
-        }
-        else
-        {
-            total_x_range.min = min(total_x_range.min, x_range.min);
-            total_x_range.max = max(total_x_range.max, x_range.max);
+            auto plot = plotAtCell(row, col);
+            if (!plot)
+                continue;
 
-            total_y_range.min = min(total_y_range.min, y_range.min);
-            total_y_range.max = max(total_y_range.max, y_range.max);
+            auto range = plot->yRange();
+
+            if (first)
+            {
+                total_range = range;
+            }
+            else
+            {
+                total_range.min = std::min(total_range.min, range.min);
+                total_range.max = std::max(total_range.max, range.max);
+            }
         }
-        first = false;
+
+        m_y_range_ctls[row]->setLimit(total_range);
+        m_y_range_ctls[row]->setValue(total_range);
     }
 
-    cout << "X range: " << total_x_range.min << ", " << total_x_range.max << endl;
+    for (int col = 0; col < columnCount(); ++col)
+    {
+        Plot::Range total_range;
 
-    m_x_range->setLimit(total_x_range);
-    m_x_range->setValue(total_x_range);
+        bool first = true;
+        for (int row = 0; row < rowCount(); ++row)
+        {
+            auto plot = plotAtCell(row, col);
+            if (!plot)
+                continue;
+
+            auto range = plot->xRange();
+
+            if (first)
+            {
+                total_range = range;
+            }
+            else
+            {
+                total_range.min = std::min(total_range.min, range.min);
+                total_range.max = std::max(total_range.max, range.max);
+            }
+        }
+
+        m_x_range_ctls[col]->setLimit(total_range);
+        m_x_range_ctls[col]->setValue(total_range);
+    }
 }
 
 ////
 
-PlotView2::PlotView2(Plot * plot, QWidget * parent):
-    QWidget(parent),
-    m_plot(plot)
+PlotView2::PlotView2(QWidget * parent):
+    QWidget(parent)
 {
 }
 
 PlotView2::~PlotView2()
 {
     delete m_plot;
+}
+
+void PlotView2::setPlot(Plot *plot)
+{
+    if (m_plot)
+        delete m_plot;
+
+    m_plot = plot;
+
+    update();
 }
 
 void PlotView2::setRangeController(PlotRangeController * ctl, Qt::Orientation orientation)
@@ -211,49 +330,81 @@ void PlotView2::setRangeController(PlotRangeController * ctl, Qt::Orientation or
 
 void PlotView2::wheelEvent(QWheelEvent* event)
 {
-    printf("wheel\n");
-
     if (event->phase() != Qt::ScrollUpdate && event->phase() != Qt::NoScrollPhase)
         return;
 
-    double degrees = event->angleDelta().y() / 8.0;
+    double degrees;
+    bool vertical;
 
-    if (!m_x_range)
-        return;
-
-    auto value = m_x_range->value();
-
-    double extent = value.extent();
-    extent *= std::pow(2.0, -degrees / 180.0);
-
-    value.max = value.min + extent;
-    value.max = std::min(value.max, m_x_range->limit().max);
-    value.max = std::max(value.max, 0.0);
-
-    m_x_range->setValue(value);
-
-#if 0
-    if (event->modifiers() & Qt::ControlModifier)
+    if (event->angleDelta().y() != 0)
     {
-        auto plot_rect = plotRect(0);
-        auto mouse_rel_x = plot_rect.width() > 0
-                ? (event->pos().x() - plot_rect.x()) / double(plot_rect.width())
-                : 0;
-        auto mouse_x =  mouse_rel_x * view_x_range.extent() + view_x_range.min;
-
-        double new_size = view_x_range.extent() * pow(2.0, -1.0 * degrees/360.0);
-        setSize(new_size);
-
-        auto new_x = mouse_x - mouse_rel_x * view_x_range.extent();
-        setOffset(new_x);
+        degrees = event->angleDelta().y();
+        vertical = true;
     }
-    else if (event->modifiers() & Qt::ShiftModifier)
+    else
     {
-        double new_offset = view_x_range.min + 0.5 * view_x_range.extent() * degrees/360.0;
-        //qDebug() << "new offset = " << new_offset;
-        setOffset(new_offset);
+        degrees = event->angleDelta().x();
+        vertical = false;
     }
-#endif
+
+    degrees /= 8.0;
+
+    bool zoom = event->modifiers() & Qt::ControlModifier;
+
+    //printf("zoom: %d, vertical: %d, degrees: %f\n", zoom, vertical, degrees);
+
+    if (zoom)
+    {
+        auto * range = vertical ? m_y_range : m_x_range;
+
+        if (!range)
+            return;
+
+        auto value = range->value();
+
+        //printf("Value: %f, %f\n", value.min, value.max);
+
+        double extent = value.extent();
+        extent *= std::pow(2.0, -degrees / 180.0);
+
+        //printf("Extent %f -> %f\n", value.extent(), extent);
+
+
+        value.max = value.min + extent;
+        value.max = std::min(value.max, range->limit().max);
+        value.max = std::max(value.max, value.min);
+
+        //printf("Limit: %f, %f\n", range->limit().min, range->limit().max);
+        //printf("New Value: %f, %f\n", value.min, value.max);
+
+        range->setValue(value);
+    }
+    else
+    {
+        auto * range = vertical ? m_y_range : m_x_range;
+
+        if (!range)
+            return;
+
+        auto value = range->value();
+
+        double visible_extent = value.extent();
+        double offset = visible_extent * 0.5 * degrees/360.0;
+
+        if (!vertical)
+            offset = -offset;
+
+        value.min += offset;
+        value.min = std::min(value.min, range->limit().max - visible_extent);
+        value.min = std::max(value.min, range->limit().min);
+
+        value.max = value.min + visible_extent;
+
+        //printf("Limit: %f, %f\n", range->limit().min, range->limit().max);
+        //printf("Value: %f, %f\n", value.min, value.max);
+
+        range->setValue(value);
+    }
 }
 
 void PlotView2::paintEvent(QPaintEvent*)
@@ -269,14 +420,14 @@ void PlotView2::paintEvent(QPaintEvent*)
     QPen frame_pen;
     frame_pen.setColor(Qt::lightGray);
 
-    auto plot = m_plot;
-
     auto plot_rect = this->rect().adjusted(10,10,-10,-10);
 
     painter.setPen(frame_pen);
     painter.drawRect(plot_rect);
 
-    if (plot->isEmpty())
+    auto plot = m_plot;
+
+    if (!plot or plot->isEmpty())
         return;
 
     Mapping2d map;
