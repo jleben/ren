@@ -32,6 +32,8 @@ PlotGridView::PlotGridView(QWidget * parent):
 
     m_grid->addWidget(view, 0, 0);
 
+    selectView(view);
+
     //printf("Rows: %d, Columns: %d\n", rowCount(), columnCount());
 }
 
@@ -45,10 +47,28 @@ PlotView2 * PlotGridView::makeView()
 void PlotGridView::deleteView(PlotView2* view)
 {
     if (view && m_selected_view == view)
-        m_selected_view = nullptr;
+    {
+        selectView(nullptr);
+    }
 
     delete view;
 }
+
+void PlotGridView::selectView(PlotView2* view)
+{
+    m_selected_view = view;
+    if (view)
+    {
+        m_selected_cell = findView(view);
+    }
+    else
+    {
+        m_selected_cell = QPoint(-1, -1);
+    }
+
+    update();
+}
+
 
 void PlotGridView::setRowCount(int count)
 {
@@ -157,15 +177,6 @@ void PlotGridView::addPlot(Plot * plot, int row, int column)
     updateDataRange();
 }
 
-void PlotGridView::addPlotToColumn(Plot * plot, int column)
-{
-    int row = rowCount()-1;
-    if (plotAtCell(row, column))
-        ++row;
-
-    addPlot(plot, row, column);
-}
-
 void PlotGridView::removePlot(int row, int column)
 {
     auto view = viewAtCell(row, column);
@@ -243,6 +254,20 @@ PlotView2 * PlotGridView::viewAtPoint(const QPoint & pos)
     return nullptr;
 }
 
+QPoint PlotGridView::findView(PlotView2 * view)
+{
+    for (int row = 0; row < m_grid->rowCount(); ++row)
+    {
+        for (int col = 0; col < m_grid->columnCount(); ++col)
+        {
+            if (viewAtCell(row, col) == view)
+                return QPoint(col, row);
+        }
+    }
+
+    return QPoint(-1, -1);
+}
+
 void PlotGridView::updateDataRange()
 {
     printf("updating data range");
@@ -312,9 +337,7 @@ bool PlotGridView::eventFilter(QObject * object, QEvent * event)
         if (!view)
             return false;
 
-        m_selected_view = view;
-
-        update();
+        selectView(view);
     }
 
     return false;
@@ -324,15 +347,10 @@ void PlotGridView::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
 
-    for (int row = 0; row < rowCount(); ++row)
+    if (m_selected_view)
     {
-        for (int col = 0; col < columnCount(); ++col)
-        {
-            if (viewAtCell(row, col) == m_selected_view)
-            {
-                painter.drawRect(m_grid->cellRect(row, col).adjusted(-5,-5,5,5));
-            }
-        }
+        const auto & cell = m_selected_cell;
+        painter.drawRect(m_grid->cellRect(cell.y(), cell.x()).adjusted(-5,-5,5,5));
     }
 }
 

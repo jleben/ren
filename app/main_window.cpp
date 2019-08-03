@@ -281,7 +281,15 @@ void MainWindow::plot(DataSource * source, int index)
     {
         auto * view = m_selected_plot_view;
 
-        view->addPlotToColumn(plot, 0);
+        if (view->hasSelectedCell())
+        {
+            auto cell = view->selectedCell();
+            view->addPlot(plot, cell.y(), cell.x());
+        }
+        else
+        {
+            view->addPlot(plot, view->rowCount(), 0);
+        }
 
         view->show();
     }
@@ -668,7 +676,8 @@ void MainWindow::restorePlot(PlotGridView * view, const json & state)
         throw Error("Invalid plot state.");
     }
 
-    view->addPlotToColumn(plot, 0);
+    // FIXME:
+    view->addPlot(plot, view->rowCount(), 0);
 }
 
 bool MainWindow::closeProject()

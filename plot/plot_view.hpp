@@ -165,12 +165,14 @@ public:
     void setColumnCount(int count);
     void setRowCount(int count);
     void addPlot(Plot*, int row, int column);
-    void addPlotToColumn(Plot *, int column);
     void removePlot(Plot*);
     void removePlot(int row, int column);
 
     Plot * plotAt(const QPoint & pos);
     Plot * plotAtCell(int row, int column);
+
+    bool hasSelectedCell() const { return m_selected_view != nullptr; }
+    QPoint selectedCell() const { return m_selected_cell; }
 
     QSize sizeHint() const override { return QSize(600,400); }
 
@@ -178,8 +180,10 @@ private:
     PlotView2 * viewAtIndex(int index);
     PlotView2 * viewAtCell(int row, int column);
     PlotView2 * viewAtPoint(const QPoint & pos);
+    QPoint findView(PlotView2 * view);
     PlotView2 * makeView();
     void deleteView(PlotView2* view);
+    void selectView(PlotView2* view);
 
     void updateDataRange();
 
@@ -191,6 +195,7 @@ private:
     vector<PlotRangeController*> m_x_range_ctls;
     vector<PlotRangeController*> m_y_range_ctls;
 
+    QPoint m_selected_cell;
     PlotView2 * m_selected_view = nullptr;
 };
 
