@@ -33,7 +33,7 @@ public:
         double min = 0;
         double max = 0;
 
-        double extent() { return max - min; }
+        double extent() const { return max - min; }
     };
 
     Plot(QObject * parent = 0): QObject(parent) {}

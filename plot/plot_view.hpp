@@ -119,6 +119,8 @@ public:
         emit changed();
     }
 
+    void moveTo(double pos);
+
     const Plot::Range & value() const { return m_value; }
     const Plot::Range & limit() const { return m_limit; }
 
@@ -140,16 +142,34 @@ public:
 
     void setPlot(Plot * plot);
     Plot * plot() const { return m_plot; }
+    QPointF mapToPlot(const QPointF & pos);
+    QPointF mapDistanceToPlot(const QPointF & distance);
+    QRect plotRect() const;
 
+    virtual void mouseMoveEvent(QMouseEvent*) override;
+    virtual void mousePressEvent(QMouseEvent*) override;
     virtual void wheelEvent(QWheelEvent*) override;
     virtual void paintEvent(QPaintEvent*) override;
 
     void setRangeController(PlotRangeController * ctl, Qt::Orientation);
 
 private:
+    enum MouseInteraction
+    {
+        NoMouseInteraction,
+        MouseZoom,
+        MouseShift
+    };
+
     Plot * m_plot = nullptr;
     PlotRangeController * m_x_range = nullptr;
     PlotRangeController * m_y_range = nullptr;
+
+    MouseInteraction m_mouse_interaction = NoMouseInteraction;
+    QPoint m_mouse_press_point;
+    Plot::Range m_x_range_start;
+    Plot::Range m_y_range_start;
+    QPointF m_mouse_press_plot_point;
 };
 
 class PlotGridView : public QWidget

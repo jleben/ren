@@ -448,6 +448,118 @@ void PlotView2::setRangeController(PlotRangeController * ctl, Qt::Orientation or
     update();
 }
 
+QRect PlotView2::plotRect() const
+{
+    return this->rect().adjusted(10,10,-10,-10);
+}
+
+QPointF PlotView2::mapToPlot(const QPointF & pos)
+{
+    const auto & xRange = m_x_range ? m_x_range->value() : m_plot->xRange();
+    const auto & yRange = m_y_range ? m_y_range->value() : m_plot->yRange();
+
+    auto rect = plotRect();
+    if (rect.isEmpty())
+        return QPointF(0,0);
+
+    double x = (pos.x() - rect.x()) * (xRange.extent() / rect.width()) + xRange.min;
+    double y = (rect.y() + rect.height() - pos.y()) * (yRange.extent() / rect.height()) + yRange.min;
+
+    return QPointF(x,y);
+}
+
+QPointF PlotView2::mapDistanceToPlot(const QPointF & distance)
+{
+    const auto & xRange = m_x_range ? m_x_range->value() : m_plot->xRange();
+    const auto & yRange = m_y_range ? m_y_range->value() : m_plot->yRange();
+
+    auto rect = plotRect();
+    if (rect.isEmpty())
+        return QPointF(0,0);
+
+    double x = distance.x() * (xRange.extent() / rect.width());
+    double y = -distance.y() * (yRange.extent() / rect.height());
+
+    return QPointF(x,y);
+}
+
+void PlotView2::mousePressEvent(QMouseEvent* event)
+{
+    if (event->buttons() & Qt::LeftButton)
+    {
+        m_mouse_press_point = event->pos();
+        m_mouse_press_plot_point = mapToPlot(event->pos());
+
+        if (m_x_range)
+            m_x_range_start = m_x_range->value();
+        if (m_y_range)
+            m_y_range_start = m_y_range->value();
+
+        if (event->modifiers() & Qt::ControlModifier)
+        {
+            m_mouse_interaction = MouseZoom;
+            cout << "Start zoom" << endl;
+        }
+        else
+        {
+            m_mouse_interaction = MouseShift;
+            cout << "Start shift" << endl;
+        }
+    }
+}
+
+void PlotView2::mouseMoveEvent(QMouseEvent * event)
+{
+    if (event->buttons() & Qt::LeftButton)
+    {
+        auto distance = event->pos() - m_mouse_press_point;
+
+        qDebug() << "Distance:" << distance;
+
+        if (m_mouse_interaction == MouseZoom)
+        {
+#if 0
+            QPointF plot_distance(0,0);
+
+            if (std::abs(distance.x()) < 20 || std::abs(distance.y()) < 20)
+            {
+                // Reset position
+            }
+            else
+            {
+
+                if (std::abs(distance.x()) > std::abs(distance.y()))
+                {
+                    // horizontal
+                    auto p = mapDistanceToPlot();
+                    plot_distance.setX(p.x());
+                }
+                else
+                {
+                    // vertical
+                    auto p = mapDistanceToPlot(
+                }
+            }
+#endif
+        }
+        else if (m_mouse_interaction == MouseShift)
+        {
+            auto plot_distance = mapDistanceToPlot(distance);
+
+            qDebug() << "Plot distance:" << plot_distance << endl;
+
+            if (m_x_range)
+                m_x_range->moveTo(m_x_range_start.min - plot_distance.x());
+            if (m_y_range)
+                m_y_range->moveTo(m_y_range_start.min - plot_distance.y());
+        }
+
+    }
+
+}
+
+
+
 void PlotView2::wheelEvent(QWheelEvent* event)
 {
     if (event->phase() != Qt::ScrollUpdate && event->phase() != Qt::NoScrollPhase)
@@ -540,7 +652,7 @@ void PlotView2::paintEvent(QPaintEvent*)
     QPen frame_pen;
     frame_pen.setColor(Qt::lightGray);
 
-    auto plot_rect = this->rect().adjusted(10,10,-10,-10);
+    auto plot_rect = plotRect();
 
     painter.setPen(frame_pen);
     painter.drawRect(plot_rect);
@@ -644,6 +756,18 @@ void PlotView2::paintEvent(QPaintEvent*)
 }
 
 
+
+void PlotRangeController::moveTo(double pos)
+{
+    double extent = m_value.extent();
+    double p = pos;
+    p = std::min(p, m_limit.max - extent);
+    p = std::max(p, m_limit.min);
+    m_value.min = p;
+    m_value.max = p + extent;
+
+    emit changed();
+}
 
 ////
 
