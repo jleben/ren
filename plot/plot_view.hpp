@@ -120,6 +120,7 @@ public:
     }
 
     void moveTo(double pos);
+    void scaleTo(double extent);
 
     const Plot::Range & value() const { return m_value; }
     const Plot::Range & limit() const { return m_limit; }
@@ -142,9 +143,9 @@ public:
 
     void setPlot(Plot * plot);
     Plot * plot() const { return m_plot; }
+    QRect plotRect() const;
     QPointF mapToPlot(const QPointF & pos);
     QPointF mapDistanceToPlot(const QPointF & distance);
-    QRect plotRect() const;
 
     virtual void mouseMoveEvent(QMouseEvent*) override;
     virtual void mousePressEvent(QMouseEvent*) override;

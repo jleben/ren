@@ -207,7 +207,7 @@ void PlotGridView::setColumnCount(int count)
 
 void PlotGridView::addPlot(Plot * plot, int row, int column)
 {
-    cout << "Adding plot at " << row << ", " << column << endl;
+    //cout << "Adding plot at " << row << ", " << column << endl;
 
     if (row < 0 or column < 0)
         return;
@@ -495,16 +495,7 @@ void PlotView2::mousePressEvent(QMouseEvent* event)
         if (m_y_range)
             m_y_range_start = m_y_range->value();
 
-        if (event->modifiers() & Qt::ControlModifier)
-        {
-            m_mouse_interaction = MouseZoom;
-            cout << "Start zoom" << endl;
-        }
-        else
-        {
-            m_mouse_interaction = MouseShift;
-            cout << "Start shift" << endl;
-        }
+        m_mouse_interaction = MouseShift;
     }
 }
 
@@ -514,39 +505,9 @@ void PlotView2::mouseMoveEvent(QMouseEvent * event)
     {
         auto distance = event->pos() - m_mouse_press_point;
 
-        qDebug() << "Distance:" << distance;
-
-        if (m_mouse_interaction == MouseZoom)
-        {
-#if 0
-            QPointF plot_distance(0,0);
-
-            if (std::abs(distance.x()) < 20 || std::abs(distance.y()) < 20)
-            {
-                // Reset position
-            }
-            else
-            {
-
-                if (std::abs(distance.x()) > std::abs(distance.y()))
-                {
-                    // horizontal
-                    auto p = mapDistanceToPlot();
-                    plot_distance.setX(p.x());
-                }
-                else
-                {
-                    // vertical
-                    auto p = mapDistanceToPlot(
-                }
-            }
-#endif
-        }
-        else if (m_mouse_interaction == MouseShift)
+        if (m_mouse_interaction == MouseShift)
         {
             auto plot_distance = mapDistanceToPlot(distance);
-
-            qDebug() << "Plot distance:" << plot_distance << endl;
 
             if (m_x_range)
                 m_x_range->moveTo(m_x_range_start.min - plot_distance.x());
@@ -592,24 +553,24 @@ void PlotView2::wheelEvent(QWheelEvent* event)
         if (!range)
             return;
 
-        auto value = range->value();
+        auto plot_rect = plotRect();
 
-        //printf("Value: %f, %f\n", value.min, value.max);
+        auto mouse_plot_pos = mapToPlot(event->pos());
 
-        double extent = value.extent();
-        extent *= std::pow(2.0, -degrees / 180.0);
+        double new_extent = range->value().extent() * pow(2.0, -degrees/360.0);
+        range->scaleTo(new_extent);
 
-        //printf("Extent %f -> %f\n", value.extent(), extent);
+        auto plot_origin = plot_rect.topLeft() + QPoint(0, plot_rect.height());
+        auto mouse_plot_offset = mapDistanceToPlot(event->pos() - plot_origin);
 
-
-        value.max = value.min + extent;
-        value.max = std::min(value.max, range->limit().max);
-        value.max = std::max(value.max, value.min);
-
-        //printf("Limit: %f, %f\n", range->limit().min, range->limit().max);
-        //printf("New Value: %f, %f\n", value.min, value.max);
-
-        range->setValue(value);
+        if (vertical)
+        {
+            range->moveTo(mouse_plot_pos.y() - mouse_plot_offset.y());
+        }
+        else
+        {
+            range->moveTo(mouse_plot_pos.x() - mouse_plot_offset.x());
+        }
     }
     else
     {
@@ -670,8 +631,8 @@ void PlotView2::paintEvent(QPaintEvent*)
     Plot::Range x_range = m_x_range ? m_x_range->value() : plot->xRange();
     Plot::Range y_range = m_y_range ? m_y_range->value() : plot->yRange();
 
-    cout << "X range: " << x_range.min << ", " << x_range.max << endl;
-    cout << "Y range: " << y_range.min << ", " << y_range.max << endl;
+    //cout << "X range: " << x_range.min << ", " << x_range.max << endl;
+    //cout << "Y range: " << y_range.min << ", " << y_range.max << endl;
 
     QRectF region(x_range.min, y_range.min, x_range.extent(), y_range.extent());
 
@@ -765,6 +726,21 @@ void PlotRangeController::moveTo(double pos)
     p = std::max(p, m_limit.min);
     m_value.min = p;
     m_value.max = p + extent;
+
+    emit changed();
+}
+
+void PlotRangeController::scaleTo(double extent)
+{
+    extent = std::min(extent, m_limit.extent());
+    extent = std::max(extent, 0.0);
+
+    m_value.max = m_value.min + extent;
+    if (m_value.max > m_limit.max)
+    {
+        m_value.max = m_limit.max;
+        m_value.min = m_value.max - extent;
+    }
 
     emit changed();
 }
