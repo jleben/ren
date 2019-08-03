@@ -26,13 +26,28 @@ PlotGridView::PlotGridView(QWidget * parent):
     m_x_range_ctls.push_back(new PlotRangeController(this));
     m_y_range_ctls.push_back(new PlotRangeController(this));
 
-    auto view = new PlotView2;
+    auto view = makeView();
     view->setRangeController(m_x_range_ctls.front(), Qt::Horizontal);
     view->setRangeController(m_y_range_ctls.front(), Qt::Vertical);
 
     m_grid->addWidget(view, 0, 0);
 
     //printf("Rows: %d, Columns: %d\n", rowCount(), columnCount());
+}
+
+PlotView2 * PlotGridView::makeView()
+{
+    auto view = new PlotView2;
+    view->installEventFilter(this);
+    return view;
+}
+
+void PlotGridView::deleteView(PlotView2* view)
+{
+    if (view && m_selected_view == view)
+        m_selected_view = nullptr;
+
+    delete view;
 }
 
 void PlotGridView::setRowCount(int count)
@@ -48,13 +63,14 @@ void PlotGridView::setRowCount(int count)
         {
             for (int col = 0; col < columnCount(); ++col)
             {
-                auto * item = m_grid->itemAtPosition(row, col);
-                delete item;
+                deleteView(viewAtCell(row, col));
             }
 
             delete m_y_range_ctls.back();
             m_y_range_ctls.pop_back();
         }
+
+        updateDataRange();
     }
     else if (count > rowCount())
     {
@@ -67,7 +83,7 @@ void PlotGridView::setRowCount(int count)
             {
                 auto x_ctl = m_x_range_ctls[col];
 
-                auto view = new PlotView2;
+                auto view = makeView();
                 view->setRangeController(x_ctl, Qt::Horizontal);
                 view->setRangeController(y_ctl, Qt::Vertical);
 
@@ -90,18 +106,31 @@ void PlotGridView::setColumnCount(int count)
         {
             for (int row = 0; row < rowCount(); ++row)
             {
-                auto item = m_grid->itemAtPosition(row, col);
-                delete item;
+                deleteView(viewAtCell(row, col));
             }
+
+            delete m_x_range_ctls.back();
+            m_x_range_ctls.pop_back();
         }
+
+        updateDataRange();
     }
     else if (count > columnCount())
     {
         for (int col = columnCount(); col < count; ++col)
         {
+            auto x_ctl = new PlotRangeController;
+            m_x_range_ctls.push_back(x_ctl);
+
             for (int row = 0; row < rowCount(); ++row)
             {
-                m_grid->addWidget(new PlotView2, row, col);
+                auto y_ctl = m_y_range_ctls[row];
+
+                auto view = makeView();
+                view->setRangeController(x_ctl, Qt::Horizontal);
+                view->setRangeController(y_ctl, Qt::Vertical);
+
+                m_grid->addWidget(view, row, col);
             }
         }
     }
@@ -139,41 +168,23 @@ void PlotGridView::addPlotToColumn(Plot * plot, int column)
 
 void PlotGridView::removePlot(int row, int column)
 {
-    auto item = m_grid->itemAtPosition(row, column);
-    if (!item)
-        return;
+    auto view = viewAtCell(row, column);
 
-    auto plot_view = qobject_cast<PlotView2*>(item->widget());
-    if (!plot_view)
-        return;
+    if (view)
+        view->setPlot(nullptr);
 
-    delete plot_view;
-
-    //removeWidget(plot_view);
-
-    // TODO: disconnecting should be part of plot_view desctructor?
-    //disconnect(plot_view->plot());
-
-    // TODO: other stuff, update data range...
+    updateDataRange();
 }
 
 void PlotGridView::removePlot(Plot * plot)
 {
     for (int i = 0; i < m_grid->count(); ++i)
     {
-        auto item = m_grid->itemAt(i);
-        if (!item)
-            continue;
-
-        auto plot_view = qobject_cast<PlotView2*>(item->widget());
-        if (!plot_view)
-            return;
-
-        if (plot_view->plot() == plot)
+        auto view = viewAtIndex(i);
+        if (view->plot() == plot)
         {
-            delete plot_view;
-            // TODO:  other stuff...
-
+            view->setPlot(nullptr);
+            updateDataRange();
             return;
         }
     }
@@ -181,16 +192,10 @@ void PlotGridView::removePlot(Plot * plot)
 
 Plot * PlotGridView::plotAt(const QPoint & pos)
 {
-    for (int row = 0; row < m_grid->rowCount(); ++row)
-    {
-        for (int col = 0; col < m_grid->columnCount(); ++col)
-        {
-            if (m_grid->cellRect(row, col).contains(pos))
-            {
-                return plotAtCell(row, col);
-            }
-        }
-    }
+    auto * view = viewAtPoint(pos);
+
+    if (view)
+        return view->plot();
 
     return nullptr;
 }
@@ -220,6 +225,22 @@ PlotView2 * PlotGridView::viewAtCell(int row, int column)
         return nullptr;
 
     return qobject_cast<PlotView2*>(item->widget());
+}
+
+PlotView2 * PlotGridView::viewAtPoint(const QPoint & pos)
+{
+    for (int row = 0; row < m_grid->rowCount(); ++row)
+    {
+        for (int col = 0; col < m_grid->columnCount(); ++col)
+        {
+            if (m_grid->cellRect(row, col).contains(pos))
+            {
+                return viewAtCell(row, col);
+            }
+        }
+    }
+
+    return nullptr;
 }
 
 void PlotGridView::updateDataRange()
@@ -280,6 +301,38 @@ void PlotGridView::updateDataRange()
 
         m_x_range_ctls[col]->setLimit(total_range);
         m_x_range_ctls[col]->setValue(total_range);
+    }
+}
+
+bool PlotGridView::eventFilter(QObject * object, QEvent * event)
+{
+    if (event->type() == QEvent::MouseButtonPress)
+    {
+        auto view = qobject_cast<PlotView2*>(object);
+        if (!view)
+            return false;
+
+        m_selected_view = view;
+
+        update();
+    }
+
+    return false;
+}
+
+void PlotGridView::paintEvent(QPaintEvent*)
+{
+    QPainter painter(this);
+
+    for (int row = 0; row < rowCount(); ++row)
+    {
+        for (int col = 0; col < columnCount(); ++col)
+        {
+            if (viewAtCell(row, col) == m_selected_view)
+            {
+                painter.drawRect(m_grid->cellRect(row, col).adjusted(-5,-5,5,5));
+            }
+        }
     }
 }
 

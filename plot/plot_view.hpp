@@ -177,12 +177,21 @@ public:
 private:
     PlotView2 * viewAtIndex(int index);
     PlotView2 * viewAtCell(int row, int column);
+    PlotView2 * viewAtPoint(const QPoint & pos);
+    PlotView2 * makeView();
+    void deleteView(PlotView2* view);
+
     void updateDataRange();
+
+    virtual bool eventFilter(QObject*, QEvent*) override;
+    virtual void paintEvent(QPaintEvent*) override;
 
     QGridLayout * m_grid = nullptr;
 
     vector<PlotRangeController*> m_x_range_ctls;
     vector<PlotRangeController*> m_y_range_ctls;
+
+    PlotView2 * m_selected_view = nullptr;
 };
 
 }
