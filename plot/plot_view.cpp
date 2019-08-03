@@ -5,6 +5,7 @@
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <QToolButton>
 #include <QPainter>
 #include <QDebug>
 #include <QCursor>
@@ -21,7 +22,47 @@ namespace datavis {
 PlotGridView::PlotGridView(QWidget * parent):
     QWidget(parent)
 {
-    m_grid = new QGridLayout(this);
+    auto vbox = new QVBoxLayout(this);
+
+    auto toolbox = new QHBoxLayout;
+    vbox->addLayout(toolbox);
+
+    {
+        auto button = new QToolButton;
+        button->setText("+Row");
+        connect(button, &QAbstractButton::clicked,
+                this, &PlotGridView::addRow);
+        toolbox->addWidget(button);
+    }
+
+    {
+        auto button = new QToolButton;
+        button->setText("-Row");
+        connect(button, &QAbstractButton::clicked,
+                this, &PlotGridView::removeRow);
+        toolbox->addWidget(button);
+    }
+
+    {
+        auto button = new QToolButton;
+        button->setText("+Col");
+        connect(button, &QAbstractButton::clicked,
+                this, &PlotGridView::addColumn);
+        toolbox->addWidget(button);
+    }
+
+    {
+        auto button = new QToolButton;
+        button->setText("-Col");
+        connect(button, &QAbstractButton::clicked,
+                this, &PlotGridView::removeColumn);
+        toolbox->addWidget(button);
+    }
+
+    toolbox->addStretch();
+
+    m_grid = new QGridLayout;
+    vbox->addLayout(m_grid);
 
     m_x_range_ctls.push_back(new PlotRangeController(this));
     m_y_range_ctls.push_back(new PlotRangeController(this));
@@ -89,8 +130,6 @@ void PlotGridView::setRowCount(int count)
             delete m_y_range_ctls.back();
             m_y_range_ctls.pop_back();
         }
-
-        updateDataRange();
     }
     else if (count > rowCount())
     {
@@ -111,6 +150,12 @@ void PlotGridView::setRowCount(int count)
             }
         }
     }
+
+    m_rowCount = count;
+
+    updateDataRange();
+
+    update();
 }
 
 void PlotGridView::setColumnCount(int count)
@@ -132,8 +177,6 @@ void PlotGridView::setColumnCount(int count)
             delete m_x_range_ctls.back();
             m_x_range_ctls.pop_back();
         }
-
-        updateDataRange();
     }
     else if (count > columnCount())
     {
@@ -154,6 +197,12 @@ void PlotGridView::setColumnCount(int count)
             }
         }
     }
+
+    m_columnCount = count;
+
+    updateDataRange();
+
+    update();
 }
 
 void PlotGridView::addPlot(Plot * plot, int row, int column)
@@ -240,9 +289,9 @@ PlotView2 * PlotGridView::viewAtCell(int row, int column)
 
 PlotView2 * PlotGridView::viewAtPoint(const QPoint & pos)
 {
-    for (int row = 0; row < m_grid->rowCount(); ++row)
+    for (int row = 0; row < rowCount(); ++row)
     {
-        for (int col = 0; col < m_grid->columnCount(); ++col)
+        for (int col = 0; col < columnCount(); ++col)
         {
             if (m_grid->cellRect(row, col).contains(pos))
             {
@@ -256,9 +305,9 @@ PlotView2 * PlotGridView::viewAtPoint(const QPoint & pos)
 
 QPoint PlotGridView::findView(PlotView2 * view)
 {
-    for (int row = 0; row < m_grid->rowCount(); ++row)
+    for (int row = 0; row < rowCount(); ++row)
     {
-        for (int col = 0; col < m_grid->columnCount(); ++col)
+        for (int col = 0; col < columnCount(); ++col)
         {
             if (viewAtCell(row, col) == view)
                 return QPoint(col, row);

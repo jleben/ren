@@ -158,12 +158,17 @@ class PlotGridView : public QWidget
 public:
     PlotGridView(QWidget * parent = nullptr);
 
-    int columnCount() const { return m_grid->columnCount(); }
-    int rowCount() const { return m_grid->rowCount(); }
+    int columnCount() const { return m_columnCount; }
+    int rowCount() const { return m_rowCount; }
 
     // Adding a plot takes ownership
     void setColumnCount(int count);
     void setRowCount(int count);
+    void addColumn() { setColumnCount(columnCount() + 1); }
+    void addRow() { setRowCount(rowCount() + 1); }
+    void removeColumn() { setColumnCount(columnCount() - 1); }
+    void removeRow() { setRowCount(rowCount() - 1); }
+
     void addPlot(Plot*, int row, int column);
     void removePlot(Plot*);
     void removePlot(int row, int column);
@@ -191,6 +196,8 @@ private:
     virtual void paintEvent(QPaintEvent*) override;
 
     QGridLayout * m_grid = nullptr;
+    int m_rowCount = 1;
+    int m_columnCount = 1;
 
     vector<PlotRangeController*> m_x_range_ctls;
     vector<PlotRangeController*> m_y_range_ctls;
