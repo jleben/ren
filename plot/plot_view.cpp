@@ -73,6 +73,9 @@ PlotGridView::PlotGridView(QWidget * parent):
 
     m_grid->addWidget(view, 0, 0);
 
+    m_reticle = new PlotReticle(this);
+    m_reticle->hide();
+
     selectView(view);
 
     //printf("Rows: %d, Columns: %d\n", rowCount(), columnCount());
@@ -380,16 +383,70 @@ void PlotGridView::updateDataRange()
 
 bool PlotGridView::eventFilter(QObject * object, QEvent * event)
 {
-    if (event->type() == QEvent::MouseButtonPress)
+    switch(event->type())
+    {
+    case QEvent::MouseButtonPress:
     {
         auto view = qobject_cast<PlotView2*>(object);
         if (!view)
             return false;
 
         selectView(view);
+
+        break;
+    }
+    case QEvent::MouseMove:
+    {
+        m_reticle->update();
+        break;
+    }
+    case QEvent::Enter:
+    {
+        m_reticle->show();
+        break;
+    }
+    case QEvent::Leave:
+    {
+        m_reticle->hide();
+        break;
+    }
+    default:
+        break;
     }
 
     return false;
+}
+
+bool PlotGridView::event(QEvent *event)
+{
+    switch(event->type())
+    {
+    case QEvent::ChildAdded:
+    {
+        if (m_reticle)
+            m_reticle->raise();
+        break;
+    }
+    default:
+        break;
+    }
+
+    return QWidget::event(event);
+}
+
+void PlotGridView::resizeEvent(QResizeEvent*)
+{
+    m_reticle->setGeometry(m_grid->geometry());
+}
+
+void PlotGridView::enterEvent(QEvent*)
+{
+    update();
+}
+
+void PlotGridView::leaveEvent(QEvent*)
+{
+    update();
 }
 
 void PlotGridView::paintEvent(QPaintEvent*)
@@ -401,6 +458,28 @@ void PlotGridView::paintEvent(QPaintEvent*)
         const auto & cell = m_selected_cell;
         painter.drawRect(m_grid->cellRect(cell.y(), cell.x()).adjusted(-5,-5,5,5));
     }
+}
+
+PlotReticle::PlotReticle(QWidget * parent):
+    QWidget(parent)
+{
+    setAttribute(Qt::WA_TransparentForMouseEvents);
+}
+
+void PlotReticle::paintEvent(QPaintEvent*)
+{
+    QPainter painter(this);
+
+    auto pos = mapFromGlobal(QCursor::pos());
+
+    QPen cursor_pen;
+    cursor_pen.setColor(Qt::red);
+    cursor_pen.setWidth(1);
+
+    painter.setPen(cursor_pen);
+
+    painter.drawLine(pos.x(), 0, pos.x(), height());
+    painter.drawLine(0, pos.y(), width(), pos.y());
 }
 
 ////
@@ -676,9 +755,6 @@ void PlotView2::paintEvent(QPaintEvent*)
         cursor_pen.setWidth(1);
 
         painter.setPen(cursor_pen);
-
-        painter.drawLine(pos.x(), 0, pos.x(), height());
-        painter.drawLine(0, pos.y(), width(), pos.y());
 
         auto plot = this->plot();
         auto plotPos = mapToPlot(pos);

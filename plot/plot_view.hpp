@@ -175,6 +175,13 @@ private:
     QPointF m_mouse_press_plot_point;
 };
 
+class PlotReticle : public QWidget
+{
+public:
+    PlotReticle(QWidget * parent = nullptr);
+    virtual void paintEvent(QPaintEvent*) override;
+};
+
 class PlotGridView : public QWidget
 {
     Q_OBJECT
@@ -216,6 +223,10 @@ private:
     void updateDataRange();
 
     virtual bool eventFilter(QObject*, QEvent*) override;
+    virtual bool event(QEvent *event) override;
+    virtual void enterEvent(QEvent*) override;
+    virtual void leaveEvent(QEvent*) override;
+    virtual void resizeEvent(QResizeEvent*) override;
     virtual void paintEvent(QPaintEvent*) override;
 
     QGridLayout * m_grid = nullptr;
@@ -227,6 +238,8 @@ private:
 
     QPoint m_selected_cell;
     PlotView2 * m_selected_view = nullptr;
+
+    PlotReticle * m_reticle = nullptr;
 };
 
 }
