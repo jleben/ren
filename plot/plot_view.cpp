@@ -137,7 +137,7 @@ void PlotGridView::addRow()
 
 void PlotGridView::removeRow()
 {
-    if (m_rowCount <= 0)
+    if (m_rowCount <= 1)
         return;
 
     for (int col = 0; col < columnCount(); ++col)
@@ -206,7 +206,7 @@ void PlotGridView::addColumn()
 
 void PlotGridView::removeColumn()
 {
-    if (m_columnCount <= 0)
+    if (m_columnCount <= 1)
         return;
 
     for (int row = 0; row < rowCount(); ++row)
