@@ -27,6 +27,7 @@ public:
     DataSource(DataLibrary * lib): d_lib(lib) {}
     DataLibrary * library() const { return d_lib; }
     virtual ~DataSource() {}
+    virtual string path() const = 0;
     virtual string id() const = 0;
     virtual int count() const = 0;
     virtual int index(const string & id) const = 0;

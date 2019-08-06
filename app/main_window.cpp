@@ -447,7 +447,7 @@ void MainWindow::saveProjectFile(const QString & path)
         auto source = m_lib->source(source_idx);
 
         json source_json;
-        source_json["path"] = source->id();
+        source_json["path"] = source->path();
 
         sources_json.push_back(source_json);
     }
@@ -461,29 +461,35 @@ void MainWindow::saveProjectFile(const QString & path)
         auto geometry = plot_view->geometry();
         plot_view_json["position"] << geometry;
 
-        // TODO:
-#if 0
-        for (auto plot : plot_view->plots())
+        for (int row = 0; row < plot_view->rowCount(); ++row)
         {
-            auto data_set = plot->dataSet();
+            for(int col = 0; col < plot_view->columnCount(); ++col)
+            {
+                auto * plot = plot_view->plotAtCell(row, col);
+                if (!plot)
+                    continue;
 
-            json plot_json;
-            plot_json["data_source"] = data_set->source()->id();
-            plot_json["data_set"] = data_set->id();
+                auto data_set = plot->dataSet();
 
-            try {
-                plot_json["options"] = plot->save();
-            } catch (json::exception & e) {
-                cerr << "Failed to save plot: "
-                     << data_set->source()->id() << " : " << data_set->id()
-                     << endl;
-                has_errors = true;
-                continue;
+                json plot_json;
+                plot_json["row"] = row;
+                plot_json["column"] = col;
+                plot_json["data_source"] = data_set->source()->id();
+                plot_json["data_set"] = data_set->id();
+
+                try {
+                    plot_json["options"] = plot->save();
+                } catch (json::exception & e) {
+                    cerr << "Failed to save plot: "
+                         << data_set->source()->id() << " : " << data_set->id()
+                         << endl;
+                    has_errors = true;
+                    continue;
+                }
+
+                plot_view_json["plots"].push_back(plot_json);
             }
-
-            plot_view_json["plots"].push_back(plot_json);
         }
-#endif
 
         plot_views_json.push_back(plot_view_json);
     }
@@ -556,7 +562,12 @@ void MainWindow::openProjectFile(const QString & file_path)
         project_json.at("main_window_position") >> geometry;
         setGeometry(geometry);
     }
-    catch (json::exception & e) { has_errors = true; }
+    catch (json::exception & e)
+    {
+        cerr << "JSON exception while restoring main window geometry: "
+             << e.what() << endl;
+        has_errors = true;
+    }
 
     try
     {
@@ -567,10 +578,20 @@ void MainWindow::openProjectFile(const QString & file_path)
                 string path = source_json.at("path");
                 m_lib->open(QString::fromStdString(path));
             }
-            catch (json::exception &) { has_errors = true; }
+            catch (json::exception & e)
+            {
+                cerr << "JSON exception while restoring a data source: "
+                     << e.what() << endl;
+                has_errors = true;
+            }
         }
     }
-    catch (json::exception &) { has_errors = true; }
+    catch (json::exception & e)
+    {
+        cerr << "JSON exception while restoring data sources: "
+             << e.what() << endl;
+        has_errors = true;
+    }
 
     try
     {
@@ -584,7 +605,12 @@ void MainWindow::openProjectFile(const QString & file_path)
                 plot_view_json.at("position") >> geometry;
                 plot_view->setGeometry(geometry);
             }
-            catch (json::exception &) { has_errors = true; }
+            catch (json::exception & e)
+            {
+                cerr << "JSON exception while restoring plot view: "
+                     << e.what() << endl;
+                has_errors = true;
+            }
 
             m_selected_plot_view = plot_view;
 
@@ -594,8 +620,18 @@ void MainWindow::openProjectFile(const QString & file_path)
                 {
                     restorePlot(plot_view, plot_json);
                 }
-                catch(json::exception &) { has_errors = true; }
-                catch(Error &) { has_errors = true; }
+                catch(json::exception & e)
+                {
+                    cerr << "JSON exception while restoring a plot: "
+                         << e.what() << endl;
+                    has_errors = true;
+                }
+                catch(Error & e)
+                {
+                    cerr << "Error while restoring a plot: "
+                         << e.what() << endl;
+                    has_errors = true;
+                }
             }
         }
     }
@@ -641,6 +677,8 @@ void MainWindow::restorePlot(PlotGridView * view, const json & state)
     try {
         data = source->dataset(dataset_index);
     } catch (...) {
+        cerr << "Failed to get dataset "
+                   << source_path << " : " << dataset_id << endl;
         Error e;
         e.reason() << "Failed to get dataset "
                    << source_path << " : " << dataset_id << endl;
@@ -676,8 +714,10 @@ void MainWindow::restorePlot(PlotGridView * view, const json & state)
         throw Error("Invalid plot state.");
     }
 
-    // FIXME:
-    view->addPlot(plot, view->rowCount(), 0);
+    int row = state.at("row");
+    int column = state.at("column");
+
+    view->addPlot(plot, row, column);
 }
 
 bool MainWindow::closeProject()

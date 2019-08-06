@@ -14,6 +14,7 @@ class Hdf5Source : public DataSource
 public:
     Hdf5Source(const string & file_path, DataLibrary *);
 
+    string path() const override { return m_file_path; }
     string id() const override { return m_file_path; }
     int count() const override;
     int index(const string & id) const override;

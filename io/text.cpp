@@ -511,6 +511,7 @@ void TextPackageSource::loadDataSet(int index)
     }
 
     auto dataset = make_shared<DataSet>(member.path, data_size, member.info.attributes.size());
+    dataset->setSource(this);
 
     for (int i = 0; i < member.info.attributes.size(); ++i)
     {
