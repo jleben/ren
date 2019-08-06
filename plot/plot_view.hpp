@@ -182,6 +182,23 @@ public:
     virtual void paintEvent(QPaintEvent*) override;
 };
 
+class RangeView : public QWidget
+{
+    Q_OBJECT
+public:
+    RangeView(Qt::Orientation, PlotRangeController *, QWidget * parent = nullptr);
+    Qt::Orientation orientation() const { return m_orientation; }
+    virtual void paintEvent(QPaintEvent*) override;
+    virtual QSize sizeHint() const override { return QSize(10,10); }
+
+private:
+    PlotRangeController * m_ctl;
+    Qt::Orientation m_orientation;
+    QColor m_background_color;
+    QColor m_foreground_color;
+};
+
+
 class PlotGridView : public QWidget
 {
     Q_OBJECT
@@ -191,14 +208,15 @@ public:
     int columnCount() const { return m_columnCount; }
     int rowCount() const { return m_rowCount; }
 
-    // Adding a plot takes ownership
-    void setColumnCount(int count);
+    void addRow();
+    void removeRow();
     void setRowCount(int count);
-    void addColumn() { setColumnCount(columnCount() + 1); }
-    void addRow() { setRowCount(rowCount() + 1); }
-    void removeColumn() { setColumnCount(columnCount() - 1); }
-    void removeRow() { setRowCount(rowCount() - 1); }
 
+    void addColumn();
+    void removeColumn();
+    void setColumnCount(int count);
+
+    // Adding a plot takes ownership
     void addPlot(Plot*, int row, int column);
     void removePlot(Plot*);
     void removePlot(int row, int column);
@@ -230,11 +248,13 @@ private:
     virtual void paintEvent(QPaintEvent*) override;
 
     QGridLayout * m_grid = nullptr;
-    int m_rowCount = 1;
-    int m_columnCount = 1;
+    int m_rowCount = 0;
+    int m_columnCount = 0;
 
     vector<PlotRangeController*> m_x_range_ctls;
     vector<PlotRangeController*> m_y_range_ctls;
+    vector<RangeView*> m_x_range_views;
+    vector<RangeView*> m_y_range_views;
 
     QPoint m_selected_cell;
     PlotView2 * m_selected_view = nullptr;

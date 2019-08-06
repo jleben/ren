@@ -64,19 +64,13 @@ PlotGridView::PlotGridView(QWidget * parent):
     m_grid = new QGridLayout;
     vbox->addLayout(m_grid);
 
-    m_x_range_ctls.push_back(new PlotRangeController(this));
-    m_y_range_ctls.push_back(new PlotRangeController(this));
-
-    auto view = makeView();
-    view->setRangeController(m_x_range_ctls.front(), Qt::Horizontal);
-    view->setRangeController(m_y_range_ctls.front(), Qt::Vertical);
-
-    m_grid->addWidget(view, 0, 0);
+    addRow();
+    addColumn();
 
     m_reticle = new PlotReticle(this);
     m_reticle->hide();
 
-    selectView(view);
+    selectView(viewAtCell(0,0));
 
     //printf("Rows: %d, Columns: %d\n", rowCount(), columnCount());
 }
@@ -113,6 +107,56 @@ void PlotGridView::selectView(PlotView2* view)
     update();
 }
 
+void PlotGridView::addRow()
+{
+    auto y_ctl = new PlotRangeController;
+    m_y_range_ctls.push_back(y_ctl);
+
+    auto y_bar = new RangeView(Qt::Vertical, y_ctl);
+    m_y_range_views.push_back(y_bar);
+
+    m_grid->addWidget(y_bar, m_rowCount+1, 0);
+
+    for (int col = 0; col < columnCount(); ++col)
+    {
+        auto x_ctl = m_x_range_ctls[col];
+
+        auto view = makeView();
+        view->setRangeController(x_ctl, Qt::Horizontal);
+        view->setRangeController(y_ctl, Qt::Vertical);
+
+        m_grid->addWidget(view, m_rowCount+1, col+1);
+    }
+
+    ++m_rowCount;
+
+    updateDataRange();
+
+    update();
+}
+
+void PlotGridView::removeRow()
+{
+    if (m_rowCount <= 0)
+        return;
+
+    for (int col = 0; col < columnCount(); ++col)
+    {
+        deleteView(viewAtCell(m_rowCount-1, col));
+    }
+
+    delete m_y_range_views.back();
+    m_y_range_views.pop_back();
+
+    delete m_y_range_ctls.back();
+    m_y_range_ctls.pop_back();
+
+    --m_rowCount;
+
+    updateDataRange();
+
+    update();
+}
 
 void PlotGridView::setRowCount(int count)
 {
@@ -121,40 +165,62 @@ void PlotGridView::setRowCount(int count)
     if (count < 1)
         return;
 
-    if (count < rowCount())
+    while(rowCount() > count)
     {
-        for (int row = count; row < rowCount(); ++row)
-        {
-            for (int col = 0; col < columnCount(); ++col)
-            {
-                deleteView(viewAtCell(row, col));
-            }
-
-            delete m_y_range_ctls.back();
-            m_y_range_ctls.pop_back();
-        }
-    }
-    else if (count > rowCount())
-    {
-        for (int row = rowCount(); row < count; ++row)
-        {
-            auto y_ctl = new PlotRangeController;
-            m_y_range_ctls.push_back(y_ctl);
-
-            for (int col = 0; col < columnCount(); ++col)
-            {
-                auto x_ctl = m_x_range_ctls[col];
-
-                auto view = makeView();
-                view->setRangeController(x_ctl, Qt::Horizontal);
-                view->setRangeController(y_ctl, Qt::Vertical);
-
-                m_grid->addWidget(view, row, col);
-            }
-        }
+        removeRow();
     }
 
-    m_rowCount = count;
+    while(rowCount() < count)
+    {
+        addRow();
+    }
+}
+
+void PlotGridView::addColumn()
+{
+    auto x_ctl = new PlotRangeController;
+    m_x_range_ctls.push_back(x_ctl);
+
+    auto x_bar = new RangeView(Qt::Horizontal, x_ctl);
+    m_x_range_views.push_back(x_bar);
+
+    m_grid->addWidget(x_bar, 0, m_columnCount+1);
+
+    for (int row = 0; row < rowCount(); ++row)
+    {
+        auto y_ctl = m_y_range_ctls[row];
+
+        auto view = makeView();
+        view->setRangeController(x_ctl, Qt::Horizontal);
+        view->setRangeController(y_ctl, Qt::Vertical);
+
+        m_grid->addWidget(view, row+1, m_columnCount+1);
+    }
+
+    ++m_columnCount;
+
+    updateDataRange();
+
+    update();
+}
+
+void PlotGridView::removeColumn()
+{
+    if (m_columnCount <= 0)
+        return;
+
+    for (int row = 0; row < rowCount(); ++row)
+    {
+        deleteView(viewAtCell(row, m_columnCount-1));
+    }
+
+    delete m_x_range_views.back();
+    m_x_range_views.pop_back();
+
+    delete m_x_range_ctls.back();
+    m_x_range_ctls.pop_back();
+
+    --m_columnCount;
 
     updateDataRange();
 
@@ -168,44 +234,15 @@ void PlotGridView::setColumnCount(int count)
     if (count < 1)
         return;
 
-    if (count < columnCount())
+    while(columnCount() > count)
     {
-        for (int col = count; col < columnCount(); ++col)
-        {
-            for (int row = 0; row < rowCount(); ++row)
-            {
-                deleteView(viewAtCell(row, col));
-            }
-
-            delete m_x_range_ctls.back();
-            m_x_range_ctls.pop_back();
-        }
-    }
-    else if (count > columnCount())
-    {
-        for (int col = columnCount(); col < count; ++col)
-        {
-            auto x_ctl = new PlotRangeController;
-            m_x_range_ctls.push_back(x_ctl);
-
-            for (int row = 0; row < rowCount(); ++row)
-            {
-                auto y_ctl = m_y_range_ctls[row];
-
-                auto view = makeView();
-                view->setRangeController(x_ctl, Qt::Horizontal);
-                view->setRangeController(y_ctl, Qt::Vertical);
-
-                m_grid->addWidget(view, row, col);
-            }
-        }
+        removeColumn();
     }
 
-    m_columnCount = count;
-
-    updateDataRange();
-
-    update();
+    while(columnCount() < count)
+    {
+        addColumn();
+    }
 }
 
 void PlotGridView::addPlot(Plot * plot, int row, int column)
@@ -283,7 +320,7 @@ PlotView2 * PlotGridView::viewAtIndex(int index)
 
 PlotView2 * PlotGridView::viewAtCell(int row, int column)
 {
-    auto item = m_grid->itemAtPosition(row, column);
+    auto item = m_grid->itemAtPosition(row+1, column+1);
     if (!item)
         return nullptr;
 
@@ -456,7 +493,7 @@ void PlotGridView::paintEvent(QPaintEvent*)
     if (m_selected_view)
     {
         const auto & cell = m_selected_cell;
-        painter.drawRect(m_grid->cellRect(cell.y(), cell.x()).adjusted(-5,-5,5,5));
+        painter.drawRect(m_grid->cellRect(cell.y()+1, cell.x()+1).adjusted(-5,-5,5,5));
     }
 }
 
@@ -480,6 +517,72 @@ void PlotReticle::paintEvent(QPaintEvent*)
 
     painter.drawLine(pos.x(), 0, pos.x(), height());
     painter.drawLine(0, pos.y(), width(), pos.y());
+}
+
+RangeView::RangeView(Qt::Orientation orientation, PlotRangeController * ctl, QWidget * parent):
+    QWidget(parent),
+    m_ctl(ctl),
+    m_orientation(orientation)
+{
+    if (orientation == Qt::Horizontal)
+        setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    else
+        setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+
+    m_background_color = QColor(100,100,100);
+    m_foreground_color = QColor(200,200,200);
+
+    connect(ctl, SIGNAL(changed()),
+            this, SLOT(update()));
+}
+
+void RangeView::paintEvent(QPaintEvent*)
+{
+    QPainter painter(this);
+
+    painter.setPen(Qt::NoPen);
+
+    painter.fillRect(rect(), m_background_color);
+
+    float position, size;
+
+    if (m_ctl->limit().extent() > 0)
+    {
+        position = (m_ctl->value().min - m_ctl->limit().min) / m_ctl->limit().extent();
+        size = m_ctl->value().extent() / m_ctl->limit().extent();
+    }
+    else
+    {
+        position = size = 0;
+    }
+
+    QRect rangeRect;
+
+    if (m_orientation == Qt::Horizontal)
+    {
+        int thumb_x = int(position * width());
+        int thumb_width = std::max(5, int(size * width()));
+
+        rangeRect = rect();
+        rangeRect.setX(thumb_x);
+        rangeRect.setWidth(thumb_width);
+    }
+    else
+    {
+        int thumb_height = std::max(5, int(size * height()));
+        int thumb_y = height() - thumb_height - int(position * height());
+
+        rangeRect = rect();
+        rangeRect.setY(thumb_y);
+        rangeRect.setHeight(thumb_height);
+    }
+
+    painter.fillRect(rangeRect, m_foreground_color);
+
+    auto stripe_color = m_background_color;
+    stripe_color.setAlpha(100);
+    painter.setBrush(QBrush(stripe_color, Qt::BDiagPattern));
+    painter.drawRect(rangeRect);
 }
 
 ////
