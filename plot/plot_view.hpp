@@ -146,6 +146,7 @@ public:
     QRect plotRect() const;
     QPointF mapToPlot(const QPointF & pos);
     QPointF mapDistanceToPlot(const QPointF & distance);
+    void selectDataAt(const QPoint &);
 
     virtual void enterEvent(QEvent*) override;
     virtual void leaveEvent(QEvent*) override;
@@ -161,7 +162,8 @@ private:
     {
         NoMouseInteraction,
         MouseZoom,
-        MouseShift
+        MouseShift,
+        MouseFocusData
     };
 
     Plot * m_plot = nullptr;

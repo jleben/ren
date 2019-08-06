@@ -359,8 +359,6 @@ QPoint PlotGridView::findView(PlotView2 * view)
 
 void PlotGridView::updateDataRange()
 {
-    printf("updating data range");
-
     for (int row = 0; row < rowCount(); ++row)
     {
         Plot::Range total_range;
@@ -605,6 +603,12 @@ void PlotView2::setPlot(Plot *plot)
 
     m_plot = plot;
 
+    if (plot)
+    {
+        connect(plot, SIGNAL(contentChanged()),
+                this, SLOT(update()));
+    }
+
     update();
 }
 
@@ -666,6 +670,23 @@ QPointF PlotView2::mapDistanceToPlot(const QPointF & distance)
     return QPointF(x,y);
 }
 
+void PlotView2::selectDataAt(const QPoint & pos)
+{
+    auto plot = this->plot();
+    if (!plot)
+        return;
+
+    auto plotPos = mapToPlot(pos);
+    auto dataPos = plot->dataLocation(plotPos);
+    DataSetPtr dataset = plot->dataSet();
+    for (int d = 0; d < dataset->dimensionCount(); ++d)
+    {
+        DimensionPtr dim = dataset->globalDimension(d);
+        if (!dim) continue;
+        dim->setFocus(get<0>(dataPos)[d]);
+    }
+}
+
 void PlotView2::enterEvent(QEvent*)
 {
     update();
@@ -678,7 +699,11 @@ void PlotView2::leaveEvent(QEvent*)
 
 void PlotView2::mousePressEvent(QMouseEvent* event)
 {
-    if (event->buttons() & Qt::LeftButton)
+    m_mouse_interaction = NoMouseInteraction;
+
+    bool left_button_pressed = event->buttons() & Qt::LeftButton;
+    bool shift_pressed = event->modifiers() & Qt::ShiftModifier;
+    if (left_button_pressed and shift_pressed)
     {
         m_mouse_press_point = event->pos();
         m_mouse_press_plot_point = mapToPlot(event->pos());
@@ -690,26 +715,30 @@ void PlotView2::mousePressEvent(QMouseEvent* event)
 
         m_mouse_interaction = MouseShift;
     }
+    else if (left_button_pressed and (!event->modifiers()))
+    {
+        selectDataAt(event->pos());
+
+        m_mouse_interaction = MouseFocusData;
+    }
 }
 
 void PlotView2::mouseMoveEvent(QMouseEvent * event)
 {
-    if (event->buttons() & Qt::LeftButton)
+    if (m_mouse_interaction == MouseShift and event->buttons() & Qt::LeftButton)
     {
         auto distance = event->pos() - m_mouse_press_point;
+        auto plot_distance = mapDistanceToPlot(distance);
 
-        if (m_mouse_interaction == MouseShift)
-        {
-            auto plot_distance = mapDistanceToPlot(distance);
-
-            if (m_x_range)
-                m_x_range->moveTo(m_x_range_start.min - plot_distance.x());
-            if (m_y_range)
-                m_y_range->moveTo(m_y_range_start.min - plot_distance.y());
-        }
+        if (m_x_range)
+            m_x_range->moveTo(m_x_range_start.min - plot_distance.x());
+        if (m_y_range)
+            m_y_range->moveTo(m_y_range_start.min - plot_distance.y());
     }
-
-    update();
+    else if (m_mouse_interaction == MouseFocusData and (event->buttons() & Qt::LeftButton))
+    {
+        selectDataAt(event->pos());
+    }
 }
 
 
