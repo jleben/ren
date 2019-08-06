@@ -1,4 +1,5 @@
 #include "text.hpp"
+#include "../data/data_library.hpp"
 #include "../utility/error.hpp"
 #include "../json/json.hpp"
 
@@ -517,7 +518,17 @@ void TextPackageSource::loadDataSet(int index)
     }
     for (int i = 0; i < member.info.dimensions.size(); ++i)
     {
-        dataset->setDimension(i, member.info.dimensions[i]);
+        const auto & dim = member.info.dimensions[i];
+
+        dataset->setDimension(i, dim);
+
+        DimensionPtr gdim = library()->dimension(dim.name);
+        if (gdim)
+        {
+            cout << "TextPackageSource: Setting global dimension: " << dim.name << endl;
+            dataset->setGlobalDimension(i, gdim);
+        }
+
     }
 
     // Fill DataSet with data
