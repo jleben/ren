@@ -11,94 +11,6 @@ namespace datavis {
 
 using std::list;
 class Plot;
-class PlotCanvas;
-class RangeBar;
-
-class PlotCanvas : public QWidget
-{
-    Q_OBJECT
-
-public:
-    virtual void resizeEvent(QResizeEvent*) override;
-    virtual void enterEvent(QEvent*) override;
-    virtual void leaveEvent(QEvent*) override;
-    virtual void mouseMoveEvent(QMouseEvent*) override;
-    virtual void mousePressEvent(QMouseEvent*) override;
-    virtual void wheelEvent(QWheelEvent*) override;
-    virtual void paintEvent(QPaintEvent*) override;
-
-    void updateDataRange();
-    QRect plotRect(int index);
-    QPointF mapToPlot(int plotIndex, const QPointF & pos);
-
-    double position();
-    void setPosition(double value);
-    void setOffset(double value);
-
-    double range();
-    void setRange(double value);
-    void setSize(double value);
-
-    vector<Plot*> m_plots;
-
-    int m_margin = 10;
-    bool m_stacked = false;
-    bool m_common_x = true;
-    bool m_common_y = false;
-
-    Plot::Range total_x_range;
-    Plot::Range total_y_range;
-
-    Plot::Range view_x_range;
-
-    QPoint m_last_mouse_pos;
-
-private:
-    void selectDataAt(const QPoint &);
-
-signals:
-    void rangeChanged();
-};
-
-class PlotView : public QWidget
-{
-    Q_OBJECT
-
-public:
-    PlotView(QWidget * parent = 0);
-
-    void addPlot(Plot*);
-    void removePlot(Plot*);
-
-    const vector<Plot*> plots() { return m_canvas->m_plots; }
-
-    bool isStacked() const { return m_canvas->m_stacked; }
-    void setStacked(bool value);
-
-    bool hasCommonX() const { return m_canvas->m_common_x; }
-    void setCommonX(bool value);
-
-    bool hasCommonY() const { return m_canvas->m_common_y; }
-    void setCommonY(bool value);
-
-    Plot * plotAt(const QPoint & pos);
-
-    double position() { return m_canvas->position(); }
-    void setPosition(double value) { m_canvas->setPosition(value); }
-
-    double range() { return m_canvas->range(); }
-    void setRange(double value) { m_canvas->setRange(value); }
-
-    QSize sizeHint() const override { return QSize(600,400); }
-
-private:
-    void onPlotRangeChanged();
-    void onPlotContentChanged();
-    void onCanvasRangeChanged();
-
-    PlotCanvas * m_canvas;
-    RangeBar * m_range_bar;
-};
 
 class PlotRangeController : public QObject
 {
@@ -133,13 +45,13 @@ private:
     Plot::Range m_limit;
 };
 
-class PlotView2 : public QWidget
+class PlotView : public QWidget
 {
     Q_OBJECT
 
 public:
-    PlotView2(QWidget * parent = nullptr);
-    ~PlotView2();
+    PlotView(QWidget * parent = nullptr);
+    ~PlotView();
 
     void setPlot(Plot * plot);
     Plot * plot() const { return m_plot; }
@@ -232,13 +144,13 @@ public:
     QSize sizeHint() const override { return QSize(600,400); }
 
 private:
-    PlotView2 * viewAtIndex(int index);
-    PlotView2 * viewAtCell(int row, int column);
-    PlotView2 * viewAtPoint(const QPoint & pos);
-    QPoint findView(PlotView2 * view);
-    PlotView2 * makeView();
-    void deleteView(PlotView2* view);
-    void selectView(PlotView2* view);
+    PlotView * viewAtIndex(int index);
+    PlotView * viewAtCell(int row, int column);
+    PlotView * viewAtPoint(const QPoint & pos);
+    QPoint findView(PlotView * view);
+    PlotView * makeView();
+    void deleteView(PlotView* view);
+    void selectView(PlotView* view);
 
     void updateDataRange();
 
@@ -259,7 +171,7 @@ private:
     vector<RangeView*> m_y_range_views;
 
     QPoint m_selected_cell;
-    PlotView2 * m_selected_view = nullptr;
+    PlotView * m_selected_view = nullptr;
 
     PlotReticle * m_reticle = nullptr;
 };

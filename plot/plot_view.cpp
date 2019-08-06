@@ -1,5 +1,4 @@
 #include "plot_view.hpp"
-#include "range_bar.hpp"
 #include "plot.hpp"
 #include "../utility/vector.hpp"
 
@@ -75,14 +74,14 @@ PlotGridView::PlotGridView(QWidget * parent):
     //printf("Rows: %d, Columns: %d\n", rowCount(), columnCount());
 }
 
-PlotView2 * PlotGridView::makeView()
+PlotView * PlotGridView::makeView()
 {
-    auto view = new PlotView2;
+    auto view = new PlotView;
     view->installEventFilter(this);
     return view;
 }
 
-void PlotGridView::deleteView(PlotView2* view)
+void PlotGridView::deleteView(PlotView* view)
 {
     if (view && m_selected_view == view)
     {
@@ -92,7 +91,7 @@ void PlotGridView::deleteView(PlotView2* view)
     delete view;
 }
 
-void PlotGridView::selectView(PlotView2* view)
+void PlotGridView::selectView(PlotView* view)
 {
     m_selected_view = view;
     if (view)
@@ -309,25 +308,25 @@ Plot * PlotGridView::plotAtCell(int row, int column)
     return plot_view->plot();
 }
 
-PlotView2 * PlotGridView::viewAtIndex(int index)
+PlotView * PlotGridView::viewAtIndex(int index)
 {
     auto item = m_grid->itemAt(index);
     if (!item)
         return nullptr;
 
-    return qobject_cast<PlotView2*>(item->widget());
+    return qobject_cast<PlotView*>(item->widget());
 }
 
-PlotView2 * PlotGridView::viewAtCell(int row, int column)
+PlotView * PlotGridView::viewAtCell(int row, int column)
 {
     auto item = m_grid->itemAtPosition(row+1, column+1);
     if (!item)
         return nullptr;
 
-    return qobject_cast<PlotView2*>(item->widget());
+    return qobject_cast<PlotView*>(item->widget());
 }
 
-PlotView2 * PlotGridView::viewAtPoint(const QPoint & pos)
+PlotView * PlotGridView::viewAtPoint(const QPoint & pos)
 {
     for (int row = 0; row < rowCount(); ++row)
     {
@@ -343,7 +342,7 @@ PlotView2 * PlotGridView::viewAtPoint(const QPoint & pos)
     return nullptr;
 }
 
-QPoint PlotGridView::findView(PlotView2 * view)
+QPoint PlotGridView::findView(PlotView * view)
 {
     for (int row = 0; row < rowCount(); ++row)
     {
@@ -422,7 +421,7 @@ bool PlotGridView::eventFilter(QObject * object, QEvent * event)
     {
     case QEvent::MouseButtonPress:
     {
-        auto view = qobject_cast<PlotView2*>(object);
+        auto view = qobject_cast<PlotView*>(object);
         if (!view)
             return false;
 
@@ -585,18 +584,18 @@ void RangeView::paintEvent(QPaintEvent*)
 
 ////
 
-PlotView2::PlotView2(QWidget * parent):
+PlotView::PlotView(QWidget * parent):
     QWidget(parent)
 {
     setMouseTracking(true);
 }
 
-PlotView2::~PlotView2()
+PlotView::~PlotView()
 {
     delete m_plot;
 }
 
-void PlotView2::setPlot(Plot *plot)
+void PlotView::setPlot(Plot *plot)
 {
     if (m_plot)
         delete m_plot;
@@ -612,7 +611,7 @@ void PlotView2::setPlot(Plot *plot)
     update();
 }
 
-void PlotView2::setRangeController(PlotRangeController * ctl, Qt::Orientation orientation)
+void PlotView::setRangeController(PlotRangeController * ctl, Qt::Orientation orientation)
 {
     PlotRangeController * old_ctl = nullptr;
 
@@ -635,12 +634,12 @@ void PlotView2::setRangeController(PlotRangeController * ctl, Qt::Orientation or
     update();
 }
 
-QRect PlotView2::plotRect() const
+QRect PlotView::plotRect() const
 {
     return this->rect().adjusted(10,10,-10,-10);
 }
 
-QPointF PlotView2::mapToPlot(const QPointF & pos)
+QPointF PlotView::mapToPlot(const QPointF & pos)
 {
     const auto & xRange = m_x_range ? m_x_range->value() : m_plot->xRange();
     const auto & yRange = m_y_range ? m_y_range->value() : m_plot->yRange();
@@ -655,7 +654,7 @@ QPointF PlotView2::mapToPlot(const QPointF & pos)
     return QPointF(x,y);
 }
 
-QPointF PlotView2::mapDistanceToPlot(const QPointF & distance)
+QPointF PlotView::mapDistanceToPlot(const QPointF & distance)
 {
     const auto & xRange = m_x_range ? m_x_range->value() : m_plot->xRange();
     const auto & yRange = m_y_range ? m_y_range->value() : m_plot->yRange();
@@ -670,7 +669,7 @@ QPointF PlotView2::mapDistanceToPlot(const QPointF & distance)
     return QPointF(x,y);
 }
 
-void PlotView2::selectDataAt(const QPoint & pos)
+void PlotView::selectDataAt(const QPoint & pos)
 {
     auto plot = this->plot();
     if (!plot)
@@ -687,17 +686,17 @@ void PlotView2::selectDataAt(const QPoint & pos)
     }
 }
 
-void PlotView2::enterEvent(QEvent*)
+void PlotView::enterEvent(QEvent*)
 {
     update();
 }
 
-void PlotView2::leaveEvent(QEvent*)
+void PlotView::leaveEvent(QEvent*)
 {
     update();
 }
 
-void PlotView2::mousePressEvent(QMouseEvent* event)
+void PlotView::mousePressEvent(QMouseEvent* event)
 {
     m_mouse_interaction = NoMouseInteraction;
 
@@ -723,7 +722,7 @@ void PlotView2::mousePressEvent(QMouseEvent* event)
     }
 }
 
-void PlotView2::mouseMoveEvent(QMouseEvent * event)
+void PlotView::mouseMoveEvent(QMouseEvent * event)
 {
     if (m_mouse_interaction == MouseShift and event->buttons() & Qt::LeftButton)
     {
@@ -743,7 +742,7 @@ void PlotView2::mouseMoveEvent(QMouseEvent * event)
 
 
 
-void PlotView2::wheelEvent(QWheelEvent* event)
+void PlotView::wheelEvent(QWheelEvent* event)
 {
     if (event->phase() != Qt::ScrollUpdate && event->phase() != Qt::NoScrollPhase)
         return;
@@ -822,7 +821,7 @@ void PlotView2::wheelEvent(QWheelEvent* event)
     }
 }
 
-void PlotView2::paintEvent(QPaintEvent*)
+void PlotView::paintEvent(QPaintEvent*)
 {
     //auto mouse_pos = mapFromGlobal(QCursor::pos());
 
@@ -957,482 +956,6 @@ void PlotRangeController::scaleTo(double extent)
     }
 
     emit changed();
-}
-
-////
-
-PlotView::PlotView(QWidget * parent):
-    QWidget(parent)
-{
-    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-    m_canvas = new PlotCanvas;
-    m_canvas->setMouseTracking(true);
-
-    m_range_bar = new RangeBar;
-
-    auto layout = new QVBoxLayout(this);
-    layout->setSpacing(0);
-    layout->addWidget(m_canvas);
-    layout->addWidget(m_range_bar);
-
-    connect(m_canvas, &PlotCanvas::rangeChanged,
-            this, &PlotView::onCanvasRangeChanged);
-}
-
-void PlotView::addPlot(Plot * plot)
-{
-    if (!plot)
-        return;
-
-    plot->setView(this);
-
-    m_canvas->m_plots.push_back(plot);
-
-    connect(plot, &Plot::xRangeChanged,
-            this, &PlotView::onPlotRangeChanged);
-    connect(plot, &Plot::yRangeChanged,
-            this, &PlotView::onPlotRangeChanged);
-    connect(plot, &Plot::contentChanged,
-            this, &PlotView::onPlotContentChanged);
-
-    m_canvas->updateDataRange();
-
-    m_canvas->update();
-}
-
-void PlotView::removePlot(Plot * plot)
-{
-    if (!plot)
-        return;
-
-    auto & plots = m_canvas->m_plots;
-
-    auto handle = std::find(plots.begin(), plots.end(), plot);
-    if (handle != plots.end())
-    {
-        disconnect(plot, 0, this, 0);
-        m_canvas->m_plots.erase(handle);
-    }
-
-    m_canvas->updateDataRange();
-
-    m_canvas->update();
-}
-
-void PlotView::setStacked(bool value)
-{
-    m_canvas->m_stacked = value;
-    m_canvas->update();
-}
-
-void PlotView::setCommonX(bool value)
-{
-    m_canvas->m_common_x = value;
-    m_canvas->update();
-}
-
-void PlotView::setCommonY(bool value)
-{
-    m_canvas->m_common_y = value;
-    m_canvas->update();
-}
-
-void PlotView::onPlotRangeChanged()
-{
-    m_canvas->updateDataRange();
-    m_canvas->update();
-}
-
-void PlotView::onPlotContentChanged()
-{
-    m_canvas->update();
-}
-
-void PlotView::onCanvasRangeChanged()
-{
-    m_range_bar->setRange(m_canvas->position(), m_canvas->range());
-}
-
-QRect PlotCanvas::plotRect(int index)
-{
-    int plot_count = (int) m_plots.size();
-
-    int plot_left = m_margin;
-    int plot_right = width() - m_margin;
-
-    int plot_top;
-    int plot_bottom;
-
-    if (m_stacked)
-    {
-        plot_top = m_margin;
-        plot_bottom = height() - m_margin;
-    }
-    else
-    {
-        double plot_offset = double(height() - m_margin) / plot_count;
-        plot_top = m_margin + index * plot_offset;
-        plot_bottom = (index + 1) * plot_offset;
-    }
-
-    return QRect(QPoint(plot_left, plot_top), QPoint(plot_right, plot_bottom));
-}
-
-QPointF PlotCanvas::mapToPlot(int plotIndex, const QPointF & pos)
-{
-    if (m_plots.empty())
-        return pos;
-
-    auto plot = m_plots[plotIndex];
-
-    auto xRange = m_common_x ? view_x_range : plot->xRange();
-    auto yRange = m_common_y ? total_y_range : plot->yRange();
-
-    auto rect = plotRect(plotIndex);
-    if (rect.isEmpty())
-        return QPointF(0,0);
-
-    double x = (pos.x() - rect.x()) * (xRange.extent() / rect.width()) + xRange.min;
-    double y = (rect.y() + rect.height() - pos.y()) * (yRange.extent() / rect.height()) + yRange.min;
-
-    return QPointF(x,y);
-}
-
-void PlotCanvas::updateDataRange()
-{
-    bool first = true;
-    for (auto plot : m_plots)
-    {
-        if (plot->isEmpty())
-            continue;
-
-        auto x_range = plot->xRange();
-        auto y_range = plot->yRange();
-
-        if (first)
-        {
-            total_x_range = x_range;
-            total_y_range = y_range;
-        }
-        else
-        {
-            total_x_range.min = min(total_x_range.min, x_range.min);
-            total_x_range.max = max(total_x_range.max, x_range.max);
-
-            total_y_range.min = min(total_y_range.min, y_range.min);
-            total_y_range.max = max(total_y_range.max, y_range.max);
-        }
-        first = false;
-    }
-
-    // Reset view
-    view_x_range = total_x_range;
-
-    emit rangeChanged();
-}
-
-void PlotCanvas::selectDataAt(const QPoint & pos)
-{
-    for (int i = 0; i < m_plots.size(); ++i)
-    {
-        auto plot = m_plots[i];
-        auto plotPos = mapToPlot(i, pos);
-        auto dataPos = plot->dataLocation(plotPos);
-        DataSetPtr dataset = plot->dataSet();
-        for (int d = 0; d < dataset->dimensionCount(); ++d)
-        {
-            DimensionPtr dim = dataset->globalDimension(d);
-            if (!dim) continue;
-            dim->setFocus(get<0>(dataPos)[d]);
-        }
-    }
-}
-
-void PlotCanvas::resizeEvent(QResizeEvent*)
-{
-}
-
-void PlotCanvas::enterEvent(QEvent*)
-{
-    update();
-}
-
-void PlotCanvas::leaveEvent(QEvent*)
-{
-    update();
-}
-
-void PlotCanvas::mouseMoveEvent(QMouseEvent * event)
-{
-    if ( event->modifiers() & Qt::ControlModifier &&
-         event->buttons() & Qt::LeftButton &&
-         !m_plots.empty() )
-    {
-        auto plot_rect = plotRect(0);
-        auto mouse_distance = event->pos() - m_last_mouse_pos;
-        auto rel_distance = plot_rect.width() > 0 ?
-                    mouse_distance.x() / double(plot_rect.width()) : 0;
-        setOffset(view_x_range.min - rel_distance * view_x_range.extent());
-    }
-    else if (event->buttons() & Qt::LeftButton)
-    {
-        selectDataAt(event->pos());
-    }
-
-    m_last_mouse_pos = event->pos();
-
-    update();
-}
-
-void PlotCanvas::mousePressEvent(QMouseEvent* event)
-{
-    selectDataAt(event->pos());
-}
-
-void PlotCanvas::wheelEvent(QWheelEvent* event)
-{
-    if (event->phase() != Qt::ScrollUpdate && event->phase() != Qt::NoScrollPhase)
-        return;
-
-    if (m_plots.empty())
-        return;
-
-    double degrees = event->angleDelta().y() / 8.0;
-
-    if (event->modifiers() & Qt::ControlModifier)
-    {
-        auto plot_rect = plotRect(0);
-        auto mouse_rel_x = plot_rect.width() > 0
-                ? (event->pos().x() - plot_rect.x()) / double(plot_rect.width())
-                : 0;
-        auto mouse_x =  mouse_rel_x * view_x_range.extent() + view_x_range.min;
-
-        double new_size = view_x_range.extent() * pow(2.0, -1.0 * degrees/360.0);
-        setSize(new_size);
-
-        auto new_x = mouse_x - mouse_rel_x * view_x_range.extent();
-        setOffset(new_x);
-    }
-    else if (event->modifiers() & Qt::ShiftModifier)
-    {
-        double new_offset = view_x_range.min + 0.5 * view_x_range.extent() * degrees/360.0;
-        //qDebug() << "new offset = " << new_offset;
-        setOffset(new_offset);
-    }
-}
-
-void PlotCanvas::paintEvent(QPaintEvent* event)
-{
-    auto mouse_pos = mapFromGlobal(QCursor::pos());
-
-    QPainter painter(this);
-
-    painter.fillRect(rect(), Qt::white);
-
-    if (m_plots.empty())
-        return;
-
-    painter.setBrush(Qt::NoBrush);
-
-    QPen frame_pen;
-    frame_pen.setColor(Qt::lightGray);
-
-    int plot_index = 0;
-
-    int plot_under_mouse_index = -1;
-
-    for (auto plot : m_plots)
-    {
-        auto plot_rect = this->plotRect(plot_index);
-
-        if (plot_rect.contains(mouse_pos))
-            plot_under_mouse_index = plot_index;
-
-        painter.setPen(frame_pen);
-        painter.drawRect(plot_rect);
-
-        if (plot->isEmpty())
-            continue;
-
-        Mapping2d map;
-
-        Plot::Range x_range = m_common_x ? view_x_range : plot->xRange();
-        Plot::Range y_range = m_common_y ? total_y_range : plot->yRange();
-
-        QRectF region(x_range.min, y_range.min, x_range.extent(), y_range.extent());
-
-        double x_extent = x_range.extent();
-        double y_extent = y_range.extent();
-        double x_scale = x_extent == 0 ? 1 : 1.0 / x_extent;
-        double y_scale = y_extent == 0 ? 1 : 1.0 / y_extent;
-
-        map.translate(-x_range.min, -y_range.min);
-        map.scale(x_scale, y_scale);
-        map.scale(plot_rect.width(), -plot_rect.height());
-        map.translate(plot_rect.x(), plot_rect.y() + plot_rect.height());
-
-        painter.setClipRect(plot_rect);
-
-        painter.save();
-
-        plot->plot(&painter, map, region);
-
-        painter.restore();
-
-        ++plot_index;
-    }
-
-    painter.setClipping(false);
-
-    if (underMouse())
-    {
-        auto pos = mapFromGlobal(QCursor::pos());
-
-        QPen cursor_pen;
-        cursor_pen.setColor(Qt::red);
-        cursor_pen.setWidth(1);
-
-        painter.setPen(cursor_pen);
-
-        painter.drawLine(pos.x(), 0, pos.x(), height());
-        painter.drawLine(0, pos.y(), width(), pos.y());
-
-        if (plot_under_mouse_index >= 0)
-        {
-            auto plot = m_plots[plot_under_mouse_index];
-            auto plotPos = mapToPlot(plot_under_mouse_index, pos);
-            auto dataPos = plot->dataLocation(plotPos);
-
-            QString text;
-
-            QStringList dim_strings;
-            for (double v : get<0>(dataPos))
-            {
-                dim_strings << QString::number(v, 'f', 2);
-            }
-
-            QStringList att_string;
-            for (auto & v : get<1>(dataPos))
-                att_string << QString::number(v);
-
-            text = att_string.join(" ") + " @ " + dim_strings.join(" ");
-
-            auto fm = fontMetrics();
-            auto rect = fm.boundingRect(text);
-            rect.setWidth(rect.width() + 10);
-
-            int x, y;
-
-            if (pos.x() < width() / 2)
-                x = pos.x() + 20;
-            else
-                x = pos.x() - 20 - rect.width();
-
-            if (pos.y() < height() / 2)
-                y = pos.y() + 20 + fm.ascent();
-            else
-                y = pos.y() - 20 - fm.descent();
-
-            rect.translate(x, y);
-
-            painter.fillRect(rect.adjusted(-2,0,2,0), QColor(255,255,255,230));
-
-            painter.drawText(QPoint(x, y), text);
-        }
-    }
-}
-
-Plot * PlotView::plotAt(const QPoint & view_pos)
-{
-    QPoint pos = m_canvas->mapFrom(this, view_pos);
-
-    if (m_canvas->m_plots.empty())
-        return nullptr;
-
-    if (m_canvas->m_stacked)
-        return nullptr;
-
-    int plot_count = (int) m_canvas->m_plots.size();
-    float plot_height = float(m_canvas->height()) / plot_count;
-    int plot_index = float(pos.y()) / plot_height;
-    if (plot_index < 0 || plot_index >= plot_count)
-        return nullptr;
-
-    auto iter = m_canvas->m_plots.begin();
-    advance(iter, plot_index);
-    return *iter;
-}
-
-double PlotCanvas::position()
-{
-    double data_extent = total_x_range.extent();
-    double offset = view_x_range.min - total_x_range.min;
-    if (data_extent > 0)
-        return offset / data_extent;
-    else
-        return 0;
-}
-
-void PlotCanvas::setPosition(double value)
-{
-    double extent = total_x_range.extent();
-    double offset = value * extent + total_x_range.min;
-    setOffset(offset);
-}
-
-void PlotCanvas::setOffset(double offset)
-{
-    double extent = view_x_range.extent();
-    double max_offset = total_x_range.max - extent;
-    offset = std::max(total_x_range.min, offset);
-    offset = std::min(max_offset, offset);
-
-    if (offset == view_x_range.min)
-        return;
-
-    view_x_range.min = offset;
-    view_x_range.max = offset + extent;
-
-    emit rangeChanged();
-
-    update();
-}
-
-double PlotCanvas::range()
-{
-    double data_extent = total_x_range.extent();
-    double view_extent = view_x_range.extent();
-    if (data_extent > 0)
-        return view_extent / data_extent;
-    else
-        return 0;
-}
-
-void PlotCanvas::setRange(double value)
-{
-    double extent = total_x_range.extent();
-    double size = value * extent;
-    setSize(size);
-}
-
-void PlotCanvas::setSize(double size)
-{
-    double extent = total_x_range.extent();
-
-    size = std::min(extent, size);
-    size = std::max(0.0, size);
-
-    if (size == view_x_range.extent())
-        return;
-
-    double max_offset = total_x_range.max - size;
-    view_x_range.min = std::min(view_x_range.min, max_offset);
-    view_x_range.max = view_x_range.min + size;
-
-    emit rangeChanged();
-
-    update();
 }
 
 }

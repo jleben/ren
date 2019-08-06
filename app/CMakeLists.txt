@@ -7,7 +7,6 @@ set(plot_src
   ../plot/scatter_plot_1d.cpp
   ../plot/scatter_plot_2d.cpp
   ../plot/plot_view.cpp
-  ../plot/range_bar.cpp
 )
 
 set(app_src
