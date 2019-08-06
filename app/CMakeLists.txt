@@ -19,16 +19,23 @@ set(app_src
   plot_data_settings_view.cpp
   plot_settings_view2.cpp
   main_window.cpp
+  ${plot_src}
+)
+
+set(core_src
   ../io/hdf5.cpp
   ../io/text.cpp
   ../io/sndfile.cpp
   ../data/data_set.cpp
   ../data/data_library.cpp
   ../data/dimension.cpp
-  ${plot_src}
 )
+
+add_library(datavis_core STATIC ${core_src})
+
+target_link_libraries(datavis_core ${datavis_linked_libs})
 
 add_executable(datavis ${app_src})
 
-target_link_libraries(datavis ${datavis_linked_libs})
+target_link_libraries(datavis datavis_core ${datavis_linked_libs})
 
