@@ -45,6 +45,20 @@
             "path": "data3.txt",
             "dimensions": [ { "size": 5 }, { "size": 3 } ],
             "fields": [ { }, { } ]
+        },
+        {
+            "path": "data4.txt",
+            "dimensions":
+            [
+                {
+                    "name": "time",
+                    "size": 5,
+                    "scale": 100,
+                    "offset": 500
+                },
+                { "size": 3 }
+            ],
+            "fields": [ { } ]
         }
     ]
 }
