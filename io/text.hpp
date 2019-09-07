@@ -19,7 +19,7 @@ public:
     TextSource(const string & file_path, DataLibrary *);
 
     string path() const override { return m_file_path; }
-    string id() const override { return m_file_path; }
+    string id() const override { return m_name; }
     int count() const override { return 1; }
     int index(const string & id) const override { return 0; }
     DataSetInfo info(int index) const override;
@@ -30,6 +30,7 @@ private:
     DataSetPtr getData();
 
     string m_file_path;
+    string m_name;
     DataSetPtr m_dataset;
 };
 
@@ -62,7 +63,7 @@ public:
     TextPackageSource(const string & path, DataLibrary *);
 
     string path() const override { return m_dir_path; }
-    string id() const override { return m_file_path; }
+    string id() const override { return m_name; }
     int count() const override { return m_members.size(); }
     int index(const string & id) const override;
     DataSetInfo info(int index) const override;
@@ -82,6 +83,7 @@ private:
 
     string m_dir_path;
     string m_file_path;
+    string m_name;
     vector<Member> m_members;
 };
 

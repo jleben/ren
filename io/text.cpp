@@ -3,6 +3,8 @@
 #include "../utility/error.hpp"
 #include "../json/json.hpp"
 
+#include <QFileInfo>
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -180,7 +182,9 @@ vector<string> TextSourceParser::parse(const string & line)
 TextSource::TextSource(const string & file_path, DataLibrary * lib):
     DataSource(lib),
     m_file_path(file_path)
-{}
+{
+    m_name = QFileInfo(QString::fromStdString(file_path)).fileName().toStdString();
+}
 
 DataSetInfo TextSource::info(int) const
 {
@@ -270,6 +274,7 @@ DataSetPtr TextSource::getData()
 
     vector<int> data_size { int(record_count) };
     auto dataset = make_shared<DataSet>("data", data_size, format.count);
+    dataset->setSource(this);
 
     if (has_field_names)
     {
@@ -301,6 +306,8 @@ TextPackageSource::TextPackageSource(const string & path, DataLibrary * lib):
     // FIXME:
     m_file_path(path + "/datapackage.json")
 {
+    m_name = QFileInfo(QString::fromStdString(path)).fileName().toStdString();
+
     parseDescriptor();
 }
 

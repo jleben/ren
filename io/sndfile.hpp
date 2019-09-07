@@ -14,7 +14,7 @@ public:
     SoundFileSource(const string & file_path, DataLibrary *);
 
     string path() const override { return m_file_path; }
-    string id() const override { return m_file_path; }
+    string id() const override { return m_name; }
     int count() const override { return 1; }
     int index(const string & id) const override { return 0; }
     DataSetInfo info(int index) const override { return m_info; }
@@ -24,6 +24,7 @@ private:
     void getInfo();
 
     string m_file_path;
+    string m_name;
     DataSetInfo m_info;
     DataSetPtr m_dataset;
 };

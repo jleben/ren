@@ -1,6 +1,8 @@
 #include "hdf5.hpp"
 #include "../data/data_library.hpp"
 
+#include <QFileInfo>
+
 #include <stdexcept>
 
 using namespace H5;
@@ -169,6 +171,8 @@ Hdf5Source::Hdf5Source(const string & file_path, DataLibrary * lib):
     m_file_path(file_path),
     m_file(file_path.c_str(), H5F_ACC_RDONLY)
 {
+    m_name = QFileInfo(QString::fromStdString(file_path)).fileName().toStdString();
+
     auto child_count = m_file.getNumObjs();
     for (hsize_t i = 0; i < child_count; ++i)
     {

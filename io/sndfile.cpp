@@ -1,6 +1,9 @@
 #include "sndfile.hpp"
 #include "../data/data_library.hpp"
 #include "../utility/error.hpp"
+
+#include <QFileInfo>
+
 #include <sndfile.h>
 
 namespace datavis {
@@ -9,6 +12,8 @@ SoundFileSource::SoundFileSource(const string & file_path, DataLibrary * lib):
     DataSource(lib),
     m_file_path(file_path)
 {
+    m_name = QFileInfo(QString::fromStdString(file_path)).fileName().toStdString();
+
     getInfo();
 }
 
@@ -70,6 +75,7 @@ DataSetPtr SoundFileSource::dataset(int index)
     int attribute_count = sf_info.channels;
 
     auto dataset = make_shared<DataSet>(m_info.id, data_size, attribute_count);
+    dataset->setSource(this);
 
     for (int d = 0; d < m_info.dimensionCount(); ++d)
     {
