@@ -1,6 +1,7 @@
 #include "plot_view.hpp"
 #include "plot.hpp"
 #include "../utility/vector.hpp"
+#include "../data/data_source.hpp"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -490,7 +491,11 @@ void PlotGridView::paintEvent(QPaintEvent*)
     if (m_selected_view)
     {
         const auto & cell = m_selected_cell;
-        painter.drawRect(m_grid->cellRect(cell.y()+1, cell.x()+1).adjusted(-5,-5,5,5));
+        QPen pen;
+        pen.setWidth(2);
+        pen.setColor(Qt::red);
+        painter.setPen(pen);
+        painter.drawRect(m_grid->cellRect(cell.y()+1, cell.x()+1).adjusted(-1,-1,1,1));
     }
 }
 
@@ -636,7 +641,8 @@ void PlotView::setRangeController(PlotRangeController * ctl, Qt::Orientation ori
 
 QRect PlotView::plotRect() const
 {
-    return this->rect().adjusted(10,10,-10,-10);
+    auto fm = fontMetrics();
+    return this->rect().adjusted(0, fm.height(),0,0);
 }
 
 QPointF PlotView::mapToPlot(const QPointF & pos)
@@ -827,21 +833,34 @@ void PlotView::paintEvent(QPaintEvent*)
 
     QPainter painter(this);
 
-    painter.fillRect(rect(), Qt::white);
-
-    painter.setBrush(Qt::NoBrush);
-
-    QPen frame_pen;
-    frame_pen.setColor(Qt::lightGray);
+    painter.fillRect(rect(), QColor(200,200,200));
 
     auto plot_rect = plotRect();
 
-    painter.setPen(frame_pen);
-    painter.drawRect(plot_rect);
+    // Draw plot frame
+
+    painter.fillRect(plot_rect, Qt::white);
 
     auto plot = m_plot;
 
-    if (!plot or plot->isEmpty())
+    if (!plot)
+        return;
+
+    // Draw dataset name
+
+    if (m_plot->dataSet())
+    {
+        QString name;
+        name += QString::fromStdString(m_plot->dataSet()->source()->id());
+        name += ": ";
+        name += QString::fromStdString(m_plot->dataSet()->id());
+
+        auto fm = fontMetrics();
+        painter.setPen(QPen());
+        painter.drawText(QPoint(10, fm.ascent()), name);
+    }
+
+    if (plot->isEmpty())
         return;
 
     Mapping2d map;
@@ -924,7 +943,6 @@ void PlotView::paintEvent(QPaintEvent*)
         rect.translate(x, y);
 
         painter.fillRect(rect.adjusted(-2,0,2,0), QColor(255,255,255,230));
-
         painter.drawText(QPoint(x, y), text);
     }
 }
