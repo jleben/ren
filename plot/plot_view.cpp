@@ -833,7 +833,7 @@ void PlotView::paintEvent(QPaintEvent*)
 
     QPainter painter(this);
 
-    painter.fillRect(rect(), QColor(200,200,200));
+    painter.fillRect(rect(), QColor(210,210,210));
 
     auto plot_rect = plotRect();
 
