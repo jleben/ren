@@ -4,6 +4,7 @@
 #include "../json/json.hpp"
 
 #include <QFileInfo>
+#include <QDir>
 
 #include <iostream>
 #include <sstream>
@@ -306,7 +307,7 @@ TextPackageSource::TextPackageSource(const string & path, DataLibrary * lib):
     // FIXME:
     m_file_path(path + "/datapackage.json")
 {
-    m_name = QFileInfo(QString::fromStdString(path)).fileName().toStdString();
+    m_name = QDir(QString::fromStdString(path)).dirName().toStdString();
 
     parseDescriptor();
 }
