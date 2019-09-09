@@ -68,11 +68,7 @@ void DataLibraryView::updateLibraryTree()
 
         QString source_name;
         {
-            auto id = source->id();
-            auto pos = id.rfind('/');
-            if (pos != string::npos)
-                id = id.substr(pos+1);
-            source_name = QString::fromStdString(id);
+            source_name = QString::fromStdString(source->id());
         }
 
         auto source_item = new QTreeWidgetItem(QStringList() << source_name);
