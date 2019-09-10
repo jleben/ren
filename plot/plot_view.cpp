@@ -45,6 +45,22 @@ PlotGridView::PlotGridView(QWidget * parent):
 
     {
         auto button = new QToolButton;
+        button->setText("Row ^");
+        connect(button, &QAbstractButton::clicked,
+                this, &PlotGridView::moveSelectedRowUp);
+        toolbox->addWidget(button);
+    }
+
+    {
+        auto button = new QToolButton;
+        button->setText("Row V");
+        connect(button, &QAbstractButton::clicked,
+                this, &PlotGridView::moveSelectedRowDown);
+        toolbox->addWidget(button);
+    }
+
+    {
+        auto button = new QToolButton;
         button->setText("+Col");
         connect(button, &QAbstractButton::clicked,
                 this, &PlotGridView::addColumn);
@@ -56,6 +72,22 @@ PlotGridView::PlotGridView(QWidget * parent):
         button->setText("-Col");
         connect(button, &QAbstractButton::clicked,
                 this, &PlotGridView::removeSelectedColumn);
+        toolbox->addWidget(button);
+    }
+
+    {
+        auto button = new QToolButton;
+        button->setText("Col <");
+        connect(button, &QAbstractButton::clicked,
+                this, &PlotGridView::moveSelectedColumnLeft);
+        toolbox->addWidget(button);
+    }
+
+    {
+        auto button = new QToolButton;
+        button->setText("Col >");
+        connect(button, &QAbstractButton::clicked,
+                this, &PlotGridView::moveSelectedColumnRight);
         toolbox->addWidget(button);
     }
 
@@ -332,6 +364,89 @@ void PlotGridView::setColumnCount(int count)
         addColumn();
     }
 }
+
+void PlotGridView::swapRows(int row_a, int row_b)
+{
+    if (row_a < 0 || row_a >= m_rowCount || row_b < 0 || row_b >= m_rowCount)
+        return;
+
+    for (int col = 0; col < m_columnCount+1; ++col)
+    {
+        auto * item_a = m_grid->itemAtPosition(row_a+1, col);
+        auto * item_b = m_grid->itemAtPosition(row_b+1, col);
+
+        m_grid->removeItem(item_a);
+        m_grid->removeItem(item_b);
+
+        if (item_a) m_grid->addItem(item_a, row_b+1, col);
+        if (item_b) m_grid->addItem(item_b, row_a+1, col);
+    }
+
+    std::swap(m_y_range_views[row_a], m_y_range_views[row_b]);
+    std::swap(m_y_range_ctls[row_a], m_y_range_ctls[row_b]);
+}
+
+void PlotGridView::swapColumns(int col_a, int col_b)
+{
+    if (col_a < 0 || col_a >= m_columnCount || col_b < 0 || col_b >= m_columnCount)
+        return;
+
+    for (int row = 0; row < m_rowCount+1; ++row)
+    {
+        auto * item_a = m_grid->itemAtPosition(row, col_a+1);
+        auto * item_b = m_grid->itemAtPosition(row, col_b+1);
+
+        m_grid->removeItem(item_a);
+        m_grid->removeItem(item_b);
+
+        if (item_a) m_grid->addItem(item_a, row, col_b+1);
+        if (item_b) m_grid->addItem(item_b, row, col_a+1);
+    }
+
+    std::swap(m_x_range_views[col_a], m_x_range_views[col_b]);
+    std::swap(m_x_range_ctls[col_a], m_x_range_ctls[col_b]);
+}
+
+void PlotGridView::moveSelectedRowDown()
+{
+    if (!hasSelectedCell())
+        return;
+    auto selection = selectedCell();
+    int row = selection.y();
+    swapRows(row, row+1);
+    selectView(viewAtCell(row+1, selection.x()));
+}
+
+void PlotGridView::moveSelectedRowUp()
+{
+    if (!hasSelectedCell())
+        return;
+    auto selection = selectedCell();
+    int row = selection.y();
+    swapRows(row, row-1);
+    selectView(viewAtCell(row-1, selection.x()));
+}
+
+void PlotGridView::moveSelectedColumnLeft()
+{
+    if (!hasSelectedCell())
+        return;
+    auto selection = selectedCell();
+    int col = selection.x();
+    swapColumns(col, col-1);
+    selectView(viewAtCell(selection.y(), col-1));
+}
+
+void PlotGridView::moveSelectedColumnRight()
+{
+    if (!hasSelectedCell())
+        return;
+    auto selection = selectedCell();
+    int col = selection.x();
+    swapColumns(col, col+1);
+    selectView(viewAtCell(selection.y(), col+1));
+}
+
 
 void PlotGridView::addPlot(Plot * plot, int row, int column)
 {

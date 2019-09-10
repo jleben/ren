@@ -132,6 +132,13 @@ public:
     void removeSelectedColumn();
     void setColumnCount(int count);
 
+    void swapRows(int a, int b);
+    void swapColumns(int a, int b);
+    void moveSelectedRowDown();
+    void moveSelectedRowUp();
+    void moveSelectedColumnLeft();
+    void moveSelectedColumnRight();
+
     // Adding a plot takes ownership
     void addPlot(Plot*, int row, int column);
     void removePlot(Plot*);
