@@ -39,7 +39,7 @@ PlotGridView::PlotGridView(QWidget * parent):
         auto button = new QToolButton;
         button->setText("-Row");
         connect(button, &QAbstractButton::clicked,
-                this, &PlotGridView::removeRow);
+                this, &PlotGridView::removeSelectedRow);
         toolbox->addWidget(button);
     }
 
@@ -55,7 +55,7 @@ PlotGridView::PlotGridView(QWidget * parent):
         auto button = new QToolButton;
         button->setText("-Col");
         connect(button, &QAbstractButton::clicked,
-                this, &PlotGridView::removeColumn);
+                this, &PlotGridView::removeSelectedColumn);
         toolbox->addWidget(button);
     }
 
@@ -71,6 +71,8 @@ PlotGridView::PlotGridView(QWidget * parent):
     m_reticle->hide();
 
     selectView(viewAtCell(0,0));
+
+    printState();
 
     //printf("Rows: %d, Columns: %d\n", rowCount(), columnCount());
 }
@@ -109,6 +111,8 @@ void PlotGridView::selectView(PlotView* view)
 
 void PlotGridView::addRow()
 {
+    cout << "Adding row" << endl;
+
     auto y_ctl = new PlotRangeController;
     m_y_range_ctls.push_back(y_ctl);
 
@@ -133,29 +137,66 @@ void PlotGridView::addRow()
     updateDataRange();
 
     update();
+
+    printState();
 }
 
-void PlotGridView::removeRow()
+void PlotGridView::removeRow(int removedRow)
 {
     if (m_rowCount <= 1)
         return;
 
+    if (removedRow < 0 || removedRow >= m_rowCount)
+        return;
+
+    bool hasSelection = hasSelectedCell();
+    auto selectedCell = this->selectedCell();
+
     for (int col = 0; col < columnCount(); ++col)
     {
-        deleteView(viewAtCell(m_rowCount-1, col));
+        deleteView(viewAtCell(removedRow, col));
     }
 
-    delete m_y_range_views.back();
-    m_y_range_views.pop_back();
+    delete m_y_range_views[removedRow];
+    delete m_y_range_ctls[removedRow];
 
-    delete m_y_range_ctls.back();
-    m_y_range_ctls.pop_back();
+    m_y_range_views.erase(m_y_range_views.begin() + removedRow);
+    m_y_range_ctls.erase(m_y_range_ctls.begin() + removedRow);
+
+    for (int row = removedRow+1; row < m_rowCount+1; ++row)
+    {
+        for (int col = 0; col < m_columnCount+1; ++col)
+        {
+            auto * item = m_grid->itemAtPosition(row, col);
+            if (!item)
+                continue;
+            m_grid->removeItem(item);
+            m_grid->addItem(item, row-1, col);
+        }
+    }
 
     --m_rowCount;
+
+    if (hasSelection)
+    {
+        int y = selectedCell.y();
+        if (y > removedRow) --y;
+        selectView(viewAtCell(selectedCell.x(), y));
+    }
 
     updateDataRange();
 
     update();
+
+    printState();
+}
+
+void PlotGridView::removeSelectedRow()
+{
+    if (hasSelectedCell())
+    {
+        removeRow(selectedCell().y());
+    }
 }
 
 void PlotGridView::setRowCount(int count)
@@ -167,7 +208,7 @@ void PlotGridView::setRowCount(int count)
 
     while(rowCount() > count)
     {
-        removeRow();
+        removeRow(rowCount()-1);
     }
 
     while(rowCount() < count)
@@ -178,6 +219,8 @@ void PlotGridView::setRowCount(int count)
 
 void PlotGridView::addColumn()
 {
+    cout << "Adding column" << endl;
+
     auto x_ctl = new PlotRangeController;
     m_x_range_ctls.push_back(x_ctl);
 
@@ -202,29 +245,66 @@ void PlotGridView::addColumn()
     updateDataRange();
 
     update();
+
+    printState();
 }
 
-void PlotGridView::removeColumn()
+void PlotGridView::removeColumn(int removedColumn)
 {
     if (m_columnCount <= 1)
         return;
 
+    if (removedColumn < 0 || removedColumn >= m_columnCount)
+        return;
+
+    bool hasSelection = hasSelectedCell();
+    auto selectedCell = this->selectedCell();
+
     for (int row = 0; row < rowCount(); ++row)
     {
-        deleteView(viewAtCell(row, m_columnCount-1));
+        deleteView(viewAtCell(row, removedColumn));
     }
 
-    delete m_x_range_views.back();
-    m_x_range_views.pop_back();
+    delete m_x_range_views[removedColumn];
+    delete m_x_range_ctls[removedColumn];
 
-    delete m_x_range_ctls.back();
-    m_x_range_ctls.pop_back();
+    m_x_range_views.erase(m_x_range_views.begin() + removedColumn);
+    m_x_range_ctls.erase(m_x_range_ctls.begin() + removedColumn);
+
+    for (int row = 0; row < m_rowCount+1; ++row)
+    {
+        for (int col = removedColumn + 1; col < m_columnCount+1; ++col)
+        {
+            auto * item = m_grid->itemAtPosition(row, col);
+            if (!item)
+                continue;
+            m_grid->removeItem(item);
+            m_grid->addItem(item, row, col-1);
+        }
+    }
 
     --m_columnCount;
+
+    if (hasSelection)
+    {
+        int x = selectedCell.x();
+        if (x > removedColumn) --x;
+        selectView(viewAtCell(x, selectedCell.y()));
+    }
 
     updateDataRange();
 
     update();
+
+    printState();
+}
+
+void PlotGridView::removeSelectedColumn()
+{
+    if (hasSelectedCell())
+    {
+        removeColumn(selectedCell().x());
+    }
 }
 
 void PlotGridView::setColumnCount(int count)
@@ -236,7 +316,7 @@ void PlotGridView::setColumnCount(int count)
 
     while(columnCount() > count)
     {
-        removeColumn();
+        removeColumn(columnCount()-1);
     }
 
     while(columnCount() < count)
@@ -264,6 +344,8 @@ void PlotGridView::addPlot(Plot * plot, int row, int column)
     view->setPlot(plot);
 
     updateDataRange();
+
+    printState();
 }
 
 void PlotGridView::removePlot(int row, int column)
@@ -274,6 +356,8 @@ void PlotGridView::removePlot(int row, int column)
         view->setPlot(nullptr);
 
     updateDataRange();
+
+    printState();
 }
 
 void PlotGridView::removePlot(Plot * plot)
@@ -285,6 +369,7 @@ void PlotGridView::removePlot(Plot * plot)
         {
             view->setPlot(nullptr);
             updateDataRange();
+            printState();
             return;
         }
     }
@@ -498,6 +583,70 @@ void PlotGridView::paintEvent(QPaintEvent*)
         painter.drawRect(m_grid->cellRect(cell.y()+1, cell.x()+1).adjusted(-1,-1,1,1));
     }
 }
+
+void PlotGridView::printState()
+{
+    cout << "--- State: ---" << endl;
+
+    cout << "Rows: " << m_rowCount << "  Columns: " << m_columnCount << endl;
+
+    cout << "Layout Rows: " << m_grid->rowCount() << "  Columns: " << m_columnCount << endl;
+
+    cout << "Layout: " << endl;
+
+    for (int row = 0; row < m_grid->rowCount(); ++row)
+    {
+        for (int col = 0; col < m_grid->columnCount(); ++col)
+        {
+            auto item = m_grid->itemAtPosition(row,col);
+            QWidget * w = nullptr;
+            if (item)
+                w = item->widget();
+            cout << setw(15) << w << "  ";
+                //<< item->widget()->metaOject()->className() << endl;
+        }
+        cout << endl;
+    }
+
+    cout << "X range views & controllers:" << endl;
+
+    for (int i = 0; i < m_x_range_views.size(); ++i)
+    {
+        cout << m_x_range_views[i] << " ";
+    }
+    cout << endl;
+
+    for (int i = 0; i < m_x_range_ctls.size(); ++i)
+    {
+        cout << m_x_range_ctls[i] << " ";
+    }
+    cout << endl;
+
+    cout << "Y range views & controllers:" << endl;
+
+    for (int i = 0; i < m_y_range_views.size(); ++i)
+    {
+        cout << m_y_range_views[i] << " ";
+    }
+    cout << endl;
+
+    for (int i = 0; i < m_y_range_ctls.size(); ++i)
+    {
+        cout << m_y_range_ctls[i] << " ";
+    }
+    cout << endl;
+
+    cout << "Selected: ";
+
+    if (hasSelectedCell())
+    {
+        auto cell = selectedCell();
+        cout << cell.y() << " x " << cell.x() << " = " << m_selected_view << endl;
+    }
+
+    cout << endl;
+}
+
 
 PlotReticle::PlotReticle(QWidget * parent):
     QWidget(parent)

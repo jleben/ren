@@ -123,11 +123,13 @@ public:
     int rowCount() const { return m_rowCount; }
 
     void addRow();
-    void removeRow();
+    void removeRow(int row);
+    void removeSelectedRow();
     void setRowCount(int count);
 
     void addColumn();
-    void removeColumn();
+    void removeColumn(int column);
+    void removeSelectedColumn();
     void setColumnCount(int count);
 
     // Adding a plot takes ownership
@@ -160,6 +162,8 @@ private:
     virtual void leaveEvent(QEvent*) override;
     virtual void resizeEvent(QResizeEvent*) override;
     virtual void paintEvent(QPaintEvent*) override;
+
+    void printState();
 
     QGridLayout * m_grid = nullptr;
     int m_rowCount = 0;
