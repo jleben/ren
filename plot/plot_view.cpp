@@ -59,6 +59,14 @@ PlotGridView::PlotGridView(QWidget * parent):
         toolbox->addWidget(button);
     }
 
+    {
+        auto button = new QToolButton;
+        button->setText("-Plot");
+        connect(button, &QAbstractButton::clicked,
+                this, &PlotGridView::removeSelectedPlot);
+        toolbox->addWidget(button);
+    }
+
     toolbox->addStretch();
 
     m_grid = new QGridLayout;
@@ -372,6 +380,15 @@ void PlotGridView::removePlot(Plot * plot)
             printState();
             return;
         }
+    }
+}
+
+void PlotGridView::removeSelectedPlot()
+{
+    if (hasSelectedCell())
+    {
+        auto cell = selectedCell();
+        removePlot(cell.y(), cell.x());
     }
 }
 

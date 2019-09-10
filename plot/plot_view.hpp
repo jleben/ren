@@ -136,6 +136,7 @@ public:
     void addPlot(Plot*, int row, int column);
     void removePlot(Plot*);
     void removePlot(int row, int column);
+    void removeSelectedPlot();
 
     Plot * plotAt(const QPoint & pos);
     Plot * plotAtCell(int row, int column);
