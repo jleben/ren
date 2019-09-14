@@ -39,14 +39,12 @@ public:
         if (d_destroy_cb) d_destroy_cb();
     }
 
-    DataSetInfo info() const { return d_info; }
     DataSetPtr dataset() const { return d_dataset; }
     float progress() const { return d_progress; }
 
 //signals:
     //void progressChanged();
 
-    DataSetInfo d_info;
     DataSetPtr d_dataset;
     std::atomic<float> d_progress { 0 };
     std::function<void()> d_destroy_cb;
@@ -65,6 +63,7 @@ public:
 
     virtual int count() const = 0;
     virtual vector<string> dataset_ids() const = 0;
+    virtual DataSetInfo dataset_info(const string & id) const = 0;
     virtual DataSetAccessPtr dataset(const string & id) = 0;
 
 private:

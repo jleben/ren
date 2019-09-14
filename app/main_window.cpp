@@ -209,8 +209,7 @@ void MainWindow::removePlotView(PlotGridView * view)
 
 void MainWindow::plot(DataSource * source, const string & id)
 {
-    auto dataset = source->dataset(id);
-    auto info = dataset->info();
+    auto info = source->dataset_info(id);
 
     auto dialog = new QDialog;
     dialog->setWindowTitle("Select Plot Data");
@@ -256,6 +255,7 @@ void MainWindow::plot(DataSource * source, const string & id)
 
     cout << "Creating plot." << endl;
 
+    auto dataset = source->dataset(id);
     auto plot = settings->makePlot(dataset);
 
     if (!plot)

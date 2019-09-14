@@ -125,8 +125,7 @@ void DataLibrary::updateDimensions()
 
         for (auto & id : dataset_ids)
         {
-            auto dataset = source->dataset(id);
-            auto info = dataset->info();
+            auto info = source->dataset_info(id);
             for (int d = 0; d < info.dimensionCount(); ++d)
             {
                 const auto & dim = info.dimensions[d];

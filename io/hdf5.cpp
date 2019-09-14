@@ -229,117 +229,56 @@ Hdf5Source::Hdf5Source(const string & file_path, DataLibrary * lib):
             continue;
         }
 
-        HdfDataSetInfo info;
-        info.index = i;
-        d_hdf_datasets[dataset_name] = info;
+        DataSetInfo info;
+        info.id = dataset_name;
+        info.dimensions = readDimensions(dataset);
+        info.attributes.resize(1);
+
+        d_infos[dataset_name] = info;
     }
 }
 
 int Hdf5Source::count() const
 {
-    return d_hdf_datasets.size();
+    return d_infos.size();
 }
 
 vector<string> Hdf5Source::dataset_ids() const
 {
     vector<string> names;
-    for (const auto & entry: d_hdf_datasets)
+    for (const auto & entry: d_infos)
     {
         names.push_back(entry.first);
     }
     return names;
 }
 
+DataSetInfo Hdf5Source::dataset_info(const string & id) const
+{
+    if (d_infos.count(id))
+        return d_infos.at(id);
+
+    return DataSetInfo();
+}
+
 DataSetAccessPtr Hdf5Source::dataset(const string & id)
 {
-    if (!d_hdf_datasets.count(id))
+    if (!d_infos.count(id))
         return nullptr;
 
-    //const HdfDataSetInfo & hdf_info = d_hdf_datasets.at(id);
-
-    auto cleanup = [=](){
-        d_datasets.erase(id);
-        // Stop loading dataset.
-    };
-
-    //auto access = d_datasets[id].lock();
-    auto access = d_datasets[id];
+    auto access = d_datasets[id].lock();
     if (access) return access;
 
-    access = make_shared<DataSetAccessor>(cleanup);
+    access = make_shared<DataSetAccessor>(function<void()>{});
     d_datasets[id] = access;
 
     auto hdf_dataset = m_file.openDataSet(id);
 
-    DataSetInfo info;
-    info.id = id;
-    info.dimensions = readDimensions(hdf_dataset);
-    info.attributes.resize(1);
-
-    access->d_info = info;
     // FIXME: Load asynchronously:
     access->d_dataset = readDataset(id, hdf_dataset, this, library());
     access->d_progress = 1;
 
     return access;
 }
-#if 0
-DataSetInfo Hdf5Source::info(int index) const
-{
-    auto dataset_index = m_dataset_indices[index];
 
-    auto dataset_name = m_file.getObjnameByIdx(dataset_index);
-
-    auto dataset = m_file.openDataSet(dataset_name);
-
-    DataSetInfo info;
-
-    info.id = dataset_name;
-    info.dimensions = readDimensions(dataset);
-    info.attributes.resize(1);
-
-    return info;
-}
-
-DataSetPtr Hdf5Source::dataset(int index)
-{
-    auto client_dataset = m_datasets[index].lock();
-    if (client_dataset)
-        return client_dataset;
-
-    auto dataset_index = m_dataset_indices[index];
-
-    auto dataset_name = m_file.getObjnameByIdx(dataset_index);
-
-    auto dataset = m_file.openDataSet(dataset_name);
-
-    auto dataspace = dataset.getSpace();
-    if (!dataspace.isSimple())
-        throw std::runtime_error("Data space is not simple.");
-
-    auto dimensions = readDimensions(dataset);
-
-    vector<int> object_size;
-    for (auto & dim : dimensions)
-        object_size.push_back(dim.size);
-
-    client_dataset = make_shared<DataSet>(dataset_name, object_size);
-    client_dataset->setSource(this);
-
-    dataset.read(client_dataset->data()->data(), hdf5_type<double>::native_type());
-
-    for (int d = 0; d < dimensions.size(); ++d)
-    {
-        client_dataset->setDimension(d, dimensions[d]);
-        string name = dimensions[d].name;
-        DimensionPtr gdim = library()->dimension(name);
-        if (gdim)
-            client_dataset->setGlobalDimension(d, gdim);
-    }
-
-    m_datasets[index] = client_dataset;
-
-    return client_dataset;
-}
-#endif
 }

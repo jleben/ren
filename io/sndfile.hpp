@@ -19,6 +19,7 @@ public:
 
     virtual int count() const override { return 0; }
     virtual vector<string> dataset_ids() const override { return {}; }
+    DataSetInfo dataset_info(const string & id) const { return {}; }
     virtual DataSetAccessPtr dataset(const string & id) override { return nullptr; }
 
     int index(const string & id) const { return 0; }

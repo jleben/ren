@@ -77,7 +77,7 @@ void DataLibraryView::updateLibraryTree()
         auto dataset_ids = source->dataset_ids();
         for (auto & id : dataset_ids)
         {
-            auto dataset_info = source->dataset(id)->info();
+            auto dataset_info = source->dataset_info(id);
 
             QString name = QString::fromStdString(dataset_info.id);
 
@@ -146,7 +146,7 @@ void DataLibraryView::updateDataInfo()
     if (source == nullptr || id.empty())
         m_dataset_info->setInfo(DataSetInfo());
     else
-        m_dataset_info->setInfo(source->dataset(id)->info());
+        m_dataset_info->setInfo(source->dataset_info(id));
 }
 
 DataSource * DataLibraryView::selectedSource()
