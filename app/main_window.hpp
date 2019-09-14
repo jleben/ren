@@ -55,7 +55,7 @@ private:
     void plotSelectedObject();
     PlotGridView * addPlotView();
     void removePlotView(PlotGridView*);
-    void plot(DataSource *, int index);
+    void plot(DataSource *, const string & id);
     void restorePlot(PlotGridView *, const json & state);
     void removeSelectedPlot();
     bool eventFilter(QObject*, QEvent*) override;

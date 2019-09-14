@@ -5,6 +5,7 @@
 #include "plot.hpp"
 #include "../data/array.hpp"
 #include "../data/data_set.hpp"
+#include "../data/data_source.hpp"
 
 #include <list>
 #include <vector>
@@ -25,6 +26,8 @@ public:
     LinePlot(QObject * parent = 0);
 
     DataSetPtr dataSet() const { return m_dataset; }
+    // FIXME: Async dataset loading
+    void setDataSet(DataSetAccessPtr access, int dimension) { setDataSet(access->dataset(), dimension); }
     void setDataSet(DataSetPtr data);
     void setDataSet(DataSetPtr data, int dimension);
 

@@ -15,10 +15,15 @@ public:
 
     string path() const override { return m_file_path; }
     string id() const override { return m_name; }
-    int count() const override { return 1; }
-    int index(const string & id) const override { return 0; }
-    DataSetInfo info(int index) const override { return m_info; }
-    DataSetPtr dataset(int index) override;
+    //int count() const override { return 1; }
+
+    virtual int count() const override { return 0; }
+    virtual vector<string> dataset_ids() const override { return {}; }
+    virtual DataSetAccessPtr dataset(const string & id) override { return nullptr; }
+
+    int index(const string & id) const { return 0; }
+    DataSetInfo info(int index) const { return m_info; }
+    DataSetPtr dataset(int index);
 
 private:
     void getInfo();

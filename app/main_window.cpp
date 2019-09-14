@@ -167,8 +167,8 @@ void MainWindow::onSelectedDataChanged()
 
 bool MainWindow::hasSelectedObject()
 {
-    auto object_idx = m_lib_view->selectedDatasetIndex();
-    return object_idx >= 0;
+    auto object_id = m_lib_view->selectedDatasetId();
+    return !object_id.empty();
 }
 
 void MainWindow::plotSelectedObject()
@@ -177,11 +177,11 @@ void MainWindow::plotSelectedObject()
     if (!source)
         return;
 
-    auto object_idx = m_lib_view->selectedDatasetIndex();
-    if (object_idx < 0)
+    auto object_id = m_lib_view->selectedDatasetId();
+    if (object_id.empty())
         return;
 
-    plot(source, object_idx);
+    plot(source, object_id);
 }
 
 PlotGridView * MainWindow::addPlotView()
@@ -207,9 +207,10 @@ void MainWindow::removePlotView(PlotGridView * view)
     view->deleteLater();
 }
 
-void MainWindow::plot(DataSource * source, int index)
+void MainWindow::plot(DataSource * source, const string & id)
 {
-    auto info = source->info(index);
+    auto dataset = source->dataset(id);
+    auto info = dataset->info();
 
     auto dialog = new QDialog;
     dialog->setWindowTitle("Select Plot Data");
@@ -232,9 +233,10 @@ void MainWindow::plot(DataSource * source, int index)
     if (result != QDialog::Accepted)
         return;
 
-    cout << "Reading dataset." << endl;
-
+#if 0
     // Get data
+
+    cout << "Reading dataset." << endl;
 
     DataSetPtr data;
     try {
@@ -248,12 +250,13 @@ void MainWindow::plot(DataSource * source, int index)
     }
 
     cout << "Reading dataset finished." << endl;
+#endif
 
     // Create plot
 
     cout << "Creating plot." << endl;
 
-    auto plot = settings->makePlot(data);
+    auto plot = settings->makePlot(dataset);
 
     if (!plot)
     {
@@ -383,7 +386,7 @@ bool MainWindow::eventFilter(QObject * object, QEvent * event)
                 {
                     auto source = m_lib->source(QString::fromStdString(item.sourceId));
                     if (!source) continue;
-                    plot(source, item.datasetIndex);
+                    plot(source, item.datasetId);
                 }
                 drop_event->acceptProposedAction();
                 return true;
@@ -664,8 +667,8 @@ void MainWindow::restorePlot(PlotGridView * view, const json & state)
     }
 
     auto dataset_id = state.at("data_set");
-    int dataset_index = source->index(dataset_id);
-    if (dataset_index < 0)
+    auto dataset = source->dataset(dataset_id);
+    if (!dataset)
     {
         Error e;
         e.reason() << "Failed to find data set " << dataset_id
@@ -673,7 +676,10 @@ void MainWindow::restorePlot(PlotGridView * view, const json & state)
         throw e;
     }
 
-    DataSetPtr data;
+    // FIXME: Async loading
+    DataSetPtr data = dataset->dataset();
+
+#if 0
     try {
         data = source->dataset(dataset_index);
     } catch (...) {
@@ -684,6 +690,7 @@ void MainWindow::restorePlot(PlotGridView * view, const json & state)
                    << source_path << " : " << dataset_id << endl;
         throw e;
     }
+#endif
 
     Plot * plot = nullptr;
 

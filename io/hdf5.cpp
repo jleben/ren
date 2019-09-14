@@ -166,6 +166,38 @@ vector<DataSet::Dimension> readDimensions(H5::DataSet & dataset)
     return dims;
 }
 
+DataSetPtr Hdf5Source::readDataset(string id, H5::DataSet & dataset, Hdf5Source * source, DataLibrary * library)
+{
+    // FIXME: Use of 'this' is not thread safe. See below...
+
+    auto dataspace = dataset.getSpace();
+    if (!dataspace.isSimple())
+        throw std::runtime_error("Data space is not simple.");
+
+    auto dimensions = readDimensions(dataset);
+
+    vector<int> object_size;
+    for (auto & dim : dimensions)
+        object_size.push_back(dim.size);
+
+    auto client_dataset = make_shared<DataSet>(id, object_size);
+    client_dataset->setSource(source);
+
+    dataset.read(client_dataset->data()->data(), hdf5_type<double>::native_type());
+
+    for (int d = 0; d < dimensions.size(); ++d)
+    {
+        client_dataset->setDimension(d, dimensions[d]);
+        string name = dimensions[d].name;
+        // FIXME: library() not thread safe:
+        DimensionPtr gdim = library->dimension(name);
+        if (gdim)
+            client_dataset->setGlobalDimension(d, gdim);
+    }
+
+    return client_dataset;
+}
+
 Hdf5Source::Hdf5Source(const string & file_path, DataLibrary * lib):
     DataSource(lib),
     m_file_path(file_path),
@@ -197,29 +229,61 @@ Hdf5Source::Hdf5Source(const string & file_path, DataLibrary * lib):
             continue;
         }
 
-        m_dataset_indices.push_back(i);
+        HdfDataSetInfo info;
+        info.index = i;
+        d_hdf_datasets[dataset_name] = info;
     }
-
-    m_datasets.resize(m_dataset_indices.size());
 }
 
 int Hdf5Source::count() const
 {
-    return m_dataset_indices.size();
+    return d_hdf_datasets.size();
 }
 
-int Hdf5Source::index(const string & id) const
+vector<string> Hdf5Source::dataset_ids() const
 {
-    for (int i = 0; i < m_dataset_indices.size(); ++i)
+    vector<string> names;
+    for (const auto & entry: d_hdf_datasets)
     {
-        auto dataset_index = m_dataset_indices[i];
-        auto dataset_name = m_file.getObjnameByIdx(dataset_index);
-        if (id == dataset_name)
-            return i;
+        names.push_back(entry.first);
     }
-    return -1;
+    return names;
 }
 
+DataSetAccessPtr Hdf5Source::dataset(const string & id)
+{
+    if (!d_hdf_datasets.count(id))
+        return nullptr;
+
+    //const HdfDataSetInfo & hdf_info = d_hdf_datasets.at(id);
+
+    auto cleanup = [=](){
+        d_datasets.erase(id);
+        // Stop loading dataset.
+    };
+
+    //auto access = d_datasets[id].lock();
+    auto access = d_datasets[id];
+    if (access) return access;
+
+    access = make_shared<DataSetAccessor>(cleanup);
+    d_datasets[id] = access;
+
+    auto hdf_dataset = m_file.openDataSet(id);
+
+    DataSetInfo info;
+    info.id = id;
+    info.dimensions = readDimensions(hdf_dataset);
+    info.attributes.resize(1);
+
+    access->d_info = info;
+    // FIXME: Load asynchronously:
+    access->d_dataset = readDataset(id, hdf_dataset, this, library());
+    access->d_progress = 1;
+
+    return access;
+}
+#if 0
 DataSetInfo Hdf5Source::info(int index) const
 {
     auto dataset_index = m_dataset_indices[index];
@@ -277,5 +341,5 @@ DataSetPtr Hdf5Source::dataset(int index)
 
     return client_dataset;
 }
-
+#endif
 }

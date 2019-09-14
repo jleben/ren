@@ -5,12 +5,15 @@
 
 #include <string>
 #include <memory>
+#include <atomic>
+#include <functional>
 
 namespace datavis {
 
 using std::string;
 
 class DataLibrary;
+class DataSource;
 
 class DataSetInfo
 {
@@ -21,6 +24,36 @@ public:
     int dimensionCount() const { return int(dimensions.size()); }
 };
 
+class DataSetAccessor //: public QObject
+{
+    //Q_OBJECT;
+
+    friend class DataSource;
+
+public:
+    DataSetAccessor(std::function<void()> destroyCallback):
+        d_destroy_cb(destroyCallback) {}
+
+    ~DataSetAccessor()
+    {
+        if (d_destroy_cb) d_destroy_cb();
+    }
+
+    DataSetInfo info() const { return d_info; }
+    DataSetPtr dataset() const { return d_dataset; }
+    float progress() const { return d_progress; }
+
+//signals:
+    //void progressChanged();
+
+    DataSetInfo d_info;
+    DataSetPtr d_dataset;
+    std::atomic<float> d_progress { 0 };
+    std::function<void()> d_destroy_cb;
+};
+
+using DataSetAccessPtr = std::shared_ptr<DataSetAccessor>;
+
 class DataSource
 {
 public:
@@ -29,10 +62,10 @@ public:
     virtual ~DataSource() {}
     virtual string path() const = 0;
     virtual string id() const = 0;
+
     virtual int count() const = 0;
-    virtual int index(const string & id) const = 0;
-    virtual DataSetInfo info(int index) const = 0;
-    virtual DataSetPtr dataset(int index) = 0;
+    virtual vector<string> dataset_ids() const = 0;
+    virtual DataSetAccessPtr dataset(const string & id) = 0;
 
 private:
     DataLibrary * d_lib = nullptr;

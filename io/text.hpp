@@ -20,10 +20,16 @@ public:
 
     string path() const override { return m_file_path; }
     string id() const override { return m_name; }
-    int count() const override { return 1; }
-    int index(const string & id) const override { return 0; }
-    DataSetInfo info(int index) const override;
-    DataSetPtr dataset(int index) override;
+
+    virtual int count() const override { return 0; }
+    virtual vector<string> dataset_ids() const override { return {}; }
+    virtual DataSetAccessPtr dataset(const string & id) override { return nullptr; }
+
+
+    //int count() const override { return 1; }
+    int index(const string & id) const { return 0; }
+    DataSetInfo info(int index) const;
+    DataSetPtr dataset(int index);
 
 private:
     DataSetInfo inferInfo() const;
@@ -64,10 +70,16 @@ public:
 
     string path() const override { return m_dir_path; }
     string id() const override { return m_name; }
-    int count() const override { return m_members.size(); }
-    int index(const string & id) const override;
-    DataSetInfo info(int index) const override;
-    DataSetPtr dataset(int index) override;
+
+    virtual int count() const override { return 0; }
+    virtual vector<string> dataset_ids() const override { return {}; }
+    virtual DataSetAccessPtr dataset(const string & id) override { return nullptr; }
+
+
+    //int count() const override { return m_members.size(); }
+    int index(const string & id) const;
+    DataSetInfo info(int index) const;
+    DataSetPtr dataset(int index);
 
     struct Member
     {

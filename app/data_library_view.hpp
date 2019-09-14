@@ -22,7 +22,7 @@ public:
     struct Item
     {
         string sourceId;
-        int datasetIndex;
+        string datasetId;
     };
 
     vector<Item> items;
@@ -38,7 +38,8 @@ public:
     DataLibrary * library() { return m_lib; }
 
     DataSource * selectedSource();
-    int selectedDatasetIndex();
+    //int selectedDatasetIndex();
+    string selectedDatasetId();
 
 signals:
     void selectionChanged();

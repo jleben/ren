@@ -7,6 +7,7 @@
 #include "plot.hpp"
 #include "../data/array.hpp"
 #include "../data/data_set.hpp"
+#include "../data/data_source.hpp"
 
 namespace datavis {
 
@@ -19,6 +20,8 @@ public:
 
     HeatMap(QObject * parent = 0);
 
+    // FIXME: Async dataset loading
+    void setDataSet(DataSetAccessPtr access, const vector_t & dim) { setDataSet(access->dataset(), dim); }
     void setDataSet(DataSetPtr);
     void setDataSet(DataSetPtr, const vector_t & dim);
     void setDimensions(const vector_t & dim);

@@ -74,14 +74,15 @@ void DataLibraryView::updateLibraryTree()
         auto source_item = new QTreeWidgetItem(QStringList() << source_name);
         source_item->setData(0, Qt::UserRole, QVariant::fromValue(source));
 
-        for (int object_idx = 0; object_idx < source->count(); ++object_idx)
+        auto dataset_ids = source->dataset_ids();
+        for (auto & id : dataset_ids)
         {
-            auto object = source->info(object_idx);
+            auto dataset_info = source->dataset(id)->info();
 
-            QString name = QString::fromStdString(object.id);
+            QString name = QString::fromStdString(dataset_info.id);
 
             QStringList size_texts;
-            for (auto & dim : object.dimensions)
+            for (auto & dim : dataset_info.dimensions)
                 size_texts << QString::number(dim.size);
             QString size_text = size_texts.join(" ");
 
@@ -89,9 +90,9 @@ void DataLibraryView::updateLibraryTree()
             texts << name;
             texts << size_text;
 
-            auto object_item = new QTreeWidgetItem(texts);
+            auto dataset_item = new QTreeWidgetItem(texts);
 
-            source_item->addChild(object_item);
+            source_item->addChild(dataset_item);
         }
 
         m_lib_tree->addTopLevelItem(source_item);
@@ -140,12 +141,12 @@ void DataLibraryView::updateDimTree()
 void DataLibraryView::updateDataInfo()
 {
     auto source = selectedSource();
-    int index = selectedDatasetIndex();
+    string id = selectedDatasetId();
 
-    if (source == nullptr || index < 0)
+    if (source == nullptr || id.empty())
         m_dataset_info->setInfo(DataSetInfo());
     else
-        m_dataset_info->setInfo(source->info(index));
+        m_dataset_info->setInfo(source->dataset(id)->info());
 }
 
 DataSource * DataLibraryView::selectedSource()
@@ -160,6 +161,7 @@ DataSource * DataLibraryView::selectedSource()
     return item->data(0, Qt::UserRole).value<DataSource*>();
 }
 
+#if 0
 int DataLibraryView::selectedDatasetIndex()
 {
     auto item = m_lib_tree->currentItem();
@@ -171,6 +173,16 @@ int DataLibraryView::selectedDatasetIndex()
         return -1;
 
     return parent->indexOfChild(item);
+}
+#endif
+
+string DataLibraryView::selectedDatasetId()
+{
+    auto item = m_lib_tree->currentItem();
+    if (!item || !item->parent() || item->parent() == m_lib_tree->invisibleRootItem())
+        return string();
+
+    return item->text(0).toStdString();
 }
 
 QMimeData * DataSetTree::mimeData(const QList<QTreeWidgetItem *> items) const
@@ -184,11 +196,11 @@ QMimeData * DataSetTree::mimeData(const QList<QTreeWidgetItem *> items) const
             continue;
 
         auto source = source_item->data(0, Qt::UserRole).value<DataSource*>();
-        auto index = source_item->indexOfChild(item);
+        string id = item->text(0).toStdString();
 
         DraggedDatasets::Item data_item;
         data_item.sourceId = source->id();
-        data_item.datasetIndex = index;
+        data_item.datasetId = id;
         data_items.push_back(data_item);
     }
 
