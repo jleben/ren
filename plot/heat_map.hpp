@@ -3,11 +3,13 @@
 #include <QTransform>
 #include <QImage>
 #include <array>
+#include <future>
 
 #include "plot.hpp"
 #include "../data/array.hpp"
 #include "../data/data_set.hpp"
 #include "../data/data_source.hpp"
+#include "../app/async.hpp"
 
 namespace datavis {
 
@@ -21,17 +23,16 @@ public:
     HeatMap(QObject * parent = 0);
 
     // FIXME: Async dataset loading
-    void setDataSet(DataSetAccessPtr access, const vector_t & dim) { setDataSet(access->dataset(), dim); }
-    void setDataSet(DataSetPtr);
-    void setDataSet(DataSetPtr, const vector_t & dim);
-    void setDimensions(const vector_t & dim);
-    void setRange(const vector_t & start, const vector_t & size);
+    void setDataSet(DataSetAccessPtr access, const vector_t & dim);
+    //void setDataSet(DataSetPtr);
+    //void setDataSet(DataSetPtr, const vector_t & dim);
+    //void setDimensions(const vector_t & dim);
 
-    vector_t dimensions() { return m_dim; }
+    vector_t dimensions() { return d_options.dimensions; }
 
     DataSetPtr dataSet() override { return m_dataset; }
 
-    virtual bool isEmpty() const override { return !m_data_region.is_valid(); }
+    virtual bool isEmpty() const override { return !d_plot_data || !d_plot_data->isReady(); }
 
     virtual Range xRange() override;
     virtual Range yRange() override;
@@ -43,19 +44,39 @@ public:
     virtual void restore(const DataSetPtr &, const json &) override;
 
 private:
-    void onSelectionChanged();
-    bool update_selected_region();
-    void update_value_range();
-    void generate_image();
 
+    struct PlotData
+    {
+        vector_t dimensions;
+        DataSetPtr dataset;
+        data_region_type data_region;
+        Range value_range;
+        QPixmap pixmap;
+
+        void update_value_range();
+        void generate_image();
+    };
+
+    using PlotDataPtr = std::shared_ptr<PlotData>;
+    using PlotDataFuture = Async<PlotDataPtr>;
+
+    void onDataSetProgress();
+    void onSelectionChanged();
+    void preparePlotData();
+    void clearPlotData();
+
+    bool update_selected_region();
+
+    struct
+    {
+        vector_t dimensions;
+    }
+    d_options;
+
+    DataSetAccessPtr d_dataset_accessor = nullptr;
     DataSetPtr m_dataset = nullptr;
     data_region_type m_data_region;
-    pair<double,double> m_value_range;
-    vector_t m_dim;
-    vector_t m_start;
-    vector_t m_size;
-
-    QPixmap m_pixmap;
+    std::shared_ptr<PlotDataFuture> d_plot_data;
 
     QPen m_pen { Qt::black };
 };

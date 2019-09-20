@@ -22,10 +22,12 @@ set(app_src
 )
 
 set(core_src
+  async.cpp
   ../io/hdf5.cpp
   ../io/text.cpp
   ../io/sndfile.cpp
   ../data/data_set.cpp
+  ../data/data_source.cpp
   ../data/data_library.cpp
   ../data/dimension.cpp
 )

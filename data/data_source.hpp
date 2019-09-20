@@ -2,6 +2,7 @@
 
 #include "../data/array.hpp"
 #include "../data/data_set.hpp"
+#include "../app/async.hpp"
 
 #include <string>
 #include <memory>
@@ -24,9 +25,10 @@ public:
     int dimensionCount() const { return int(dimensions.size()); }
 };
 
-class DataSetAccessor //: public QObject
+#if 0
+class DataSetAccessor : public QObject
 {
-    //Q_OBJECT;
+    Q_OBJECT;
 
     friend class DataSource;
 
@@ -39,18 +41,34 @@ public:
         if (d_destroy_cb) d_destroy_cb();
     }
 
+    // Thread-safe methods:
+
     DataSetPtr dataset() const { return d_dataset; }
     float progress() const { return d_progress; }
 
-//signals:
-    //void progressChanged();
+    void setDataset(DataSetPtr dataset)
+    {
+        d_dataset = dataset;
+    }
 
+    void setProgress(float progress)
+    {
+        d_progress = progress;
+        emit progressChanged();
+    }
+
+signals:
+    void progressChanged();
+
+private:
     DataSetPtr d_dataset;
     std::atomic<float> d_progress { 0 };
     std::function<void()> d_destroy_cb;
 };
+#endif
 
-using DataSetAccessPtr = std::shared_ptr<DataSetAccessor>;
+using DataSetAccess = Async<DataSetPtr>;
+using DataSetAccessPtr = std::shared_ptr<DataSetAccess>;
 
 class DataSource
 {

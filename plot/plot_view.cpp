@@ -466,6 +466,11 @@ void PlotGridView::addPlot(Plot * plot, int row, int column)
     auto view = viewAtCell(row, column);
     view->setPlot(plot);
 
+    connect(plot, &Plot::xRangeChanged,
+            this, &PlotGridView::updateDataRange);
+    connect(plot, &Plot::yRangeChanged,
+            this, &PlotGridView::updateDataRange);
+
     updateDataRange();
 
     printState();
@@ -476,7 +481,9 @@ void PlotGridView::removePlot(int row, int column)
     auto view = viewAtCell(row, column);
 
     if (view)
+    {
         view->setPlot(nullptr);
+    }
 
     updateDataRange();
 
@@ -631,6 +638,8 @@ void PlotGridView::updateDataRange()
         m_x_range_ctls[col]->setLimit(total_range);
         m_x_range_ctls[col]->setValue(total_range);
     }
+
+    update();
 }
 
 bool PlotGridView::eventFilter(QObject * object, QEvent * event)

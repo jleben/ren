@@ -166,7 +166,7 @@ vector<DataSet::Dimension> readDimensions(H5::DataSet & dataset)
     return dims;
 }
 
-DataSetPtr Hdf5Source::readDataset(string id, H5::DataSet & dataset, Hdf5Source * source, DataLibrary * library)
+DataSetPtr Hdf5Source::readDataset(string id, H5::DataSet & dataset, Hdf5Source * source)
 {
     // FIXME: Use of 'this' is not thread safe. See below...
 
@@ -190,9 +190,11 @@ DataSetPtr Hdf5Source::readDataset(string id, H5::DataSet & dataset, Hdf5Source 
         client_dataset->setDimension(d, dimensions[d]);
         string name = dimensions[d].name;
         // FIXME: library() not thread safe:
+#if 0
         DimensionPtr gdim = library->dimension(name);
         if (gdim)
             client_dataset->setGlobalDimension(d, gdim);
+#endif
     }
 
     return client_dataset;
@@ -269,14 +271,17 @@ DataSetAccessPtr Hdf5Source::dataset(const string & id)
     auto access = d_datasets[id].lock();
     if (access) return access;
 
-    access = make_shared<DataSetAccessor>(function<void()>{});
+    access = make_shared<DataSetAccess>([=](AsyncStatus * status)
+    {
+        auto hdf_dataset = m_file.openDataSet(id);
+        auto dataset = readDataset(id, hdf_dataset, this);
+        status->setProgress(1);
+        return dataset;
+    });
+
     d_datasets[id] = access;
 
-    auto hdf_dataset = m_file.openDataSet(id);
-
-    // FIXME: Load asynchronously:
-    access->d_dataset = readDataset(id, hdf_dataset, this, library());
-    access->d_progress = 1;
+    access->start();
 
     return access;
 }

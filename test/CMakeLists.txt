@@ -2,6 +2,7 @@
 add_executable(run_tests
     test.cpp
     test_text_source.cpp
+    test_async.cpp
     ../testing/testing.cpp
 )
 

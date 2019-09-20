@@ -677,7 +677,7 @@ void MainWindow::restorePlot(PlotGridView * view, const json & state)
     }
 
     // FIXME: Async loading
-    DataSetPtr data = dataset->dataset();
+    DataSetPtr data = dataset->value();
 
 #if 0
     try {

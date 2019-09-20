@@ -24,13 +24,13 @@ public:
     virtual DataSetAccessPtr dataset(const string & id) override;
 
 private:
-    static DataSetPtr readDataset(string id, H5::DataSet & dataset, Hdf5Source *, DataLibrary *);
+    static DataSetPtr readDataset(string id, H5::DataSet & dataset, Hdf5Source *);
 
     string m_file_path;
     string m_name;
     H5::H5File m_file;
     std::unordered_map<string, DataSetInfo> d_infos;
-    std::unordered_map<string, std::weak_ptr<DataSetAccessor>> d_datasets;
+    std::unordered_map<string, std::weak_ptr<DataSetAccess>> d_datasets;
 };
 
 }

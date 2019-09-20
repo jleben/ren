@@ -1,4 +1,5 @@
 #include "heat_map.hpp"
+#include "../app/async.hpp"
 
 #include <QPainter>
 #include <QPainterPath>
@@ -13,24 +14,102 @@ namespace datavis {
 
 HeatMap::HeatMap(QObject * parent):
     Plot(parent)
-{}
+{
+#if 0
+    connect(&d_prepare_status, &AsyncStatus::done,
+            this, &HeatMap::xRangeChanged, Qt::QueuedConnection);
+    connect(&d_prepare_status, &AsyncStatus::done,
+            this, &HeatMap::yRangeChanged, Qt::QueuedConnection);
+#endif
+}
 
 json HeatMap::save()
 {
     json d;
     d["type"] = "heat_map";
-    d["x_dim"] = m_dim[0];
-    d["y_dim"] = m_dim[1];
+    d["x_dim"] = d_options.dimensions[0];
+    d["y_dim"] = d_options.dimensions[1];
     return d;
 }
+#if 1
+void HeatMap::setDataSet(DataSetAccessPtr access, const vector_t & dim)
+{
+    clearPlotData();
+    m_dataset = nullptr;
+
+    d_options.dimensions = dim;
+    d_dataset_accessor = access;
+    connect(d_dataset_accessor->status(), &AsyncStatus::done,
+            this, &HeatMap::onDataSetProgress);
+    onDataSetProgress();
+}
+
+void HeatMap::onDataSetProgress()
+{
+    if (d_plot_data)
+        return;
+
+    if (d_dataset_accessor && d_dataset_accessor->status()->isDone())
+    {
+        m_dataset = d_dataset_accessor->value();
+
+        update_selected_region();
+
+        printf("Range: %f %f, %f %f\n", xRange().min, xRange().max,
+               yRange().min, yRange().max);
+
+        emit xRangeChanged();
+        emit yRangeChanged();
+
+        preparePlotData();
+    }
+}
+
+void HeatMap::preparePlotData()
+{
+    clearPlotData();
+
+    auto plot_data = make_shared<PlotData>();
+    plot_data->dimensions = d_options.dimensions;
+    plot_data->dataset = m_dataset;
+    plot_data->data_region = m_data_region;
+
+    d_plot_data = make_shared<PlotDataFuture>([=](AsyncStatus*)
+    {
+        printf("HeatMap: preparing...\n");
+
+        plot_data->update_value_range();
+        plot_data->generate_image();
+
+        printf("HeatMap: prepared.\n");
+
+        return plot_data;
+    });
+
+    connect(d_plot_data->status(), &AsyncStatus::done,
+            this, &HeatMap::contentChanged, Qt::QueuedConnection);
+
+    d_plot_data->start();
+}
+
+void HeatMap::clearPlotData()
+{
+    d_plot_data = nullptr;
+    emit contentChanged();
+}
+
+#endif
 
 void HeatMap::restore(const DataSetPtr & dataset, const json & options)
 {
+#if 0
     int x_dim = options.at("x_dim");
     int y_dim = options.at("y_dim");
     setDataSet(dataset, { x_dim, y_dim });
+#endif
 }
 
+#if 0
 void HeatMap::setDataSet(DataSetPtr dataset)
 {
     setDataSet(dataset, { 0, 1 });
@@ -101,24 +180,18 @@ void HeatMap::setDimensions(const vector_t & dims)
     update_value_range();
     generate_image();
 }
-
-void HeatMap::setRange(const vector_t & start, const vector_t & size)
-{
-    m_start = start;
-    m_size = size;
-
-    update_selected_region();
-    update_value_range();
-    generate_image();
-}
+#endif
 
 void HeatMap::onSelectionChanged()
 {
+    // FIXME:
+#if 0
     if (!m_dataset)
         return;
 
     if (update_selected_region())
         generate_image();
+#endif
 }
 
 bool HeatMap::update_selected_region()
@@ -129,15 +202,17 @@ bool HeatMap::update_selected_region()
         return true;
     }
 
-    auto data_size = m_dataset->data()->size();
+    auto dataset = m_dataset;
+
+    auto data_size = dataset->data()->size();
     auto data_dim_count = data_size.size();
 
-    vector<int> offset = m_dataset->selectedIndex();
+    vector<int> offset = dataset->selectedIndex();
     vector<int> size(data_dim_count, 1);
 
     for (int d = 0; d < 2; ++d)
     {
-        int data_dim = m_dim[d];
+        int data_dim = d_options.dimensions[d];
         if (data_dim < 0 || data_dim >= data_dim_count)
         {
             cerr << "Selected dimension is invalid: " << data_dim << endl;
@@ -145,20 +220,11 @@ bool HeatMap::update_selected_region()
             return true;
         }
 
-        if (m_start[d] < 0 || m_size[d] < 0 || m_start[d] + m_size[d] > data_size[data_dim])
-        {
-            cerr << "Selected range for dimension " << data_dim << " is invalid:"
-                 << m_start[d] << "," << (m_start[d] + m_size[d])
-                 << endl;
-            m_data_region = data_region_type();
-            return true;
-        }
-
-        offset[data_dim] = m_start[d];
-        size[data_dim] = m_size[d];
+        offset[data_dim] = 0;
+        size[data_dim] = data_size[data_dim];
     }
 
-    auto region = get_region(*m_dataset->data(), offset, size);
+    auto region = get_region(*dataset->data(), offset, size);
 
     if (m_data_region != region)
     {
@@ -169,9 +235,9 @@ bool HeatMap::update_selected_region()
     return false;
 }
 
-void HeatMap::update_value_range()
+void HeatMap::PlotData::update_value_range()
 {
-    if (!m_data_region.is_valid())
+    if (!data_region.is_valid())
         return;
 
     // qDebug() << "Computing value range.";
@@ -179,11 +245,11 @@ void HeatMap::update_value_range()
     double min = 0;
     double max = 0;
 
-    auto it = m_data_region.begin();
-    if (it != m_data_region.end())
+    auto it = data_region.begin();
+    if (it != data_region.end())
     {
         min = max = (*it).value();
-        while(++it != m_data_region.end())
+        while(++it != data_region.end())
         {
             auto value = (*it).value();
             min = std::min(value, min);
@@ -191,33 +257,35 @@ void HeatMap::update_value_range()
         }
     }
 
-    m_value_range.first = min;
-    m_value_range.second = max;
+    value_range = Range(min, max);
 
     // qDebug() << "Done computing value range.";
 }
 
-void HeatMap::generate_image()
+void HeatMap::PlotData::generate_image()
 {
+    // FIXME: Accessing data_region and other data members is not thread safe.
+
     // qDebug() << "Generating image";
 
-    if (!m_data_region.is_valid())
+    if (!data_region.is_valid())
     {
-        m_pixmap = QPixmap();
         return;
     }
 
-    double value_range = m_value_range.second - m_value_range.first;
-    double value_scale = value_range != 0 ? 1 / value_range : 1;
-    double value_offset = -m_value_range.first;
+    double value_extent = value_range.extent();
+    double value_scale = value_extent != 0 ? 1 / value_extent : 1;
+    double value_offset = -value_range.min;
 
-    QImage image(m_size[0], m_size[1], QImage::Format_RGB888);
+    int width = dataset->dimension(dimensions[0]).size;
+    int height = dataset->dimension(dimensions[1]).size;
+    QImage image(width, height, QImage::Format_RGB888);
 
-    for (auto & element : m_data_region)
+    for (auto & element : data_region)
     {
         auto loc = element.location();
-        int x = loc[m_dim[0]];
-        int y = image.height() - 1 - loc[m_dim[1]];
+        int x = loc[dimensions[0]];
+        int y = image.height() - 1 - loc[dimensions[1]];
 
         double v = element.value();
         v += value_offset;
@@ -230,46 +298,46 @@ void HeatMap::generate_image()
 
     // qDebug() << "Image generated.";
 
-    m_pixmap = QPixmap::fromImage(image);
+    pixmap = QPixmap::fromImage(image);
 
     // qDebug() << "Pixmap generated.";
 }
 
 Plot::Range HeatMap::xRange()
 {
-    if (!m_data_region.is_valid())
+    if (!m_dataset)
     {
         return Range();
     }
 
-    auto x_dim = m_dataset->dimension(m_dim[0]);
+    auto x_dim = m_dataset->dimension(d_options.dimensions[0]);
 
     double margin = 0.5;
-    double x_min = m_start[0] - margin;
-    double x_max = m_start[0] + m_size[0] - 1 + margin;
+    double x_min = - margin;
+    double x_max = x_dim.size - 1 + margin;
 
     return Range(x_dim.map * x_min, x_dim.map * x_max);
 }
 
 Plot::Range HeatMap::yRange()
 {
-    if (!m_data_region.is_valid())
+    if (!m_dataset)
     {
         return Range();
     }
 
-    auto y_dim = m_dataset->dimension(m_dim[1]);
+    auto y_dim = m_dataset->dimension(d_options.dimensions[1]);
 
     double margin = 0.5;
-    double y_min = m_start[1] - margin;
-    double y_max = m_start[1] + m_size[1] - 1 + margin;
+    double y_min = - margin;
+    double y_max = y_dim.size - 1 + margin;
 
     return Range(y_dim.map * y_min, y_dim.map * y_max);
 }
 
 tuple<vector<double>, vector<double>> HeatMap::dataLocation(const QPointF & point)
 {
-    if (isEmpty())
+    if (!m_dataset)
         return {};
 
     auto offset = m_data_region.offset();
@@ -282,8 +350,8 @@ tuple<vector<double>, vector<double>> HeatMap::dataLocation(const QPointF & poin
         location[d] = dim.map * offset[d];
     }
 
-    location[m_dim[0]] = point.x();
-    location[m_dim[1]] = point.y();
+    location[d_options.dimensions[0]] = point.x();
+    location[d_options.dimensions[1]] = point.y();
 
     auto index = m_dataset->indexForPoint(location);
 
@@ -307,11 +375,8 @@ tuple<vector<double>, vector<double>> HeatMap::dataLocation(const QPointF & poin
 
 void HeatMap::plot(QPainter * painter,  const Mapping2d & transform, const QRectF & region)
 {
-    if (!m_data_region.is_valid())
+    if (!d_plot_data || !d_plot_data->isReady())
         return;
-
-    auto x_dim = m_dataset->dimension(m_dim[0]);
-    auto y_dim = m_dataset->dimension(m_dim[1]);
 
     painter->save();
 
@@ -321,7 +386,9 @@ void HeatMap::plot(QPainter * painter,  const Mapping2d & transform, const QRect
     auto topLeft = transform * QPointF(x_range.min, y_range.max);
     auto bottomRight = transform * QPointF(x_range.max, y_range.min);
 
-    painter->drawPixmap(QRectF(topLeft, bottomRight), m_pixmap, m_pixmap.rect());
+    auto & pixmap = d_plot_data->value()->pixmap;
+    painter->drawPixmap(QRectF(topLeft, bottomRight),
+                        pixmap, pixmap.rect());
 
     painter->restore();
 }
