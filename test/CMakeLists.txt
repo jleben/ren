@@ -3,6 +3,7 @@ add_executable(run_tests
     test.cpp
     test_text_source.cpp
     test_async.cpp
+    ../reactive/test_reactive.cpp
     ../testing/testing.cpp
 )
 
