@@ -227,10 +227,17 @@ auto map(F fn, A arg, As ... args)
     map(fn, args...);
 }
 
-
-template <typename R, typename ... A> inline
-Value<R> apply(std::function<R(A...)> fn, QThread * thread, Value<A> ...arg)
+template <typename F, typename ... A> inline
+auto apply(F fn, Value<A> ...arg) -> decltype(apply((QThread*)nullptr, fn, arg...))
 {
+    return apply((QThread*)nullptr, fn, arg...);
+}
+
+template <typename F, typename ... A> inline
+auto apply(QThread * thread, F fn, Value<A> ...arg) -> Value<decltype(fn(arg->value...))>
+{
+    using R = decltype(fn(arg->value...));
+
     auto result = std::make_shared<Value_Data<R>>();
 
     using Worker = Function_Worker<R,A...>;

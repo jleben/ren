@@ -22,28 +22,26 @@ bool test1()
     thread.start();
 
     Value<int> v1 = value(10);
-    //std::function<int(int)> f = [](int x) -> int
-    std::function<int(int)> f1 = [](int x) -> int
+
+    auto f1 = [](int x) -> int
     {
         this_thread::sleep_for(chrono::milliseconds(200));
         printf("f1: x = %d\n", x); return x + 10;
     };
 
-    auto v2 = Reactive::apply(f1, &thread, v1);
+    auto v2 = Reactive::apply(&thread, f1, v1);
 
-    std::function<int()> f2 = [](){ printf("f2\n"); return 5; };
-
-    auto v3 = Reactive::apply(f2, &thread);
+    auto v3 = Reactive::apply(&thread, [](){ printf("f2\n"); return 5; });
 
     atomic<int> y { 0 };
 
-    std::function<void(int,int)> g = [&](int a, int b)
+    auto g = [&](int a, int b)
     {
         y = a + b;
         app.quit();
     };
 
-    auto z = Reactive::apply(g, nullptr, v2, v3);
+    auto z = Reactive::apply(g, v2, v3);
 
     printf("Executing app...\n");
 
