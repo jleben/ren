@@ -1,3 +1,5 @@
+#pragma once
+
 #include <QObject>
 #include <QEvent>
 #include <QCoreApplication>

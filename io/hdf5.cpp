@@ -238,6 +238,14 @@ Hdf5Source::Hdf5Source(const string & file_path, DataLibrary * lib):
 
         d_infos[dataset_name] = info;
     }
+
+    m_thread.start();
+}
+
+Hdf5Source::~Hdf5Source()
+{
+    m_thread.quit();
+    m_thread.wait();
 }
 
 int Hdf5Source::count() const
@@ -271,17 +279,15 @@ DataSetAccessPtr Hdf5Source::dataset(const string & id)
     auto access = d_datasets[id].lock();
     if (access) return access;
 
-    access = make_shared<DataSetAccess>([=](AsyncStatus * status)
+    access = Reactive::apply(&m_thread, [=](Reactive::Status &)
     {
+        // FIXME: Thread safety (m_file, 'this', ...)
         auto hdf_dataset = m_file.openDataSet(id);
         auto dataset = readDataset(id, hdf_dataset, this);
-        status->setProgress(1);
         return dataset;
     });
 
     d_datasets[id] = access;
-
-    access->start();
 
     return access;
 }

@@ -2,6 +2,8 @@
 
 #include <QTransform>
 #include <QImage>
+#include <QThread>
+
 #include <array>
 #include <future>
 
@@ -9,12 +11,14 @@
 #include "../data/array.hpp"
 #include "../data/data_set.hpp"
 #include "../data/data_source.hpp"
-#include "../app/async.hpp"
+#include "../reactive/reactive.hpp"
 
 namespace datavis {
 
 class HeatMap : public Plot
 {
+    static QThread background_thread;
+
 public:
     using data_type = array<double>;
     using data_region_type = array_region<double>;
@@ -32,7 +36,7 @@ public:
 
     DataSetPtr dataSet() override { return m_dataset; }
 
-    virtual bool isEmpty() const override { return !d_plot_data || !d_plot_data->isReady(); }
+    virtual bool isEmpty() const override { return !m_dataset; }
 
     virtual Range xRange() override;
     virtual Range yRange() override;
@@ -53,19 +57,14 @@ private:
         Range value_range;
         QPixmap pixmap;
 
+        void update_selected_region();
         void update_value_range();
         void generate_image();
     };
 
     using PlotDataPtr = std::shared_ptr<PlotData>;
-    using PlotDataFuture = Async<PlotDataPtr>;
 
-    void onDataSetProgress();
     void onSelectionChanged();
-    void preparePlotData();
-    void clearPlotData();
-
-    bool update_selected_region();
 
     struct
     {
@@ -73,10 +72,12 @@ private:
     }
     d_options;
 
-    DataSetAccessPtr d_dataset_accessor = nullptr;
+    DataSetAccessPtr d_dataset_accessor;
+    Reactive::Value<PlotDataPtr> d_plot_data;
+    Reactive::Value<void> d_prepration;
+
     DataSetPtr m_dataset = nullptr;
     data_region_type m_data_region;
-    std::shared_ptr<PlotDataFuture> d_plot_data;
 
     QPen m_pen { Qt::black };
 };

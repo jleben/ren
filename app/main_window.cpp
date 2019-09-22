@@ -676,7 +676,11 @@ void MainWindow::restorePlot(PlotGridView * view, const json & state)
         throw e;
     }
 
+    return;
+
     // FIXME: Async loading
+#if 0
+
     DataSetPtr data = dataset->value();
 
 #if 0
@@ -725,6 +729,7 @@ void MainWindow::restorePlot(PlotGridView * view, const json & state)
     int column = state.at("column");
 
     view->addPlot(plot, row, column);
+#endif
 }
 
 bool MainWindow::closeProject()

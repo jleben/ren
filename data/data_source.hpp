@@ -2,7 +2,7 @@
 
 #include "../data/array.hpp"
 #include "../data/data_set.hpp"
-#include "../app/async.hpp"
+#include "../reactive/reactive.hpp"
 
 #include <string>
 #include <memory>
@@ -25,50 +25,7 @@ public:
     int dimensionCount() const { return int(dimensions.size()); }
 };
 
-#if 0
-class DataSetAccessor : public QObject
-{
-    Q_OBJECT;
-
-    friend class DataSource;
-
-public:
-    DataSetAccessor(std::function<void()> destroyCallback):
-        d_destroy_cb(destroyCallback) {}
-
-    ~DataSetAccessor()
-    {
-        if (d_destroy_cb) d_destroy_cb();
-    }
-
-    // Thread-safe methods:
-
-    DataSetPtr dataset() const { return d_dataset; }
-    float progress() const { return d_progress; }
-
-    void setDataset(DataSetPtr dataset)
-    {
-        d_dataset = dataset;
-    }
-
-    void setProgress(float progress)
-    {
-        d_progress = progress;
-        emit progressChanged();
-    }
-
-signals:
-    void progressChanged();
-
-private:
-    DataSetPtr d_dataset;
-    std::atomic<float> d_progress { 0 };
-    std::function<void()> d_destroy_cb;
-};
-#endif
-
-using DataSetAccess = Async<DataSetPtr>;
-using DataSetAccessPtr = std::shared_ptr<DataSetAccess>;
+using DataSetAccessPtr = Reactive::Value<DataSetPtr>;
 
 class DataSource
 {

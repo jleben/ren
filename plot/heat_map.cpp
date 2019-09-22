@@ -12,15 +12,13 @@ using namespace std;
 
 namespace datavis {
 
+// FIXME: Someone needs to reap this thread when program shuts down.
+QThread HeatMap::background_thread;
+
 HeatMap::HeatMap(QObject * parent):
     Plot(parent)
 {
-#if 0
-    connect(&d_prepare_status, &AsyncStatus::done,
-            this, &HeatMap::xRangeChanged, Qt::QueuedConnection);
-    connect(&d_prepare_status, &AsyncStatus::done,
-            this, &HeatMap::yRangeChanged, Qt::QueuedConnection);
-#endif
+    background_thread.start();
 }
 
 json HeatMap::save()
@@ -31,74 +29,54 @@ json HeatMap::save()
     d["y_dim"] = d_options.dimensions[1];
     return d;
 }
-#if 1
+
 void HeatMap::setDataSet(DataSetAccessPtr access, const vector_t & dim)
 {
-    clearPlotData();
+    // Clear current data
+
+    d_prepration = nullptr;
+    d_plot_data = nullptr;
+    d_dataset_accessor = nullptr;
     m_dataset = nullptr;
+    m_data_region = data_region_type();
+
+    emit xRangeChanged();
+    emit yRangeChanged();
+    emit contentChanged();
+
+    // Set up new data
 
     d_options.dimensions = dim;
     d_dataset_accessor = access;
-    connect(d_dataset_accessor->status(), &AsyncStatus::done,
-            this, &HeatMap::onDataSetProgress);
-    onDataSetProgress();
-}
 
-void HeatMap::onDataSetProgress()
-{
-    if (d_plot_data)
-        return;
+    auto plot_data = make_shared<PlotData>();
+    plot_data->dimensions = dim;
 
-    if (d_dataset_accessor && d_dataset_accessor->status()->isDone())
+    auto preparePlot = [=](Reactive::Status&, DataSetPtr dataset) -> PlotDataPtr
     {
-        m_dataset = d_dataset_accessor->value();
+        plot_data->dataset = dataset;
+        plot_data->update_selected_region();
+        plot_data->update_value_range();
+        plot_data->generate_image();
+        return plot_data;
+    };
 
-        update_selected_region();
+    d_plot_data = Reactive::apply(&background_thread, preparePlot, d_dataset_accessor);
+
+    d_prepration = Reactive::apply([=](Reactive::Status&, PlotDataPtr plot_data)
+    {
+        m_dataset = plot_data->dataset;
+        m_data_region = plot_data->data_region;
 
         printf("Range: %f %f, %f %f\n", xRange().min, xRange().max,
                yRange().min, yRange().max);
 
         emit xRangeChanged();
         emit yRangeChanged();
-
-        preparePlotData();
-    }
+        emit contentChanged();
+    },
+    d_plot_data);
 }
-
-void HeatMap::preparePlotData()
-{
-    clearPlotData();
-
-    auto plot_data = make_shared<PlotData>();
-    plot_data->dimensions = d_options.dimensions;
-    plot_data->dataset = m_dataset;
-    plot_data->data_region = m_data_region;
-
-    d_plot_data = make_shared<PlotDataFuture>([=](AsyncStatus*)
-    {
-        printf("HeatMap: preparing...\n");
-
-        plot_data->update_value_range();
-        plot_data->generate_image();
-
-        printf("HeatMap: prepared.\n");
-
-        return plot_data;
-    });
-
-    connect(d_plot_data->status(), &AsyncStatus::done,
-            this, &HeatMap::contentChanged, Qt::QueuedConnection);
-
-    d_plot_data->start();
-}
-
-void HeatMap::clearPlotData()
-{
-    d_plot_data = nullptr;
-    emit contentChanged();
-}
-
-#endif
 
 void HeatMap::restore(const DataSetPtr & dataset, const json & options)
 {
@@ -194,15 +172,13 @@ void HeatMap::onSelectionChanged()
 #endif
 }
 
-bool HeatMap::update_selected_region()
+void HeatMap::PlotData::update_selected_region()
 {
-    if (!m_dataset)
+    if (!dataset)
     {
-        m_data_region = data_region_type();
-        return true;
+        data_region = data_region_type();
+        return;
     }
-
-    auto dataset = m_dataset;
 
     auto data_size = dataset->data()->size();
     auto data_dim_count = data_size.size();
@@ -212,27 +188,19 @@ bool HeatMap::update_selected_region()
 
     for (int d = 0; d < 2; ++d)
     {
-        int data_dim = d_options.dimensions[d];
+        int data_dim = dimensions[d];
         if (data_dim < 0 || data_dim >= data_dim_count)
         {
             cerr << "Selected dimension is invalid: " << data_dim << endl;
-            m_data_region = data_region_type();
-            return true;
+            data_region = data_region_type();
+            return;
         }
 
         offset[data_dim] = 0;
         size[data_dim] = data_size[data_dim];
     }
 
-    auto region = get_region(*dataset->data(), offset, size);
-
-    if (m_data_region != region)
-    {
-        m_data_region = region;
-        return true;
-    }
-
-    return false;
+    data_region = get_region(*dataset->data(), offset, size);
 }
 
 void HeatMap::PlotData::update_value_range()
@@ -375,7 +343,7 @@ tuple<vector<double>, vector<double>> HeatMap::dataLocation(const QPointF & poin
 
 void HeatMap::plot(QPainter * painter,  const Mapping2d & transform, const QRectF & region)
 {
-    if (!d_plot_data || !d_plot_data->isReady())
+    if (!m_dataset)
         return;
 
     painter->save();
@@ -386,7 +354,7 @@ void HeatMap::plot(QPainter * painter,  const Mapping2d & transform, const QRect
     auto topLeft = transform * QPointF(x_range.min, y_range.max);
     auto bottomRight = transform * QPointF(x_range.max, y_range.min);
 
-    auto & pixmap = d_plot_data->value()->pixmap;
+    auto & pixmap = d_plot_data->value->pixmap;
     painter->drawPixmap(QRectF(topLeft, bottomRight),
                         pixmap, pixmap.rect());
 
