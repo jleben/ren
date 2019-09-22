@@ -39,16 +39,6 @@ namespace std
 
 namespace Reactive {
 
-#if 0
-class Item
-{
-public:
-    virtual ~Item() {}
-};
-
-using ItemPtr = std::shared_pointer<Item>;
-#endif
-
 template <typename T>
 class ReadyArg : public QEvent
 {
@@ -133,7 +123,7 @@ class Function_Worker : public Function_Worker_Base<A...>
             return QObject::event(event);
 
         bool ready = Function_Worker_Base<A...>::allArgsReady();
-        printf("Worker: All args ready: %d\n", ready);
+        //printf("Worker: All args ready: %d\n", ready);
 
         if (!ready)
             return true;
@@ -144,7 +134,7 @@ class Function_Worker : public Function_Worker_Base<A...>
         },
         Function_Worker_Base<A...>::args);
 
-        printf("Worker: Function done. Result = %d\n", r);
+        //printf("Worker: Function done. Result = %d\n", r);
 
         std::vector<std::weak_ptr<QObject>> subscribers;
 
@@ -157,7 +147,7 @@ class Function_Worker : public Function_Worker_Base<A...>
             subscribers = real_result->subscribers;
         }
 
-        printf("Worker: Result stored\n");
+        //printf("Worker: Result stored\n");
 
         for (auto & potential_subscriber : subscribers)
         {
@@ -166,10 +156,10 @@ class Function_Worker : public Function_Worker_Base<A...>
                 continue;
             auto item = new ReadyArg<R>(r);
             QCoreApplication::postEvent(subscriber.get(), item);
-            printf("Worker: Subscriber notified.\n");
+            //printf("Worker: Subscriber notified.\n");
         }
 
-        printf("Worker: Done\n");
+        //printf("Worker: Done\n");
 
         return true;
     }
@@ -188,7 +178,7 @@ class Function_Worker<void,A...> : public Function_Worker_Base<A...>
             return QObject::event(event);
 
         bool ready = Function_Worker_Base<A...>::allArgsReady();
-        printf("Ready: %d\n", ready);
+        //printf("Ready: %d\n", ready);
 
         if (!ready)
             return true;
@@ -199,7 +189,7 @@ class Function_Worker<void,A...> : public Function_Worker_Base<A...>
         },
         Function_Worker_Base<A...>::args);
 
-        printf("Function done.\n");
+        //printf("Function done.\n");
 
         auto real_result = result.lock();
         if (real_result)
@@ -220,13 +210,13 @@ void subscribe(Value<A> arg, Worker_Pointer worker)
 
     if (arg->ready)
     {
-        printf("Immediately posting function arg: %d\n", arg->value);
+        //printf("Immediately posting function arg: %d\n", arg->value);
         auto item = new ReadyArg<A>(arg->value);
         QCoreApplication::postEvent(worker.get(), item);
     }
     else
     {
-        printf("Subscribing to function arg.\n");
+        //printf("Subscribing to function arg.\n");
         arg->subscribers.push_back(worker);
     }
 }
@@ -280,11 +270,11 @@ auto apply(QThread * thread, F fn, Value<A> ...arg)
     }
     else
     {
-        printf("Worker has no arg. Scheduling immediately.\n");
+        //printf("Worker has no arg. Scheduling immediately.\n");
         QCoreApplication::postEvent(worker.get(), new QEvent(QEvent::User));
     }
 
-    printf("Apply done.\n");
+    //printf("Apply done.\n");
 
     return result;
 }
@@ -303,9 +293,5 @@ Value<T> value(T v)
     result->value = v;
     return result;
 }
-
-// Wait for Value to be ready and return it's content.
-template <typename T> inline
-T get(Value<T>);
 
 }
