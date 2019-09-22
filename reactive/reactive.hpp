@@ -9,6 +9,7 @@
 #include <functional>
 #include <atomic>
 #include <tuple>
+#include <utility>
 
 namespace Reactive {
 
@@ -57,11 +58,21 @@ public:
     T value;
 };
 
-using Worker_Pointer = QObject_Pointer<QObject>;
+struct Worker : public QObject
+{
+    virtual void cancel() = 0;
+};
+
+using Worker_Pointer = QObject_Pointer<Worker>;
 
 template <typename T>
 struct Value_Data
 {
+    ~Value_Data()
+    {
+        worker->cancel();
+    }
+
     std::mutex mutex;
     Worker_Pointer worker;
     std::vector<std::weak_ptr<QObject>> subscribers;
@@ -72,6 +83,11 @@ struct Value_Data
 template <>
 struct Value_Data<void>
 {
+    ~Value_Data()
+    {
+        worker->cancel();
+    }
+
     Worker_Pointer worker;
     std::atomic<bool> done { false };
 };
@@ -79,8 +95,13 @@ struct Value_Data<void>
 template <typename T>
 using Value = std::shared_ptr<Value_Data<T>>;
 
+struct Status
+{
+    std::atomic<bool> cancelled;
+};
+
 template <typename ...A>
-struct AbstractWorker
+struct Function_Worker_Base : public Worker
 {
     bool allArgsReady() const
     {
@@ -97,18 +118,21 @@ struct AbstractWorker
         return ready;
     }
 
+    void cancel() override { status.cancelled = true; }
+
     std::tuple<Value<A>...> args;
+    Status status;
 };
 
 template <typename R, typename ... A>
-class Function_Worker : public QObject, public AbstractWorker<A...>
+class Function_Worker : public Function_Worker_Base<A...>
 {
     bool event(QEvent * event) override
     {
         if (event->type() != QEvent::User)
             return QObject::event(event);
 
-        bool ready = AbstractWorker<A...>::allArgsReady();
+        bool ready = Function_Worker_Base<A...>::allArgsReady();
         printf("Worker: All args ready: %d\n", ready);
 
         if (!ready)
@@ -116,9 +140,9 @@ class Function_Worker : public QObject, public AbstractWorker<A...>
 
         auto r = std::apply([this](Value<A> ... arg)
         {
-                return fn(arg->value...);
+                return fn(this->status, arg->value...);
         },
-        AbstractWorker<A...>::args);
+        Function_Worker_Base<A...>::args);
 
         printf("Worker: Function done. Result = %d\n", r);
 
@@ -151,19 +175,19 @@ class Function_Worker : public QObject, public AbstractWorker<A...>
     }
 
 public:
-    std::function<R(A...)> fn;
+    std::function<R(Status&, A...)> fn;
     std::weak_ptr<Value_Data<R>> result;
 };
 
 template <typename ... A>
-class Function_Worker<void,A...> : public QObject, public AbstractWorker<A...>
+class Function_Worker<void,A...> : public Function_Worker_Base<A...>
 {
     bool event(QEvent * event) override
     {
         if (event->type() != QEvent::User)
             return QObject::event(event);
 
-        bool ready = AbstractWorker<A...>::allArgsReady();
+        bool ready = Function_Worker_Base<A...>::allArgsReady();
         printf("Ready: %d\n", ready);
 
         if (!ready)
@@ -171,9 +195,9 @@ class Function_Worker<void,A...> : public QObject, public AbstractWorker<A...>
 
         std::apply([this](Value<A> ... arg)
         {
-                return fn(arg->value...);
+                return fn(this->status, arg->value...);
         },
-        AbstractWorker<A...>::args);
+        Function_Worker_Base<A...>::args);
 
         printf("Function done.\n");
 
@@ -185,7 +209,7 @@ class Function_Worker<void,A...> : public QObject, public AbstractWorker<A...>
     }
 
 public:
-    std::function<void(A...)> fn;
+    std::function<void(Status&, A...)> fn;
     std::weak_ptr<Value_Data<void>> result;
 };
 
@@ -228,15 +252,10 @@ auto map(F fn, A arg, As ... args)
 }
 
 template <typename F, typename ... A> inline
-auto apply(F fn, Value<A> ...arg) -> decltype(apply((QThread*)nullptr, fn, arg...))
+auto apply(QThread * thread, F fn, Value<A> ...arg)
+-> Value<typename std::result_of<F(Status&,A...)>::type>
 {
-    return apply((QThread*)nullptr, fn, arg...);
-}
-
-template <typename F, typename ... A> inline
-auto apply(QThread * thread, F fn, Value<A> ...arg) -> Value<decltype(fn(arg->value...))>
-{
-    using R = decltype(fn(arg->value...));
+    using R = typename std::result_of<F(Status&,A...)>::type;
 
     auto result = std::make_shared<Value_Data<R>>();
 
@@ -268,6 +287,12 @@ auto apply(QThread * thread, F fn, Value<A> ...arg) -> Value<decltype(fn(arg->va
     printf("Apply done.\n");
 
     return result;
+}
+
+template <typename F, typename ... A> inline
+auto apply(F fn, Value<A> ...arg) -> decltype(apply((QThread*)nullptr, fn, arg...))
+{
+    return apply((QThread*)nullptr, fn, arg...);
 }
 
 template <typename T> inline
