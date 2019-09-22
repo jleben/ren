@@ -974,6 +974,9 @@ void PlotView::selectDataAt(const QPoint & pos)
     auto plotPos = mapToPlot(pos);
     auto dataPos = plot->dataLocation(plotPos);
     DataSetPtr dataset = plot->dataSet();
+    if (!dataset)
+        return;
+
     for (int d = 0; d < dataset->dimensionCount(); ++d)
     {
         DimensionPtr dim = dataset->globalDimension(d);
