@@ -25,7 +25,7 @@ public:
     int dimensionCount() const { return int(dimensions.size()); }
 };
 
-using DataSetAccessPtr = Reactive::Value<DataSetPtr>;
+using FutureDataset = Reactive::Value<DataSetPtr>;
 
 class DataSource
 {
@@ -39,7 +39,7 @@ public:
     virtual int count() const = 0;
     virtual vector<string> dataset_ids() const = 0;
     virtual DataSetInfo dataset_info(const string & id) const = 0;
-    virtual DataSetAccessPtr dataset(const string & id) = 0;
+    virtual FutureDataset dataset(const string & id) = 0;
 
 private:
     DataLibrary * d_lib = nullptr;

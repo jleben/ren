@@ -40,7 +40,7 @@ PlotSettingsView::PlotSettingsView(const DataSetInfo & info, QWidget *parent):
             m_settings_stack, SLOT(setCurrentIndex(int)));
 }
 
-Plot * PlotSettingsView::makePlot(const DataSetAccessPtr & dataset)
+Plot * PlotSettingsView::makePlot(const FutureDataset & dataset)
 {
     auto settings = m_settings[m_type->currentIndex()];
     return settings->makePlot(dataset);
@@ -93,7 +93,7 @@ LinePlotSettings::LinePlotSettings(const DataSetInfo & info, QWidget * parent):
     form->addRow("Dimension:", m_dimension);
 }
 
-Plot * LinePlotSettings::makePlot(const DataSetAccessPtr & dataset)
+Plot * LinePlotSettings::makePlot(const FutureDataset & dataset)
 {
     int dim = m_dimension->currentIndex();
     if (dim < 0)
@@ -123,7 +123,7 @@ HeatMapPlotSettings::HeatMapPlotSettings(const DataSetInfo & info, QWidget * par
     m_y_dim->setCurrentIndex(1);
 }
 
-Plot * HeatMapPlotSettings::makePlot(const DataSetAccessPtr & dataset)
+Plot * HeatMapPlotSettings::makePlot(const FutureDataset & dataset)
 {
     int x = m_x_dim->currentIndex();
     int y = m_y_dim->currentIndex();
@@ -151,7 +151,7 @@ ScatterPlot1dSettings::ScatterPlot1dSettings(const DataSetInfo & info, QWidget *
     form->addRow("Attribute:", m_attribute);
 }
 
-Plot * ScatterPlot1dSettings::makePlot(const DataSetAccessPtr & dataset)
+Plot * ScatterPlot1dSettings::makePlot(const FutureDataset & dataset)
 {
     auto orientation = m_orientation->currentIndex() == 0 ? ScatterPlot1d::Horizontal : ScatterPlot1d::Vertical;
     int attribute = m_attribute->currentIndex();
@@ -198,7 +198,7 @@ ScatterPlot2dSettings::ScatterPlot2dSettings(const DataSetInfo & info, QWidget *
     m_dots->setChecked(true);
 }
 
-Plot * ScatterPlot2dSettings::makePlot(const DataSetAccessPtr & dataset)
+Plot * ScatterPlot2dSettings::makePlot(const FutureDataset & dataset)
 {
     int x = m_x_source->currentIndex();
     int y = m_y_source->currentIndex();

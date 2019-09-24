@@ -27,7 +27,7 @@ public:
 
     DataSetPtr dataSet() const { return m_dataset; }
     // FIXME: Async dataset loading
-    void setDataSet(DataSetAccessPtr access, int dimension) {}
+    void setDataSet(FutureDataset access, int dimension) {}
     void setDataSet(DataSetPtr data);
     void setDataSet(DataSetPtr data, int dimension);
 

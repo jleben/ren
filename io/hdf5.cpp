@@ -271,15 +271,15 @@ DataSetInfo Hdf5Source::dataset_info(const string & id) const
     return DataSetInfo();
 }
 
-DataSetAccessPtr Hdf5Source::dataset(const string & id)
+FutureDataset Hdf5Source::dataset(const string & id)
 {
     if (!d_infos.count(id))
         return nullptr;
 
-    auto access = d_datasets[id].lock();
-    if (access) return access;
+    auto dataset = d_datasets[id].lock();
+    if (dataset) return dataset;
 
-    access = Reactive::apply(&m_thread, [=](Reactive::Status &)
+    dataset = Reactive::apply(&m_thread, [=](Reactive::Status &)
     {
         // FIXME: Thread safety (m_file, 'this', ...)
         auto hdf_dataset = m_file.openDataSet(id);
@@ -287,9 +287,9 @@ DataSetAccessPtr Hdf5Source::dataset(const string & id)
         return dataset;
     });
 
-    d_datasets[id] = access;
+    d_datasets[id] = dataset;
 
-    return access;
+    return dataset;
 }
 
 }

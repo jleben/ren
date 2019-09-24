@@ -30,13 +30,12 @@ json HeatMap::save()
     return d;
 }
 
-void HeatMap::setDataSet(DataSetAccessPtr access, const vector_t & dim)
+void HeatMap::setDataSet(FutureDataset dataset, const vector_t & dim)
 {
     // Clear current data
 
     d_prepration = nullptr;
     d_plot_data = nullptr;
-    d_dataset_accessor = nullptr;
     m_dataset = nullptr;
     m_data_region = data_region_type();
 
@@ -47,7 +46,6 @@ void HeatMap::setDataSet(DataSetAccessPtr access, const vector_t & dim)
     // Set up new data
 
     d_options.dimensions = dim;
-    d_dataset_accessor = access;
 
     auto plot_data = make_shared<PlotData>();
     plot_data->dimensions = dim;
@@ -61,7 +59,7 @@ void HeatMap::setDataSet(DataSetAccessPtr access, const vector_t & dim)
         return plot_data;
     };
 
-    d_plot_data = Reactive::apply(&background_thread, preparePlot, d_dataset_accessor);
+    d_plot_data = Reactive::apply(&background_thread, preparePlot, dataset);
 
     d_prepration = Reactive::apply([=](Reactive::Status&, PlotDataPtr plot_data)
     {

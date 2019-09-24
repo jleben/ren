@@ -27,7 +27,7 @@ public:
     HeatMap(QObject * parent = 0);
 
     // FIXME: Async dataset loading
-    void setDataSet(DataSetAccessPtr access, const vector_t & dim);
+    void setDataSet(FutureDataset, const vector_t & dim);
     //void setDataSet(DataSetPtr);
     //void setDataSet(DataSetPtr, const vector_t & dim);
     //void setDimensions(const vector_t & dim);
@@ -72,7 +72,6 @@ private:
     }
     d_options;
 
-    DataSetAccessPtr d_dataset_accessor;
     Reactive::Value<PlotDataPtr> d_plot_data;
     Reactive::Value<void> d_prepration;
 

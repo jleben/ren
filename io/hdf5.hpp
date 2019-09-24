@@ -25,7 +25,7 @@ public:
     virtual int count() const override;
     virtual vector<string> dataset_ids() const override;
     virtual DataSetInfo dataset_info(const string & id) const override;
-    virtual DataSetAccessPtr dataset(const string & id) override;
+    virtual FutureDataset dataset(const string & id) override;
 
 private:
     static DataSetPtr readDataset(string id, H5::DataSet & dataset, Hdf5Source *);
@@ -35,7 +35,7 @@ private:
     string m_name;
     H5::H5File m_file;
     std::unordered_map<string, DataSetInfo> d_infos;
-    std::unordered_map<string, DataSetAccessPtr::weak_type> d_datasets;
+    std::unordered_map<string, FutureDataset::weak_type> d_datasets;
 };
 
 }
