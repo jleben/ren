@@ -70,17 +70,52 @@ bool test_cancel()
     QCoreApplication app(argc, nullptr);
 
     {
-        auto r = Reactive::apply([&](Status & status)
+        Reactive::apply([&](Status & status)
         {
-                ++x;
-                while(!status.cancelled && x < 10) ++x;
-                app.quit();
+            x = 2;
         });
     }
 
-    app.exec();
+    app.sendPostedEvents();
 
-    test.assert("x == 2", x == 2);
+    test.assert(x == 1) << "x (" << x << ") == 1";
+
+    return test.success();
+}
+
+
+// test_cancel_thread:
+// Test that discarding the result sets Status::cancelled = true.
+bool test_cancel_thread()
+{
+    Test test;
+
+    int argc = 0;
+    QCoreApplication app(argc, nullptr);
+
+
+    QThread thread;
+    thread.start();
+
+    atomic<bool> thread_started { false };
+
+    {
+        auto result = Reactive::apply(&thread, [&](Status & status)
+        {
+            thread_started = true;
+            while(!status.cancelled) { this_thread::yield(); }
+            thread.quit();
+        });
+
+        // Wait until thread is started, to make sure status is observed.
+        while(!thread_started)
+            this_thread::yield();
+
+        // Now discard the result.
+    }
+
+    // Thread will quit only if it observes Status::cancelled = true.
+    thread.wait();
 
     return test.success();
 }
@@ -90,5 +125,6 @@ Test_Set reactive_tests()
     return {
         { "test1", &test1 },
         { "cancel", &test_cancel },
+        { "cancel-thread", &test_cancel_thread },
     };
 }

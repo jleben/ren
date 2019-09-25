@@ -15,12 +15,36 @@
 
 namespace Reactive {
 
+template <typename F>
+inline
+auto for_each(F)
+{}
+
+template <typename F, typename A>
+inline
+auto for_each(F fn, A arg)
+{
+    fn(arg);
+}
+
+template <typename F, typename A, typename ...As>
+inline
+auto for_each(F fn, A arg, As ... args)
+{
+    fn(arg);
+    for_each(fn, args...);
+}
+
 template <typename QObjectType>
 struct QObject_Pointer : public std::shared_ptr<QObjectType>
 {
     struct Deleter
     {
-        void operator() (QObjectType * object) { object->deleteLater(); }
+        void operator() (QObjectType * object)
+        {
+            QCoreApplication::removePostedEvents(object, QEvent::User);
+            object->deleteLater();
+        }
     };
 
     QObject_Pointer() {}
@@ -223,26 +247,6 @@ void subscribe(Value<A> arg, Worker_Pointer worker)
     }
 }
 
-template <typename F>
-inline
-auto map(F)
-{}
-
-template <typename F, typename A>
-inline
-auto map(F fn, A arg)
-{
-    fn(arg);
-}
-
-template <typename F, typename A, typename ...As>
-inline
-auto map(F fn, A arg, As ... args)
-{
-    fn(arg);
-    map(fn, args...);
-}
-
 template <typename F, typename ... A> inline
 auto apply(QThread * thread, F fn, Value<A> ...arg)
 -> Value<typename std::result_of<F(Status&,A...)>::type>
@@ -268,7 +272,7 @@ auto apply(QThread * thread, F fn, Value<A> ...arg)
 
     if (sizeof...(arg))
     {
-        map([&](auto arg){ subscribe(arg, worker); }, arg...);
+        for_each([&](auto arg){ subscribe(arg, worker); }, arg...);
     }
     else
     {
