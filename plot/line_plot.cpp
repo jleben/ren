@@ -1,4 +1,5 @@
 #include "line_plot.hpp"
+#include "../utility/threads.hpp"
 
 #include <cmath>
 #include <algorithm>
@@ -27,129 +28,85 @@ json LinePlot::save()
 
 void LinePlot::restore(const DataSetPtr & dataset, const json & options)
 {
+    // FIXME
+#if 0
     int dim = options.at("dim");
     setDataSet(dataset, dim);
+#endif
 }
 
-void LinePlot::setDataSet(DataSetPtr dataset)
+void LinePlot::setDataSet(FutureDataset dataset, int dimension)
 {
-    setDataSet(dataset, 0);
-}
+    // Clear scheduled work
+    m_on_dataset = nullptr;
+    m_dataset = nullptr;
+    m_data_region = data_region_type();
+    m_value_range = nullptr;
+    m_on_value_range = nullptr;
+    m_cache.clear();
 
-void LinePlot::setDataSet(DataSetPtr dataset, int dim)
-{
-    if (m_dataset)
-        m_dataset->disconnect(this);
+    emit xRangeChanged();
+    emit yRangeChanged();
+    emit contentChanged();
 
-    m_dataset = dataset;
-
-    if (m_dataset)
+    if (!dataset)
     {
+        return;
+    }
+
+    m_dim = dimension;
+
+    printf("A\n");
+
+    m_on_dataset = Reactive::apply([=](Reactive::Status&, DataSetPtr dataset)
+    {
+        printf("Got dataset.\n");
+
+        m_dataset = dataset;
+
         connect(m_dataset.get(), &DataSet::selectionChanged,
                 this, &LinePlot::onSelectionChanged);
-    }
 
-    if (!dataset || dataset->data()->size().empty())
-    {
-        m_dim = -1;
-        m_start = 0;
-        m_end = 0;
-    }
-    else
-    {
-        auto size = dataset->data()->size();
+        auto dim_count = dataset->data()->size().size();
 
-        if (size.size() > dim)
+        if (!dim_count)
         {
-            m_dim = dim;
+            m_dataset = nullptr;
+            return;
         }
-        else
+
+        printf("Dataset not empty.\n");
+
+        if (m_dim < 0 || m_dim >= dim_count)
         {
             m_dim = 0;
         }
 
-        m_start = 0;
-        m_end = size[dim];
-    }
+        update_selected_region();
 
-    findEntireValueRange();
+        emit xRangeChanged();
+        emit contentChanged();
+        emit sourceChanged();
+    },
+    dataset);
 
-    update_selected_region();
+    printf("B\n");
 
-    emit sourceChanged();
-    emit dimensionChanged();
-    emit xRangeChanged();
-    emit yRangeChanged();
-    emit contentChanged();
-}
-
-void LinePlot::setDimension(int dim)
-{
-    if (!m_dataset)
-        return;
-
-    auto size = m_dataset->data()->size();
-
-    if (dim < 0 || dim >= size.size())
-        dim = -1;
-
-    m_dim = dim;
-
-    if (dim >= 0)
+    m_value_range = Reactive::apply(background_thread(),
+    [](Reactive::Status&, DataSetPtr dataset) -> Range
     {
-        m_start = 0;
-        m_end = size[dim];
-    }
-    else
+        printf("LinePlot: Computing value range...\n");
+        auto range = findEntireValueRange(dataset);
+        printf("LinePlot: Done computing value range.\n");
+        return range;
+    },
+    dataset);
+
+    m_on_value_range = Reactive::apply([=](Reactive::Status&, Range)
     {
-        m_start = 0;
-        m_end = 0;
-    }
-
-    update_selected_region();
-
-    emit dimensionChanged();
-    emit xRangeChanged();
-    //emit yRangeChanged();
-    emit contentChanged();
-}
-
-void LinePlot::setRange(int start, int end)
-{
-    if (!m_dataset)
-        return;
-
-    auto size = m_dataset->data()->size();
-
-    if (size.empty())
-        return;
-
-    if (m_dim < 0 || m_dim >= size.size())
-    {
-        cerr << "Unexpected: current dimension is invalid." << endl;
-        return;
-    }
-
-    if (end < start)
-    {
-        cerr << "Warning: negative range." << endl;
-        return;
-    }
-
-    if (start < 0 || start + end >= size[m_dim])
-    {
-        cerr << "Warning: selected range out of array bounds." << endl;
-        return;
-    }
-
-    m_start = start;
-    m_end = end;
-
-    update_selected_region();
-
-    emit xRangeChanged();
-    //emit yRangeChanged();
-    emit contentChanged();
+        emit yRangeChanged();
+    },
+    m_value_range);
 }
 
 void LinePlot::setColor(const QColor & color)
@@ -169,12 +126,9 @@ void LinePlot::onSelectionChanged()
     emit contentChanged();
 }
 
-void LinePlot::findEntireValueRange()
+Plot::Range LinePlot::findEntireValueRange(DataSetPtr dataset)
 {
-    if (!m_dataset)
-        m_value_range = Range(0,0);
-
-    auto region = get_all(*m_dataset->data());
+    auto region = get_all(*dataset->data());
 
     double min = 0;
     double max = 0;
@@ -192,14 +146,28 @@ void LinePlot::findEntireValueRange()
         max = std::max(max, v);
     }
 
-    m_value_range.min = min;
-    m_value_range.max = max;
+    return Range(min, max);
 }
 
 void LinePlot::update_selected_region()
 {
-    m_data_region = getDataRegion(m_start, m_end - m_start);
+    printf("Updating selected region\n");
+
     m_cache.clear();
+
+    if (!m_dataset)
+    {
+        m_data_region = data_region_type();
+
+        printf("Region empty\n");
+
+        return;
+    }
+
+    auto dim = m_dataset->dimension(m_dim);
+    m_data_region = getDataRegion(0, dim.size);
+
+    printf("Region valid : %d\n", m_data_region.is_valid());
 }
 
 LinePlot::data_region_type LinePlot::getDataRegion(int region_start, int region_size)
@@ -245,32 +213,20 @@ LinePlot::data_region_type LinePlot::getDataRegion(int region_start, int region_
 
 Plot::Range LinePlot::xRange()
 {
-    if (!m_data_region.is_valid())
-    {
+    if (!m_dataset)
         return Range();
-    }
 
     auto dim = m_dataset->dimension(m_dim);
 
-    return Range { dim.map * m_start, dim.map * (m_end - 1) };
+    return Range(dim.minimum(), dim.maximum());
 }
 
 Plot::Range LinePlot::yRange()
 {
-    return m_value_range;
-#if 0
-    if (!m_data_region.is_valid())
-    {
+    if (m_value_range && m_value_range->ready)
+        return m_value_range->value;
+    else
         return Range();
-    }
-
-    auto min_it = std::min_element(m_data_region.begin(), m_data_region.end());
-    auto max_it = std::max_element(m_data_region.begin(), m_data_region.end());
-    double min_value = min_it.value();
-    double max_value = max_it.value();
-
-    return Range { min_value, max_value };
-#endif
 }
 
 tuple<vector<double>, vector<double>> LinePlot::dataLocation(const QPointF & point)
@@ -375,8 +331,8 @@ void LinePlot::plot(QPainter * painter,  const Mapping2d & transform, const QRec
     int region_end = int((region.x() + region.width()) / dim.map);
     int region_size = region_end - region_start + 1;
 
-    region_start = std::max(region_start, m_start);
-    region_size = std::min(region_size, m_end - m_start);
+    region_start = std::max(region_start, 0);
+    region_size = std::min(region_size, int(dim.size));
 
     if (region_size <= 0)
         return;

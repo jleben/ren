@@ -26,20 +26,11 @@ public:
     LinePlot(QObject * parent = 0);
 
     DataSetPtr dataSet() const { return m_dataset; }
-    // FIXME: Async dataset loading
-    void setDataSet(FutureDataset access, int dimension) {}
-    void setDataSet(DataSetPtr data);
-    void setDataSet(DataSetPtr data, int dimension);
-
-    int dimension() const { return m_dim; }
-    void setDimension(int dim);
-
-    void setRange(int start, int end);
+    void setDataSet(FutureDataset access, int dimension);
 
     QColor color() const { return m_color; }
     void setColor(const QColor & c);
 
-    DataSetPtr dataSet() override { return m_dataset; }
     virtual bool isEmpty() const override { return !m_data_region.is_valid(); }
     virtual Range xRange() override;
     virtual Range yRange() override;
@@ -47,6 +38,7 @@ public:
     virtual void plot(QPainter *,  const Mapping2d &, const QRectF & region) override;
 
     virtual json save() override;
+    // FIXME: Async dataset loading
     virtual void restore(const DataSetPtr &, const json &) override;
 
 signals:
@@ -70,7 +62,7 @@ private:
     };
 
     void onSelectionChanged();
-    void findEntireValueRange();
+    static Range findEntireValueRange(DataSetPtr);
     void update_selected_region();
     data_region_type getDataRegion(int start, int size);
 
@@ -78,15 +70,16 @@ private:
     DataCache * getCache(double dataPerPixel);
     void makeCache(DataCache &, int blockSize);
 
-    DataSetPtr m_dataset = nullptr;
-    data_region_type m_data_region;
     int m_dim = -1;
-    int m_start = 0;
-    int m_end = 0;
-
     QColor m_color { Qt::black };
 
-    Range m_value_range;
+    Reactive::Value<void> m_on_dataset;
+
+    DataSetPtr m_dataset = nullptr;
+    data_region_type m_data_region;
+
+    Reactive::Value<Range> m_value_range;
+    Reactive::Value<void> m_on_value_range;
 
     double m_cache_use_factor = 5;
     double m_cache_factor = 10;
