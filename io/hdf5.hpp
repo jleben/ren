@@ -4,8 +4,6 @@
 
 #include <H5Cpp.h>
 
-#include <QThread>
-
 #include <memory>
 #include <unordered_map>
 
@@ -28,12 +26,11 @@ public:
     virtual FutureDataset dataset(const string & id) override;
 
 private:
-    static DataSetPtr readDataset(string id, H5::DataSet & dataset, Hdf5Source *);
+    static DataSetPtr readDataset(string id, H5::DataSet & dataset);
 
-    QThread m_thread;
     string m_file_path;
     string m_name;
-    H5::H5File m_file;
+    std::shared_ptr<H5::H5File> m_file;
     std::unordered_map<string, DataSetInfo> d_infos;
     std::unordered_map<string, FutureDataset::weak_type> d_datasets;
 };

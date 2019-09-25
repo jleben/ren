@@ -19,7 +19,6 @@ set(app_src
   plot_settings_view2.cpp
   main_window.cpp
   ${plot_src}
-  ../utility/threads.cpp
 )
 
 set(core_src
@@ -31,6 +30,7 @@ set(core_src
   ../data/data_source.cpp
   ../data/data_library.cpp
   ../data/dimension.cpp
+  ../utility/threads.cpp
 )
 
 add_library(datavis_core STATIC ${core_src})

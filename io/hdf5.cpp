@@ -1,5 +1,6 @@
 #include "hdf5.hpp"
 #include "../data/data_library.hpp"
+#include "../utility/threads.hpp"
 
 #include <QFileInfo>
 
@@ -166,10 +167,8 @@ vector<DataSet::Dimension> readDimensions(H5::DataSet & dataset)
     return dims;
 }
 
-DataSetPtr Hdf5Source::readDataset(string id, H5::DataSet & dataset, Hdf5Source * source)
+DataSetPtr Hdf5Source::readDataset(string id, H5::DataSet & dataset)
 {
-    // FIXME: Use of 'this' is not thread safe. See below...
-
     auto dataspace = dataset.getSpace();
     if (!dataspace.isSimple())
         throw std::runtime_error("Data space is not simple.");
@@ -181,20 +180,12 @@ DataSetPtr Hdf5Source::readDataset(string id, H5::DataSet & dataset, Hdf5Source 
         object_size.push_back(dim.size);
 
     auto client_dataset = make_shared<DataSet>(id, object_size);
-    client_dataset->setSource(source);
 
     dataset.read(client_dataset->data()->data(), hdf5_type<double>::native_type());
 
     for (int d = 0; d < dimensions.size(); ++d)
     {
         client_dataset->setDimension(d, dimensions[d]);
-        string name = dimensions[d].name;
-        // FIXME: library() not thread safe:
-#if 0
-        DimensionPtr gdim = library->dimension(name);
-        if (gdim)
-            client_dataset->setGlobalDimension(d, gdim);
-#endif
     }
 
     return client_dataset;
@@ -202,17 +193,17 @@ DataSetPtr Hdf5Source::readDataset(string id, H5::DataSet & dataset, Hdf5Source 
 
 Hdf5Source::Hdf5Source(const string & file_path, DataLibrary * lib):
     DataSource(lib),
-    m_file_path(file_path),
-    m_file(file_path.c_str(), H5F_ACC_RDONLY)
+    m_file_path(file_path)
 {
     m_name = QFileInfo(QString::fromStdString(file_path)).fileName().toStdString();
+    m_file = make_shared<H5::H5File>(file_path.c_str(), H5F_ACC_RDONLY);
 
-    auto child_count = m_file.getNumObjs();
+    auto child_count = m_file->getNumObjs();
     for (hsize_t i = 0; i < child_count; ++i)
     {
-        auto type = m_file.getObjTypeByIdx(i);
+        auto type = m_file->getObjTypeByIdx(i);
 
-        auto dataset_name = m_file.getObjnameByIdx(i);
+        auto dataset_name = m_file->getObjnameByIdx(i);
 
         if (type != H5G_DATASET)
         {
@@ -221,7 +212,7 @@ Hdf5Source::Hdf5Source(const string & file_path, DataLibrary * lib):
             continue;
         }
 
-        auto dataset = m_file.openDataSet(dataset_name);
+        auto dataset = m_file->openDataSet(dataset_name);
 
         auto dataspace = dataset.getSpace();
         if (!dataspace.isSimple())
@@ -238,14 +229,10 @@ Hdf5Source::Hdf5Source(const string & file_path, DataLibrary * lib):
 
         d_infos[dataset_name] = info;
     }
-
-    m_thread.start();
 }
 
 Hdf5Source::~Hdf5Source()
 {
-    m_thread.quit();
-    m_thread.wait();
 }
 
 int Hdf5Source::count() const
@@ -276,20 +263,46 @@ FutureDataset Hdf5Source::dataset(const string & id)
     if (!d_infos.count(id))
         return nullptr;
 
-    auto dataset = d_datasets[id].lock();
-    if (dataset) return dataset;
-
-    dataset = Reactive::apply(&m_thread, [=](Reactive::Status &)
     {
-        // FIXME: Thread safety (m_file, 'this', ...)
-        auto hdf_dataset = m_file.openDataSet(id);
-        auto dataset = readDataset(id, hdf_dataset, this);
+        auto dataset = d_datasets[id].lock();
+        if (dataset) return dataset;
+    }
+
+    auto file = m_file;
+
+    auto raw_dataset = Reactive::apply(background_thread(), [file, id](Reactive::Status &)
+    {
+        printf("HDF5: Reading data...\n");
+
+        // NOTE: Using file is safe, because:
+        // - Only one thread at a time uses it
+        // - It is a shared pointer, so it will live after this object dies.
+        auto hdf_dataset = file->openDataSet(id);
+        auto dataset = readDataset(id, hdf_dataset);
         return dataset;
     });
 
-    d_datasets[id] = dataset;
+    auto prepared_dataset = Reactive::apply([=](Reactive::Status &, DataSetPtr dataset)
+    {
+        printf("HDF5: Preparing dataset...\n");
 
-    return dataset;
+        dataset->setSource(this);
+
+        for (int d = 0; d < dataset->dimensionCount(); ++d)
+        {
+            string name = dataset->dimension(d).name;
+            DimensionPtr gdim = library()->dimension(name);
+            if (gdim)
+                dataset->setGlobalDimension(d, gdim);
+        }
+
+        return dataset;
+    },
+    raw_dataset);
+
+    d_datasets[id] = prepared_dataset;
+
+    return prepared_dataset;
 }
 
 }
