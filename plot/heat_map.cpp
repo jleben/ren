@@ -60,6 +60,9 @@ void HeatMap::setDataSet(FutureDataset dataset, const vector_t & dim)
     d_prepration = Reactive::apply([=](Reactive::Status&, PlotDataPtr plot_data)
     {
         m_dataset = plot_data->dataset;
+        connect(m_dataset.get(), &DataSet::selectionChanged,
+                this, &HeatMap::onSelectionChanged);
+
         m_data_region = plot_data->data_region;
 
         printf("Range: %f %f, %f %f\n", xRange().min, xRange().max,
@@ -156,14 +159,13 @@ void HeatMap::setDimensions(const vector_t & dims)
 
 void HeatMap::onSelectionChanged()
 {
-    // FIXME:
-#if 0
     if (!m_dataset)
         return;
 
-    if (update_selected_region())
-        generate_image();
-#endif
+    d_plot_data->value->update_selected_region();
+    d_plot_data->value->generate_image();
+
+    emit contentChanged();
 }
 
 void HeatMap::PlotData::update_selected_region()
