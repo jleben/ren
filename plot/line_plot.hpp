@@ -25,7 +25,7 @@ public:
 
     LinePlot(QObject * parent = 0);
 
-    DataSetPtr dataSet() const { return m_dataset; }
+    DataSetPtr dataSet() override { return m_dataset; }
     void setDataSet(FutureDataset access, int dimension);
 
     QColor color() const { return m_color; }
