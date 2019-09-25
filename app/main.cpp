@@ -1,4 +1,5 @@
 #include "main_window.hpp"
+#include "../utility/threads.hpp"
 
 #include <QApplication>
 #include <iostream>
@@ -19,6 +20,8 @@ int main(int argc, char *argv[])
         file_path = args[1];
     }
 
+    background_thread()->start();
+
     auto main_win = new MainWindow;
 
     {
@@ -37,6 +40,9 @@ int main(int argc, char *argv[])
     int status = app.exec();
 
     delete main_win;
+
+    background_thread()->quit();
+    background_thread()->wait();
 
     return status;
 }

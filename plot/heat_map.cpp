@@ -1,5 +1,6 @@
 #include "heat_map.hpp"
 #include "../app/async.hpp"
+#include "../utility/threads.hpp"
 
 #include <QPainter>
 #include <QPainterPath>
@@ -12,14 +13,9 @@ using namespace std;
 
 namespace datavis {
 
-// FIXME: Someone needs to reap this thread when program shuts down.
-QThread HeatMap::background_thread;
-
 HeatMap::HeatMap(QObject * parent):
     Plot(parent)
-{
-    background_thread.start();
-}
+{}
 
 json HeatMap::save()
 {
@@ -59,7 +55,7 @@ void HeatMap::setDataSet(FutureDataset dataset, const vector_t & dim)
         return plot_data;
     };
 
-    d_plot_data = Reactive::apply(&background_thread, preparePlot, dataset);
+    d_plot_data = Reactive::apply(background_thread(), preparePlot, dataset);
 
     d_prepration = Reactive::apply([=](Reactive::Status&, PlotDataPtr plot_data)
     {

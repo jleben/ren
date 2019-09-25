@@ -17,8 +17,6 @@ namespace datavis {
 
 class HeatMap : public Plot
 {
-    static QThread background_thread;
-
 public:
     using data_type = array<double>;
     using data_region_type = array_region<double>;

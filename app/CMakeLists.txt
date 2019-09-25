@@ -19,6 +19,7 @@ set(app_src
   plot_settings_view2.cpp
   main_window.cpp
   ${plot_src}
+  ../utility/threads.cpp
 )
 
 set(core_src
