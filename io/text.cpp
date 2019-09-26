@@ -187,7 +187,7 @@ TextSource::TextSource(const string & file_path, DataLibrary * lib):
     m_name = QFileInfo(QString::fromStdString(file_path)).fileName().toStdString();
 }
 
-DataSetInfo TextSource::info(int) const
+DataSetInfo TextSource::dataset_info(const string & id) const
 {
     return inferInfo();
 }
@@ -236,12 +236,14 @@ DataSetInfo TextSource::inferInfo() const
     return info;
 }
 
-DataSetPtr TextSource::dataset(int)
+FutureDataset TextSource::dataset(const string & id)
 {
+    // FIXME: Make asynchronous
+
     if (!m_dataset)
         m_dataset = getData();
 
-    return m_dataset;
+    return Reactive::value<DataSetPtr>(m_dataset);
 }
 
 DataSetPtr TextSource::getData()
@@ -312,28 +314,25 @@ TextPackageSource::TextPackageSource(const string & path, DataLibrary * lib):
     parseDescriptor();
 }
 
-int TextPackageSource::index(const string & id) const
+vector<string> TextPackageSource::dataset_ids() const
 {
-    for(int i = 0; i < m_members.size(); ++i)
-    {
-        if (m_members[i].info.id == id)
-            return i;
-    }
-
-    return -1;
+    return m_member_ids;
 }
 
-DataSetInfo TextPackageSource::info(int index) const
+DataSetInfo TextPackageSource::dataset_info(const string & id) const
 {
-    return m_members[index].info;
+    return m_members.at(id).info;
 }
 
-DataSetPtr TextPackageSource::dataset(int index)
+FutureDataset TextPackageSource::dataset(const string & id)
 {
-    if (!m_members[index].dataset)
-        loadDataSet(index);
+    // FIXME: Make asynchronous
 
-    return m_members[index].dataset;
+    auto & member = m_members.at(id);
+    if (!member.dataset)
+        loadDataSet(member);
+
+    return Reactive::value<DataSetPtr>(member.dataset);
 }
 
 using nlohmann::json;
@@ -462,12 +461,12 @@ void TextPackageSource::parseDescriptor()
 
         auto resources = data.at("resources");
 
-        m_members.reserve(resources.size());
-
         for(auto resource : resources)
         {
-            m_members.emplace_back();
-            parseResourceDescription(m_members.back(), resource);
+            Member member;
+            parseResourceDescription(member, resource);
+            m_members[member.info.id] = member;
+            m_member_ids.push_back(member.info.id);
         }
     }
     catch (json::exception & e)
@@ -476,10 +475,8 @@ void TextPackageSource::parseDescriptor()
     }
 }
 
-void TextPackageSource::loadDataSet(int index)
+void TextPackageSource::loadDataSet(Member & member)
 {
-    Member & member = m_members[index];
-
     // FIXME:
     string path = m_dir_path + '/' + member.path;
 

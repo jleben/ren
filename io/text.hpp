@@ -5,11 +5,13 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 namespace datavis {
 
 using std::string;
 using std::vector;
+using std::unordered_map;
 
 class DataLibrary;
 
@@ -21,16 +23,10 @@ public:
     string path() const override { return m_file_path; }
     string id() const override { return m_name; }
 
-    virtual int count() const override { return 0; }
-    virtual vector<string> dataset_ids() const override { return {}; }
-    DataSetInfo dataset_info(const string & id) const { return {}; }
-    virtual FutureDataset dataset(const string & id) override { return nullptr; }
-
-
-    //int count() const override { return 1; }
-    int index(const string & id) const { return 0; }
-    DataSetInfo info(int index) const;
-    DataSetPtr dataset(int index);
+    virtual int count() const override { return 1; }
+    virtual vector<string> dataset_ids() const override { return { "data" }; }
+    DataSetInfo dataset_info(const string & id) const override;
+    virtual FutureDataset dataset(const string & id) override;
 
 private:
     DataSetInfo inferInfo() const;
@@ -72,16 +68,10 @@ public:
     string path() const override { return m_dir_path; }
     string id() const override { return m_name; }
 
-    virtual int count() const override { return 0; }
-    virtual vector<string> dataset_ids() const override { return {}; }
-    DataSetInfo dataset_info(const string & id) const { return {}; }
-    virtual FutureDataset dataset(const string & id) override { return nullptr; }
-
-
-    //int count() const override { return m_members.size(); }
-    int index(const string & id) const;
-    DataSetInfo info(int index) const;
-    DataSetPtr dataset(int index);
+    virtual int count() const override { return m_members.size(); }
+    virtual vector<string> dataset_ids() const override;
+    DataSetInfo dataset_info(const string & id) const;
+    virtual FutureDataset dataset(const string & id) override;
 
     struct Member
     {
@@ -93,12 +83,14 @@ public:
 
 private:
     void parseDescriptor();
-    void loadDataSet(int index);
+    void loadDataSet(Member&);
 
     string m_dir_path;
     string m_file_path;
     string m_name;
-    vector<Member> m_members;
+    // Store IDs in vector to preserve declared order of members
+    vector<string> m_member_ids;
+    unordered_map<string, Member> m_members;
 };
 
 }

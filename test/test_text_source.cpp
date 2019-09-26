@@ -103,9 +103,14 @@ static bool test_load_package()
 
     test.assert("Source has 4 datasets.", source.count() == 4);
 
+    auto dataset_names = source.dataset_ids();
+
+    vector<string> expected_names = { "data1.txt", "data2.txt", "data3.txt", "data4.txt" };
+    test.assert(dataset_names == expected_names) << "Datasets have expected names.";
+
     // Test dataset 1
     {
-        auto info = source.info(0);
+        auto info = source.dataset_info("data1.txt");
 
         test.assert("Dataset 1 has name data1.txt", info.id == "data1.txt");
 
@@ -137,7 +142,7 @@ static bool test_load_text_file()
 
     test.assert("Source has 1 dataset.", source.count() == 1);
 
-    auto info = source.info(0);
+    auto info = source.dataset_info("data");
 
     test.assert("Dataset 1 has id 'data'.", info.id == "data");
 
