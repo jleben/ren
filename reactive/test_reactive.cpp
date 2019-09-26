@@ -59,6 +59,17 @@ bool test1()
     return test.success();
 }
 
+bool test_immediate_value()
+{
+    Test test;
+
+    auto v = Reactive::value<int>(123);
+
+    test.assert("Value is ready.", v->ready);
+    test.assert("Value is 123.", v->value == 123);
+
+    return test.success();
+}
 
 bool test_cancel()
 {
@@ -124,6 +135,7 @@ Test_Set reactive_tests()
 {
     return {
         { "test1", &test1 },
+        { "immediate-value", &test_immediate_value },
         { "cancel", &test_cancel },
         { "cancel-thread", &test_cancel_thread },
     };

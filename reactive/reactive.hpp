@@ -86,7 +86,8 @@ struct Value_Data
 {
     ~Value_Data()
     {
-        worker->cancel();
+        if (worker)
+            worker->cancel();
     }
 
     std::mutex mutex;
@@ -101,7 +102,8 @@ struct Value_Data<void>
 {
     ~Value_Data()
     {
-        worker->cancel();
+        if (worker)
+            worker->cancel();
     }
 
     Worker_Pointer worker;
