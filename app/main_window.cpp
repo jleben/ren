@@ -189,7 +189,8 @@ PlotGridView * MainWindow::addPlotView()
     auto view = new PlotGridView;
     view->setAcceptDrops(true);
     view->installEventFilter(this);
-
+    connect(view, &PlotGridView::datasetDropped,
+            this, &MainWindow::onDatasetDroppedOnPlotView);
     m_plot_views.push_back(view);
 
     view->show();
@@ -207,9 +208,24 @@ void MainWindow::removePlotView(PlotGridView * view)
     view->deleteLater();
 }
 
-void MainWindow::plot(DataSource * source, const string & id)
+void MainWindow::onDatasetDroppedOnPlotView(const QVariant & data)
 {
-    auto info = source->dataset_info(id);
+    auto dropped_data = data.value<PlotGridView::DroppedDataset>();
+
+    auto source = m_lib->source(QString::fromStdString(dropped_data.source_id));
+    if (!source)
+        return;
+
+    auto plot = makePlot(source, dropped_data.dataset_id);
+    if (!plot)
+        return;
+
+    dropped_data.view->addPlot(plot, dropped_data.row, dropped_data.column);
+}
+
+Plot * MainWindow::makePlot(DataSource * source, const string & datasetId)
+{
+    auto info = source->dataset_info(datasetId);
 
     auto dialog = new QDialog;
     dialog->setWindowTitle("Select Plot Data");
@@ -230,42 +246,23 @@ void MainWindow::plot(DataSource * source, const string & id)
 
     auto result = dialog->exec();
     if (result != QDialog::Accepted)
-        return;
+        return nullptr;
 
-#if 0
-    // Get data
-
-    cout << "Reading dataset." << endl;
-
-    DataSetPtr data;
-    try {
-        data = source->dataset(index);
-    }
-    catch (std::exception & e) {
-        QMessageBox::warning(this, "Read Failed",
-                             QString("Failed to read data for dataset index %1:\n%2")
-                             .arg(index).arg(e.what()));
-        return;
-    }
-
-    cout << "Reading dataset finished." << endl;
-#endif
-
-    // Create plot
-
-    cout << "Creating plot." << endl;
-
-    auto dataset = source->dataset(id);
+    auto dataset = source->dataset(datasetId);
     auto plot = settings->makePlot(dataset);
 
     if (!plot)
     {
         QMessageBox::warning(this, "Creating Plot Failed",
                              QString("Invalid options."));
-        return;
     }
 
-    cout << "Creating plot finished." << endl;
+    return plot;
+}
+
+void MainWindow::plot(DataSource * source, const string & id)
+{
+    auto plot = makePlot(source, id);
 
     // Add plot to view
 
@@ -362,36 +359,6 @@ bool MainWindow::eventFilter(QObject * object, QEvent * event)
         {
             removePlotView(plot_view);
             return false;
-        }
-        case QEvent::DragEnter:
-        {
-            auto drag_event = static_cast<QDragEnterEvent*>(event);
-            auto data = drag_event->mimeData();
-            if (qobject_cast<const DraggedDatasets*>(data))
-            {
-                drag_event->acceptProposedAction();
-                return true;
-            }
-            break;
-        }
-        case QEvent::Drop:
-        {
-            auto drop_event = static_cast<QDropEvent*>(event);
-
-            auto data = qobject_cast<const DraggedDatasets*>(drop_event->mimeData());
-            if (data)
-            {
-                m_selected_plot_view = plot_view;
-                for (auto & item : data->items)
-                {
-                    auto source = m_lib->source(QString::fromStdString(item.sourceId));
-                    if (!source) continue;
-                    plot(source, item.datasetId);
-                }
-                drop_event->acceptProposedAction();
-                return true;
-            }
-            break;
         }
         default:;
         }

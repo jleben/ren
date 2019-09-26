@@ -60,14 +60,15 @@ public:
     QPointF mapDistanceToPlot(const QPointF & distance);
     void selectDataAt(const QPoint &);
 
+    void setRangeController(PlotRangeController * ctl, Qt::Orientation);
+
+protected:
     virtual void enterEvent(QEvent*) override;
     virtual void leaveEvent(QEvent*) override;
     virtual void mouseMoveEvent(QMouseEvent*) override;
     virtual void mousePressEvent(QMouseEvent*) override;
     virtual void wheelEvent(QWheelEvent*) override;
     virtual void paintEvent(QPaintEvent*) override;
-
-    void setRangeController(PlotRangeController * ctl, Qt::Orientation);
 
 private:
     enum MouseInteraction
@@ -117,6 +118,15 @@ class PlotGridView : public QWidget
 {
     Q_OBJECT
 public:
+    struct DroppedDataset
+    {
+        string source_id;
+        string dataset_id;
+        PlotGridView * view = nullptr;
+        int row;
+        int column;
+    };
+
     PlotGridView(QWidget * parent = nullptr);
 
     int columnCount() const { return m_columnCount; }
@@ -152,6 +162,10 @@ public:
     QPoint selectedCell() const { return m_selected_cell; }
 
     QSize sizeHint() const override { return QSize(600,400); }
+
+signals:
+    // QVariant = DroppedDataset
+    void datasetDropped(QVariant);
 
 private:
     PlotView * viewAtIndex(int index);
@@ -189,3 +203,5 @@ private:
 };
 
 }
+
+Q_DECLARE_METATYPE(datavis::PlotGridView::DroppedDataset);

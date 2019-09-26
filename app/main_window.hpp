@@ -56,8 +56,11 @@ private:
     PlotGridView * addPlotView();
     void removePlotView(PlotGridView*);
     void plot(DataSource *, const string & id);
+    Plot * makePlot(DataSource *, const string & datasetId);
+
     void restorePlot(PlotGridView *, const json & state);
     void removeSelectedPlot();
+    void onDatasetDroppedOnPlotView(const QVariant &);
     bool eventFilter(QObject*, QEvent*) override;
     void showPlotContextMenu(Plot*, const QPoint & pos);
 

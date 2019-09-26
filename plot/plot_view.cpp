@@ -2,6 +2,7 @@
 #include "plot.hpp"
 #include "../utility/vector.hpp"
 #include "../data/data_source.hpp"
+#include "../app/data_library_view.hpp"
 
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -671,6 +672,47 @@ bool PlotGridView::eventFilter(QObject * object, QEvent * event)
         m_reticle->hide();
         break;
     }
+    case QEvent::DragEnter:
+    {
+        auto drag_event = static_cast<QDragEnterEvent*>(event);
+        auto data = qobject_cast<const DraggedDatasets*>(drag_event->mimeData());
+        if (data && data->items.size() == 1)
+        {
+            drag_event->acceptProposedAction();
+            return true;
+        }
+        break;
+    }
+    case QEvent::Drop:
+    {
+        auto drop_event = static_cast<QDropEvent*>(event);
+        auto data = qobject_cast<const DraggedDatasets*>(drop_event->mimeData());
+        auto view = qobject_cast<PlotView*>(object);
+        if (data && view)
+        {
+            if (data->items.size() != 1)
+            {
+                // reject
+                return true;
+            }
+
+            auto cell = findView(view);
+
+            DroppedDataset dropped_data;
+            dropped_data.source_id = data->items.front().sourceId;
+            dropped_data.dataset_id = data->items.front().datasetId;
+            dropped_data.view = this;
+            dropped_data.row = cell.y();
+            dropped_data.column = cell.x();
+
+            printf("Dropped\n");
+            emit datasetDropped(QVariant::fromValue(dropped_data));
+
+            drop_event->acceptProposedAction();
+            return true;
+        }
+        break;
+    }
     default:
         break;
     }
@@ -884,6 +926,7 @@ PlotView::PlotView(QWidget * parent):
     QWidget(parent)
 {
     setMouseTracking(true);
+    setAcceptDrops(true);
 }
 
 PlotView::~PlotView()
