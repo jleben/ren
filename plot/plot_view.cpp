@@ -12,6 +12,8 @@
 #include <QCursor>
 #include <QMouseEvent>
 #include <QWheelEvent>
+#include <QShortcut>
+
 #include <algorithm>
 #include <iostream>
 #include <iterator>
@@ -114,6 +116,12 @@ PlotGridView::PlotGridView(QWidget * parent):
     selectView(viewAtCell(0,0));
 
     printState();
+
+    {
+        auto shortcut = new QShortcut(QKeySequence::Close, this);
+        connect(shortcut, &QShortcut::activated,
+                this, &QWidget::close);
+    }
 
     //printf("Rows: %d, Columns: %d\n", rowCount(), columnCount());
 }

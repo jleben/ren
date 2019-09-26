@@ -125,6 +125,17 @@ void MainWindow::makeMenu()
         connect(action, &QAction::triggered,
                 this, &MainWindow::close);
     }
+
+    {
+        auto menu = menuBar->addMenu("Window");
+
+        {
+            auto action = menu->addAction("New Plot Window");
+            action->setShortcut(QKeySequence::New);
+            connect(action, &QAction::triggered,
+                    this, &MainWindow::addPlotView);
+        }
+    }
 }
 
 void MainWindow::openFile(const QString & path)
