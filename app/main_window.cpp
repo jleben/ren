@@ -132,6 +132,7 @@ void MainWindow::makeMenu()
         {
             auto action = menu->addAction("New Plot Window");
             action->setShortcut(QKeySequence::New);
+            action->setShortcutContext(Qt::ApplicationShortcut);
             connect(action, &QAction::triggered,
                     this, &MainWindow::addPlotView);
         }
