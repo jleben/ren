@@ -233,8 +233,6 @@ void HeatMap::PlotData::update_value_range()
 
 void HeatMap::PlotData::generate_image()
 {
-    // FIXME: Accessing data_region and other data members is not thread safe.
-
     // qDebug() << "Generating image";
 
     if (!data_region.is_valid())
