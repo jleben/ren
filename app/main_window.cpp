@@ -46,23 +46,25 @@ MainWindow::MainWindow(QWidget * parent):
     m_lib_view->setLibrary(m_lib);
 
     auto lib_action_bar = new QToolBar;
+
+
+    {
+        auto action = lib_action_bar->addAction("Add Window");
+        connect(action, &QAction::triggered,
+                this, &MainWindow::addPlotView);
+    }
+
+    lib_action_bar->addSeparator();
+
     {
         auto action = lib_action_bar->addAction("Plot");
         connect(action, &QAction::triggered,
                 this, &MainWindow::plotSelectedObject);
     }
 
-    lib_action_bar->addSeparator();
-
-    {
-        auto action = lib_action_bar->addAction("Add View");
-        connect(action, &QAction::triggered,
-                this, &MainWindow::addPlotView);
-    }
-
     auto tool_layout = new QVBoxLayout;
-    tool_layout->addWidget(m_lib_view);
     tool_layout->addWidget(lib_action_bar);
+    tool_layout->addWidget(m_lib_view);
 
     auto content_view = new QWidget;
 
