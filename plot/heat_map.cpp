@@ -1,5 +1,4 @@
 #include "heat_map.hpp"
-#include "../app/async.hpp"
 #include "../utility/threads.hpp"
 
 #include <QPainter>

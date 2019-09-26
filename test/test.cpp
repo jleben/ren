@@ -11,7 +11,6 @@ int main(int argc, char *argv[])
     Test_Set tests =
     {
         { "text-source", text_source_tests() },
-        { "async", async_tests() },
         { "reactive", reactive_tests() }
     };
 
