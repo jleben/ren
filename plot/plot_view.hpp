@@ -217,8 +217,7 @@ private:
     struct
     {
         Cell cell { -1, -1 };
-        bool insert_row = false;
-        bool insert_col = false;
+        Cell offset { 0, 0 };
     }
     m_drop;
 

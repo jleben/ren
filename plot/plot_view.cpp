@@ -621,13 +621,12 @@ void PlotGridView::prepareDrop(PlotView * view, const QPoint & pos)
     int col = thisCell.column;
 
     m_drop.cell = {row, col};
-    m_drop.insert_row = false;
-    m_drop.insert_col = false;
+    m_drop.offset = {0,0};
 
     auto cellRect = view->rect();
 
-    int ymargin = cellRect.height() * 0.1;
-    int xmargin = cellRect.width() * 0.1;
+    int ymargin = cellRect.height() * 0.2;
+    int xmargin = cellRect.width() * 0.2;
     if (cellRect.adjusted(xmargin, ymargin, -xmargin, -ymargin).contains(pos))
     {
         return;
@@ -640,26 +639,22 @@ void PlotGridView::prepareDrop(PlotView * view, const QPoint & pos)
     {
         if (rx < 1 - ry)
         {
-            m_drop.cell = {row, col};
-            m_drop.insert_col = true;
+            m_drop.offset = {0,-1};
         }
         else
         {
-            m_drop.cell = {row+1, col};
-            m_drop.insert_row = true;
+            m_drop.offset = {1,0};
         }
     }
     else
     {
         if (rx < 1 - ry)
         {
-            m_drop.cell = {row, col};
-            m_drop.insert_row = true;
+            m_drop.offset = {-1,0};
         }
         else
         {
-            m_drop.cell = {row, col+1};
-            m_drop.insert_col = true;
+            m_drop.offset = {0,1};
         }
     }
 }
@@ -773,9 +768,11 @@ bool PlotGridView::eventFilter(QObject * object, QEvent * event)
             return false;
         prepareDrop(view, drag_event->pos());
 
-        printf("would drop at row %d col %d, insert row %d col %d\n",
+        printf("would drop at row %d col %d, offset %d %d\n",
                m_drop.cell.row, m_drop.cell.column,
-               m_drop.insert_row, m_drop.insert_col);
+               m_drop.offset.row, m_drop.offset.column);
+
+        update();
         break;
     }
     case QEvent::Drop:
@@ -797,12 +794,20 @@ bool PlotGridView::eventFilter(QObject * object, QEvent * event)
             dropped_data.view = this;
             dropped_data.row = m_drop.cell.row;
             dropped_data.column = m_drop.cell.column;
-            dropped_data.insert_row = m_drop.insert_row;
-            dropped_data.insert_col = m_drop.insert_col;
+            dropped_data.insert_row = m_drop.offset.row != 0;
+            if (m_drop.offset.row > 0)
+                ++dropped_data.row;
 
-            emit datasetDropped(QVariant::fromValue(dropped_data));
+            dropped_data.insert_col = m_drop.offset.column != 0;
+            if (m_drop.offset.column > 0)
+                ++dropped_data.column;
+
+            // Reset drop info
+            m_drop.cell = {-1, -1};
+            m_drop.offset = {0, 0};
 
             drop_event->acceptProposedAction();
+            emit datasetDropped(QVariant::fromValue(dropped_data));
             return true;
         }
         break;
@@ -858,6 +863,44 @@ void PlotGridView::paintEvent(QPaintEvent*)
         pen.setColor(Qt::red);
         painter.setPen(pen);
         painter.drawRect(m_grid->cellRect(cell.y()+1, cell.x()+1).adjusted(-1,-1,1,1));
+    }
+
+    if (m_drop.cell.row >= 0 and m_drop.cell.column >= 0)
+    {
+        int row = m_drop.cell.row;
+        int col = m_drop.cell.column;
+        auto rect = m_grid->cellRect(row+1, col+1);
+
+        // FIXME: Indicator position, size, color;
+
+        int size = 8;
+
+        if (m_drop.offset.row != 0)
+        {
+            if (m_drop.offset.row < 0)
+                rect.moveTop(rect.top()-size);
+            else
+                rect.moveTop(rect.bottom());
+
+            rect.setHeight(size);
+
+            //qDebug() << "Indicator rect:" << rect;
+
+            painter.fillRect(rect, Qt::black);
+        }
+        else if(m_drop.offset.column != 0)
+        {
+            if (m_drop.offset.column < 0)
+                rect.moveLeft(rect.left()-size);
+            else
+                rect.moveLeft(rect.right());
+
+            rect.setWidth(size);
+
+            //qDebug() << "Indicator rect:" << rect;
+
+            painter.fillRect(rect, Qt::black);
+        }
     }
 }
 
