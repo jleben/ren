@@ -845,7 +845,8 @@ void RangeView::paintEvent(QPaintEvent*)
     }
     else
     {
-        position = size = 0;
+        position = 0;
+        size = 1;
     }
 
     QRect rangeRect;
