@@ -190,6 +190,15 @@ void PlotGridView::addRow()
     printState();
 }
 
+void PlotGridView::insertRow(int row)
+{
+    addRow();
+    for (int i = rowCount()-2; i >= row; --i)
+    {
+        swapRows(i, i+1);
+    }
+}
+
 void PlotGridView::removeRow(int removedRow)
 {
     if (m_rowCount <= 1)
@@ -296,6 +305,15 @@ void PlotGridView::addColumn()
     update();
 
     printState();
+}
+
+void PlotGridView::insertColumn(int column)
+{
+    addColumn();
+    for (int i = columnCount()-2; i >= column; --i)
+    {
+        swapColumns(i, i+1);
+    }
 }
 
 void PlotGridView::removeColumn(int removedColumn)
@@ -504,7 +522,7 @@ void PlotGridView::removePlot(Plot * plot)
     for (int i = 0; i < m_grid->count(); ++i)
     {
         auto view = viewAtIndex(i);
-        if (view->plot() == plot)
+        if (view and view->plot() == plot)
         {
             view->setPlot(nullptr);
             updateDataRange();
@@ -566,7 +584,7 @@ PlotView * PlotGridView::viewAtPoint(const QPoint & pos)
     {
         for (int col = 0; col < columnCount(); ++col)
         {
-            if (m_grid->cellRect(row, col).contains(pos))
+            if (m_grid->cellRect(row+1, col+1).contains(pos))
             {
                 return viewAtCell(row, col);
             }
@@ -578,16 +596,72 @@ PlotView * PlotGridView::viewAtPoint(const QPoint & pos)
 
 QPoint PlotGridView::findView(PlotView * view)
 {
+    auto cell = findView2(view);
+    return QPoint(cell.column, cell.row);
+}
+
+PlotGridView::Cell PlotGridView::findView2(PlotView * view)
+{
     for (int row = 0; row < rowCount(); ++row)
     {
         for (int col = 0; col < columnCount(); ++col)
         {
             if (viewAtCell(row, col) == view)
-                return QPoint(col, row);
+                return Cell { row, col };
         }
     }
 
-    return QPoint(-1, -1);
+    return Cell { -1, -1 };
+}
+
+void PlotGridView::prepareDrop(PlotView * view, const QPoint & pos)
+{
+    auto thisCell = findView2(view);
+    int row = thisCell.row;
+    int col = thisCell.column;
+
+    m_drop.cell = {row, col};
+    m_drop.insert_row = false;
+    m_drop.insert_col = false;
+
+    auto cellRect = view->rect();
+
+    int ymargin = cellRect.height() * 0.1;
+    int xmargin = cellRect.width() * 0.1;
+    if (cellRect.adjusted(xmargin, ymargin, -xmargin, -ymargin).contains(pos))
+    {
+        return;
+    }
+
+    float rx = float(pos.x()) / cellRect.width();
+    float ry = float(pos.y()) / cellRect.height();
+
+    if (rx < ry)
+    {
+        if (rx < 1 - ry)
+        {
+            m_drop.cell = {row, col};
+            m_drop.insert_col = true;
+        }
+        else
+        {
+            m_drop.cell = {row+1, col};
+            m_drop.insert_row = true;
+        }
+    }
+    else
+    {
+        if (rx < 1 - ry)
+        {
+            m_drop.cell = {row, col};
+            m_drop.insert_row = true;
+        }
+        else
+        {
+            m_drop.cell = {row, col+1};
+            m_drop.insert_col = true;
+        }
+    }
 }
 
 void PlotGridView::updateDataRange()
@@ -691,6 +765,19 @@ bool PlotGridView::eventFilter(QObject * object, QEvent * event)
         }
         break;
     }
+    case QEvent::DragMove:
+    {
+        auto drag_event = static_cast<QDragMoveEvent*>(event);
+        auto view = qobject_cast<PlotView*>(object);
+        if (!view)
+            return false;
+        prepareDrop(view, drag_event->pos());
+
+        printf("would drop at row %d col %d, insert row %d col %d\n",
+               m_drop.cell.row, m_drop.cell.column,
+               m_drop.insert_row, m_drop.insert_col);
+        break;
+    }
     case QEvent::Drop:
     {
         auto drop_event = static_cast<QDropEvent*>(event);
@@ -704,16 +791,15 @@ bool PlotGridView::eventFilter(QObject * object, QEvent * event)
                 return true;
             }
 
-            auto cell = findView(view);
-
             DroppedDataset dropped_data;
             dropped_data.source_id = data->items.front().sourceId;
             dropped_data.dataset_id = data->items.front().datasetId;
             dropped_data.view = this;
-            dropped_data.row = cell.y();
-            dropped_data.column = cell.x();
+            dropped_data.row = m_drop.cell.row;
+            dropped_data.column = m_drop.cell.column;
+            dropped_data.insert_row = m_drop.insert_row;
+            dropped_data.insert_col = m_drop.insert_col;
 
-            printf("Dropped\n");
             emit datasetDropped(QVariant::fromValue(dropped_data));
 
             drop_event->acceptProposedAction();

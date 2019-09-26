@@ -258,7 +258,23 @@ void MainWindow::onDatasetDroppedOnPlotView(const QVariant & data)
     if (!plot)
         return;
 
-    dropped_data.view->addPlot(plot, dropped_data.row, dropped_data.column);
+    auto * view = dropped_data.view;
+
+    //printf("Dropping at %d %d\n", dropped_data.row, dropped_data.column);
+
+    if (dropped_data.insert_row)
+    {
+        //printf("Inserting row %d\n", dropped_data.row);
+        view->insertRow(dropped_data.row);
+    }
+
+    if (dropped_data.insert_col)
+    {
+        //printf("Inserting column %d\n", dropped_data.column);
+        view->insertColumn(dropped_data.column);
+    }
+
+    view->addPlot(plot, dropped_data.row, dropped_data.column);
 }
 
 Plot * MainWindow::makePlot(DataSource * source, const string & datasetId)

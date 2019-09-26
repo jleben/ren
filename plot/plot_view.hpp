@@ -118,6 +118,15 @@ class PlotGridView : public QWidget
 {
     Q_OBJECT
 public:
+    class Cell
+    {
+    public:
+        Cell() {}
+        Cell(int r, int c): row(r), column(c) {}
+        int row;
+        int column;
+    };
+
     struct DroppedDataset
     {
         string source_id;
@@ -125,6 +134,8 @@ public:
         PlotGridView * view = nullptr;
         int row;
         int column;
+        bool insert_row = false;
+        bool insert_col = false;
     };
 
     PlotGridView(QWidget * parent = nullptr);
@@ -133,11 +144,13 @@ public:
     int rowCount() const { return m_rowCount; }
 
     void addRow();
+    void insertRow(int row);
     void removeRow(int row);
     void removeSelectedRow();
     void setRowCount(int count);
 
     void addColumn();
+    void insertColumn(int column);
     void removeColumn(int column);
     void removeSelectedColumn();
     void setColumnCount(int count);
@@ -172,6 +185,8 @@ private:
     PlotView * viewAtCell(int row, int column);
     PlotView * viewAtPoint(const QPoint & pos);
     QPoint findView(PlotView * view);
+    Cell findView2(PlotView * view);
+    void prepareDrop(PlotView * view, const QPoint &);
     PlotView * makeView();
     void deleteView(PlotView* view);
     void selectView(PlotView* view);
@@ -198,6 +213,14 @@ private:
 
     QPoint m_selected_cell;
     PlotView * m_selected_view = nullptr;
+
+    struct
+    {
+        Cell cell { -1, -1 };
+        bool insert_row = false;
+        bool insert_col = false;
+    }
+    m_drop;
 
     PlotReticle * m_reticle = nullptr;
 };
