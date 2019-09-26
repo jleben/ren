@@ -17,7 +17,7 @@ json ScatterPlot2d::save()
     return d;
 }
 
-void ScatterPlot2d::restore(const DataSetPtr & dataset, const json & options)
+void ScatterPlot2d::restore(const FutureDataset & dataset, const json & options)
 {
     int x_dim = options.at("x_dim");
     int y_dim = options.at("y_dim");
@@ -29,20 +29,36 @@ void ScatterPlot2d::restore(const DataSetPtr & dataset, const json & options)
     setShowLine(line);
 }
 
-void ScatterPlot2d::setData(DataSetPtr data, int xDim, int yDim)
+void ScatterPlot2d::setData(const FutureDataset & data, int xDim, int yDim)
 {
-    m_dataset = data;
+    m_dataset = nullptr;
+    m_x_range = Range();
+    m_y_range = Range();
 
-    m_x_dim = xDim;
-    m_y_dim = yDim;
+    emit xRangeChanged();
+    emit yRangeChanged();
+    emit contentChanged();
 
-    m_x_range = range(m_x_dim);
-    m_y_range = range(m_y_dim);
+    m_preparation = Reactive::apply([=](Reactive::Status&, DataSetPtr dataset)
+    {
+        m_dataset = dataset;
 
-    //cerr << "X range: " << m_x_range.min << ", " << m_x_range.max << endl;
-    //cerr << "Y range: " << m_y_range.min << ", " << m_y_range.max << endl;
+        m_x_dim = xDim;
+        m_y_dim = yDim;
 
-    make_points();
+        m_x_range = range(m_x_dim);
+        m_y_range = range(m_y_dim);
+
+        //cerr << "X range: " << m_x_range.min << ", " << m_x_range.max << endl;
+        //cerr << "Y range: " << m_y_range.min << ", " << m_y_range.max << endl;
+
+        make_points();
+
+        emit xRangeChanged();
+        emit yRangeChanged();
+        emit contentChanged();
+    },
+    data);
 }
 
 void ScatterPlot2d::setShowDot(bool value)

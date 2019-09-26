@@ -159,8 +159,7 @@ Plot * ScatterPlot1dSettings::makePlot(const FutureDataset & dataset)
         return nullptr;
 
     auto plot = new ScatterPlot1d;
-    // FIXME: Pass access instead of dataset:
-    //plot->setData(dataset->dataset(), attribute, orientation);
+    plot->setData(dataset, attribute, orientation);
     return plot;
 }
 
@@ -206,8 +205,7 @@ Plot * ScatterPlot2dSettings::makePlot(const FutureDataset & dataset)
         return nullptr;
 
     auto plot = new ScatterPlot2d();
-    // FIXME: Pass access instead of dataset:
-    //plot->setData(dataset->dataset(), x, y);
+    plot->setData(dataset, x, y);
     plot->setShowDot(m_dots->isChecked());
     plot->setShowLine(m_line->isChecked());
     return plot;

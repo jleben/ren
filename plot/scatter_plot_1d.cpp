@@ -15,7 +15,7 @@ json ScatterPlot1d::save()
     return d;
 }
 
-void ScatterPlot1d::restore(const DataSetPtr & dataset, const json & options)
+void ScatterPlot1d::restore(const FutureDataset & dataset, const json & options)
 {
     int attribute = options.at("attribute");
     string orientation_text = options.at("orientation");
@@ -24,18 +24,32 @@ void ScatterPlot1d::restore(const DataSetPtr & dataset, const json & options)
     setData(dataset, attribute, orientation);
 }
 
-void ScatterPlot1d::setData(DataSetPtr data, int attribute, Orientation orientation)
+void ScatterPlot1d::setData(const FutureDataset & data, int attribute, Orientation orientation)
 {
-    m_dataset = data;
-    m_attribute = attribute;
-    m_orientation = orientation;
+    m_dataset = nullptr;
+    m_range = Range();
 
-    m_range = find_range();
+    emit xRangeChanged();
+    emit yRangeChanged();
+    emit contentChanged();
 
-    //cerr << "X range: " << m_x_range.min << ", " << m_x_range.max << endl;
-    //cerr << "Y range: " << m_y_range.min << ", " << m_y_range.max << endl;
+    m_preparation = Reactive::apply([=](Reactive::Status&, DataSetPtr dataset)
+    {
+            m_dataset = dataset;
+            m_attribute = attribute;
+            m_orientation = orientation;
 
-    make_points();
+            m_range = find_range();
+
+            //cerr << "X range: " << m_x_range.min << ", " << m_x_range.max << endl;
+            //cerr << "Y range: " << m_y_range.min << ", " << m_y_range.max << endl;
+
+            make_points();
+
+            emit xRangeChanged();
+            emit yRangeChanged();
+            emit contentChanged();
+    }, data);
 }
 
 void ScatterPlot1d::make_points()

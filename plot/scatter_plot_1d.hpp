@@ -25,7 +25,7 @@ public:
 
     ScatterPlot1d(QObject * parent = 0);
 
-    void setData(DataSetPtr data, int attribute, Orientation);
+    void setData(const FutureDataset & data, int attribute, Orientation);
 
     DataSetPtr dataSet() override { return m_dataset; }
     virtual bool isEmpty() const override { return !m_dataset; }
@@ -35,8 +35,7 @@ public:
     virtual void plot(QPainter *,  const Mapping2d &, const QRectF & region) override;
 
     virtual json save() override;
-    virtual void restore(const DataSetPtr &, const json &);
-    virtual void restore(const FutureDataset &, const json &) override {}
+    virtual void restore(const FutureDataset &, const json &) override;
 
 public:
     Range find_range();
@@ -48,6 +47,7 @@ public:
     Orientation m_orientation = Horizontal;
     Range m_range;
     vector<Point2d> m_points;
+    Reactive::Value<void> m_preparation;
 };
 
 }

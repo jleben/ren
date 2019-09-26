@@ -26,7 +26,7 @@ public:
 
     ScatterPlot2d(QObject * parent = 0);
 
-    void setData(DataSetPtr data, int xDim, int yDim);
+    void setData(const FutureDataset & data, int xDim, int yDim);
     void setShowDot(bool value);
     void setShowLine(bool value);
 
@@ -38,8 +38,7 @@ public:
     virtual void plot(QPainter *,  const Mapping2d &, const QRectF & region) override;
 
     virtual json save() override;
-    virtual void restore(const DataSetPtr &, const json &);
-    virtual void restore(const FutureDataset &, const json &) override {}
+    virtual void restore(const FutureDataset &, const json &) override;
 
 public:
     Range range(int dim);
@@ -54,6 +53,7 @@ public:
     Range m_x_range;
     Range m_y_range;
     vector<Point2d> m_points;
+    Reactive::Value<void> m_preparation;
 };
 
 }
