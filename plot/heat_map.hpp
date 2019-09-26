@@ -74,7 +74,6 @@ private:
     Reactive::Value<void> d_prepration;
 
     DataSetPtr m_dataset = nullptr;
-    data_region_type m_data_region;
 
     QPen m_pen { Qt::black };
 };

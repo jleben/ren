@@ -33,7 +33,6 @@ void HeatMap::setDataSet(FutureDataset dataset, const vector_t & dim)
     d_prepration = nullptr;
     d_plot_data = nullptr;
     m_dataset = nullptr;
-    m_data_region = data_region_type();
 
     emit xRangeChanged();
     emit yRangeChanged();
@@ -62,8 +61,6 @@ void HeatMap::setDataSet(FutureDataset dataset, const vector_t & dim)
         m_dataset = plot_data->dataset;
         connect(m_dataset.get(), &DataSet::selectionChanged,
                 this, &HeatMap::onSelectionChanged);
-
-        m_data_region = plot_data->data_region;
 
         printf("Range: %f %f, %f %f\n", xRange().min, xRange().max,
                yRange().min, yRange().max);
@@ -162,10 +159,16 @@ void HeatMap::onSelectionChanged()
     if (!m_dataset)
         return;
 
-    d_plot_data->value->update_selected_region();
-    d_plot_data->value->generate_image();
+    auto old_region = d_plot_data->value->data_region;
 
-    emit contentChanged();
+    d_plot_data->value->update_selected_region();
+
+    if (old_region != d_plot_data->value->data_region)
+    {
+        // FIXME: Do this asynchronously
+        d_plot_data->value->generate_image();
+        emit contentChanged();
+    }
 }
 
 void HeatMap::PlotData::update_selected_region()
@@ -304,7 +307,7 @@ tuple<vector<double>, vector<double>> HeatMap::dataLocation(const QPointF & poin
     if (!m_dataset)
         return {};
 
-    auto offset = m_data_region.offset();
+    auto offset = d_plot_data->value->data_region.offset();
 
     vector<double> location(m_dataset->dimensionCount(), 0);
 

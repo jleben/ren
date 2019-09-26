@@ -119,11 +119,13 @@ void LinePlot::setColor(const QColor & color)
 
 void LinePlot::onSelectionChanged()
 {
-    // FIXME: Optimize: only update if needed
-
+    auto old_region = m_data_region;
     update_selected_region();
-
-    emit contentChanged();
+    if (m_data_region != old_region)
+    {
+        m_cache.clear();
+        emit contentChanged();
+    }
 }
 
 Plot::Range LinePlot::findEntireValueRange(DataSetPtr dataset)
@@ -151,23 +153,14 @@ Plot::Range LinePlot::findEntireValueRange(DataSetPtr dataset)
 
 void LinePlot::update_selected_region()
 {
-    printf("Updating selected region\n");
-
-    m_cache.clear();
-
     if (!m_dataset)
     {
         m_data_region = data_region_type();
-
-        printf("Region empty\n");
-
         return;
     }
 
     auto dim = m_dataset->dimension(m_dim);
     m_data_region = getDataRegion(0, dim.size);
-
-    printf("Region valid : %d\n", m_data_region.is_valid());
 }
 
 LinePlot::data_region_type LinePlot::getDataRegion(int region_start, int region_size)
