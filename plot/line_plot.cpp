@@ -57,7 +57,7 @@ void LinePlot::setDataSet(FutureDataset dataset, int dimension)
 
     m_on_dataset = Reactive::apply([=](Reactive::Status&, DataSetPtr dataset)
     {
-        printf("Got dataset.\n");
+        printf("LinePlot: Preparing data region...\n");
 
         m_dataset = dataset;
 
@@ -72,8 +72,6 @@ void LinePlot::setDataSet(FutureDataset dataset, int dimension)
             return;
         }
 
-        printf("Dataset not empty.\n");
-
         if (m_dim < 0 || m_dim >= dim_count)
         {
             m_dim = 0;
@@ -84,6 +82,8 @@ void LinePlot::setDataSet(FutureDataset dataset, int dimension)
         emit xRangeChanged();
         emit contentChanged();
         emit sourceChanged();
+
+        printf("LinePlot: Data region ready.\n");
     },
     dataset);
 

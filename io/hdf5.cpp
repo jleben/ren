@@ -296,6 +296,8 @@ FutureDataset Hdf5Source::dataset(const string & id)
                 dataset->setGlobalDimension(d, gdim);
         }
 
+        printf("HDF5: Dataset ready.\n");
+
         return dataset;
     },
     raw_dataset);

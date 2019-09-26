@@ -47,6 +47,8 @@ void HeatMap::setDataSet(FutureDataset dataset, const vector_t & dim)
 
     auto preparePlot = [=](Reactive::Status&, DataSetPtr dataset) -> PlotDataPtr
     {
+        printf("HeatMap: Preparing...\n");
+
         plot_data->dataset = dataset;
         plot_data->update_selected_region();
         plot_data->update_value_range();
@@ -62,8 +64,10 @@ void HeatMap::setDataSet(FutureDataset dataset, const vector_t & dim)
         connect(m_dataset.get(), &DataSet::selectionChanged,
                 this, &HeatMap::onSelectionChanged);
 
-        printf("Range: %f %f, %f %f\n", xRange().min, xRange().max,
+        printf("HeatMap: Range: %f %f, %f %f\n", xRange().min, xRange().max,
                yRange().min, yRange().max);
+
+        printf("HeatMap: Ready.\n");
 
         emit xRangeChanged();
         emit yRangeChanged();
