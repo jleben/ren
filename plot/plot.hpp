@@ -2,6 +2,7 @@
 
 #include "../data/math.hpp"
 #include "../data/data_set.hpp"
+#include "../data/data_source.hpp"
 #include "../json/json.hpp"
 
 #include <QObject>
@@ -48,7 +49,7 @@ public:
     virtual tuple<vector<double>, vector<double>> dataLocation(const QPointF & point) = 0;
 
     virtual json save() { return {}; }
-    virtual void restore(const DataSetPtr &, const json &) {}
+    virtual void restore(const FutureDataset &, const json &) {}
 
 signals:
     void xRangeChanged();

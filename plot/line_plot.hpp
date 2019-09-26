@@ -38,8 +38,7 @@ public:
     virtual void plot(QPainter *,  const Mapping2d &, const QRectF & region) override;
 
     virtual json save() override;
-    // FIXME: Async dataset loading
-    virtual void restore(const DataSetPtr &, const json &) override;
+    virtual void restore(const FutureDataset &, const json &) override;
 
 signals:
     void sourceChanged();

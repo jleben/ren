@@ -72,13 +72,11 @@ void HeatMap::setDataSet(FutureDataset dataset, const vector_t & dim)
     d_plot_data);
 }
 
-void HeatMap::restore(const DataSetPtr & dataset, const json & options)
+void HeatMap::restore(const FutureDataset & dataset, const json & options)
 {
-#if 0
     int x_dim = options.at("x_dim");
     int y_dim = options.at("y_dim");
     setDataSet(dataset, { x_dim, y_dim });
-#endif
 }
 
 #if 0

@@ -26,13 +26,10 @@ json LinePlot::save()
     return d;
 }
 
-void LinePlot::restore(const DataSetPtr & dataset, const json & options)
+void LinePlot::restore(const FutureDataset & dataset, const json & options)
 {
-    // FIXME
-#if 0
     int dim = options.at("dim");
     setDataSet(dataset, dim);
-#endif
 }
 
 void LinePlot::setDataSet(FutureDataset dataset, int dimension)

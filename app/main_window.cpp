@@ -676,26 +676,6 @@ void MainWindow::restorePlot(PlotGridView * view, const json & state)
         throw e;
     }
 
-    return;
-
-    // FIXME: Async loading
-#if 0
-
-    DataSetPtr data = dataset->value();
-
-#if 0
-    try {
-        data = source->dataset(dataset_index);
-    } catch (...) {
-        cerr << "Failed to get dataset "
-                   << source_path << " : " << dataset_id << endl;
-        Error e;
-        e.reason() << "Failed to get dataset "
-                   << source_path << " : " << dataset_id << endl;
-        throw e;
-    }
-#endif
-
     Plot * plot = nullptr;
 
     if (plot_type == "line")
@@ -717,7 +697,7 @@ void MainWindow::restorePlot(PlotGridView * view, const json & state)
 
     try
     {
-        plot->restore(data, state.at("options"));
+        plot->restore(dataset, state.at("options"));
     }
     catch (json::exception &)
     {
@@ -729,7 +709,6 @@ void MainWindow::restorePlot(PlotGridView * view, const json & state)
     int column = state.at("column");
 
     view->addPlot(plot, row, column);
-#endif
 }
 
 bool MainWindow::closeProject()
