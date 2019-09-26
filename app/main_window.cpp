@@ -31,6 +31,7 @@
 #include <QMimeData>
 #include <QGuiApplication>
 #include <QScreen>
+#include <QShortcut>
 
 #include <fstream>
 #include <algorithm>
@@ -83,6 +84,13 @@ MainWindow::MainWindow(QWidget * parent):
     makeMenu();
 
     setAcceptDrops(true);
+
+    {
+        auto shortcut = new QShortcut(QString("F2"), this);
+        connect(shortcut, &QShortcut::activated,
+                this, &QWidget::raise);
+        shortcut->setContext(Qt::ApplicationShortcut);
+    }
 }
 
 void MainWindow::makeMenu()
