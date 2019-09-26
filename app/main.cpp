@@ -2,6 +2,7 @@
 #include "../utility/threads.hpp"
 
 #include <QApplication>
+#include <QScreen>
 #include <iostream>
 
 using namespace std;
@@ -25,9 +26,13 @@ int main(int argc, char *argv[])
     auto main_win = new MainWindow;
 
     {
-        auto fm = main_win->fontMetrics();
-        main_win->resize(fm.averageCharWidth() * 50, fm.height() * 30);
-        main_win->move(50,50);
+        auto * screen = qGuiApp->primaryScreen();
+        if (screen)
+        {
+            auto screenRect = screen->availableGeometry();
+            main_win->resize(screenRect.width() * 0.3, screenRect.height());
+            main_win->move(screen->availableGeometry().topLeft());
+        }
     }
 
     if (!file_path.isEmpty())
