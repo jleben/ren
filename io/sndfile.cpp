@@ -1,6 +1,7 @@
 #include "sndfile.hpp"
 #include "../data/data_library.hpp"
 #include "../utility/error.hpp"
+#include "../utility/threads.hpp"
 
 #include <QFileInfo>
 
@@ -52,45 +53,34 @@ void SoundFileSource::getInfo()
     sf_close(file);
 }
 
-DataSetPtr SoundFileSource::dataset(int index)
+SoundFileSource::Read_Result SoundFileSource::read_file(const string & file_path)
 {
-    if (index != 0)
-        return nullptr;
-
-    if (m_dataset)
-        return m_dataset;
-
     SF_INFO sf_info;
     sf_info.format = 0;
 
-    SNDFILE * file = sf_open(m_file_path.c_str(), SFM_READ, &sf_info);
+    SNDFILE * file = sf_open(file_path.c_str(), SFM_READ, &sf_info);
     if (!file)
     {
         throw Error("Failed to open file.");
     }
 
-    m_info = datavis::getInfo(sf_info);
+    auto info = datavis::getInfo(sf_info);
 
     vector<int> data_size = { int(sf_info.frames) };
     int attribute_count = sf_info.channels;
 
-    auto dataset = make_shared<DataSet>(m_info.id, data_size, attribute_count);
-    dataset->setSource(this);
+    auto dataset = make_shared<DataSet>(info.id, data_size, attribute_count);
+    //dataset->setSource(this);
 
-    for (int d = 0; d < m_info.dimensionCount(); ++d)
+    for (int d = 0; d < info.dimensionCount(); ++d)
     {
-        const auto & dim = m_info.dimensions[d];
-
+        const auto & dim = info.dimensions[d];
         dataset->setDimension(d, dim);
-
-        DimensionPtr gdim = library()->dimension(dim.name);
-        if (gdim)
-            dataset->setGlobalDimension(d, gdim);
     }
 
-    for (int a = 0; a < m_info.attributes.size(); ++a)
+    for (int a = 0; a < info.attributes.size(); ++a)
     {
-        dataset->attribute(a) = m_info.attributes[a];
+        dataset->attribute(a) = info.attributes[a];
     }
 
     int batch_size = 1024;
@@ -120,9 +110,47 @@ DataSetPtr SoundFileSource::dataset(int index)
 end:
     sf_close(file);
 
-    m_dataset = dataset;
+    Read_Result result;
+    result.info = info;
+    result.dataset = dataset;
+    return result;
+}
 
-    return dataset;
+//DataSetPtr SoundFileSource::dataset(int index)
+FutureDataset SoundFileSource::dataset(const string & id)
+{
+    if (m_dataset)
+        return m_dataset;
+
+    auto reading = Reactive::apply(background_thread(), [=](Reactive::Status&)
+    {
+        return read_file(m_file_path);
+    });
+
+    m_dataset = Reactive::apply([=](Reactive::Status&, const Read_Result & result)
+    {
+        // FIXME: Notify anyone about potentially updated info?
+        m_info = result.info;
+
+        auto & dataset = result.dataset;
+
+        dataset->setSource(this);
+
+        for (int d = 0; d < dataset->dimensionCount(); ++d)
+        {
+            const auto & name = dataset->dimension(d).name;
+            DimensionPtr gdim = library()->dimension(name);
+            if (gdim)
+                dataset->setGlobalDimension(d, gdim);
+        }
+
+        printf("SoundFileSource: dataset ready.\n");
+
+        return dataset;
+    },
+    reading);
+
+    return m_dataset;
 }
 
 }
