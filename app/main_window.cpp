@@ -29,8 +29,11 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QMimeData>
+#include <QGuiApplication>
+#include <QScreen>
 
 #include <fstream>
+#include <algorithm>
 
 namespace datavis {
 
@@ -193,7 +196,20 @@ PlotGridView * MainWindow::addPlotView()
             this, &MainWindow::onDatasetDroppedOnPlotView);
     m_plot_views.push_back(view);
 
-    view->show();
+    auto * screen = qGuiApp->primaryScreen();
+
+    if (screen)
+    {
+        auto screenRect = screen->availableGeometry();
+        int margin = std::min(screenRect.width(), screenRect.height()) * 0.15;
+        //int xMargin = screenRect.width() * 0.15;
+        //int yMargin = screenRect.height() * 0.15;
+        int xMargin = margin;
+        int yMargin = margin;
+        view->setGeometry(screenRect.adjusted(xMargin, yMargin, -xMargin, -yMargin));
+    }
+
+    view->showMaximized();
 
     return view;
 }
