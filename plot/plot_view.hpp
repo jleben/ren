@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <QSlider>
 #include <QGridLayout>
+#include <QRubberBand>
 #include <list>
 
 namespace datavis {
@@ -104,7 +105,7 @@ public:
     RangeView(Qt::Orientation, PlotRangeController *, QWidget * parent = nullptr);
     Qt::Orientation orientation() const { return m_orientation; }
     virtual void paintEvent(QPaintEvent*) override;
-    virtual QSize sizeHint() const override { return QSize(10,10); }
+    virtual QSize sizeHint() const override;
 
 private:
     PlotRangeController * m_ctl;
@@ -157,6 +158,8 @@ public:
 
     void swapRows(int a, int b);
     void swapColumns(int a, int b);
+    void moveRow(int source, int destination);
+    void moveColumn(int source, int destination);
     void moveSelectedRowDown();
     void moveSelectedRowUp();
     void moveSelectedColumnLeft();
@@ -181,6 +184,13 @@ signals:
     void datasetDropped(QVariant);
 
 private:
+    enum State
+    {
+        Default_State,
+        Dragging_Row,
+        Dragging_Column
+    };
+
     PlotView * viewAtIndex(int index);
     PlotView * viewAtCell(int row, int column);
     PlotView * viewAtPoint(const QPoint & pos);
@@ -190,6 +200,10 @@ private:
     PlotView * makeView();
     void deleteView(PlotView* view);
     void selectView(PlotView* view);
+    int rowAt(const QPoint &);
+    int columnAt(const QPoint &);
+    QRect rowRect(int row);
+    QRect columnRect(int col);
 
     void updateDataRange();
 
@@ -198,6 +212,9 @@ private:
     virtual void enterEvent(QEvent*) override;
     virtual void leaveEvent(QEvent*) override;
     virtual void resizeEvent(QResizeEvent*) override;
+    virtual void mousePressEvent(QMouseEvent*) override;
+    virtual void mouseMoveEvent(QMouseEvent*) override;
+    virtual void mouseReleaseEvent(QMouseEvent*) override;
     virtual void paintEvent(QPaintEvent*) override;
 
     void printState();
@@ -214,12 +231,21 @@ private:
     QPoint m_selected_cell;
     PlotView * m_selected_view = nullptr;
 
+    State m_state = Default_State;
+
     struct
     {
         Cell cell { -1, -1 };
         Cell offset { 0, 0 };
     }
     m_drop;
+
+    int m_dragged_row = -1;
+    int m_dropped_row = -1;
+    int m_dragged_col = -1;
+    int m_dropped_col = -1;
+    QRubberBand * m_drag_source_indicator = nullptr;
+    QRubberBand * m_drag_target_indicator = nullptr;
 
     PlotReticle * m_reticle = nullptr;
 };

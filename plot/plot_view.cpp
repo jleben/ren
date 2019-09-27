@@ -434,6 +434,44 @@ void PlotGridView::swapColumns(int col_a, int col_b)
     std::swap(m_x_range_ctls[col_a], m_x_range_ctls[col_b]);
 }
 
+void PlotGridView::moveRow(int source, int destination)
+{
+    if (source == destination)
+        return;
+
+    if (source < 0 or source >= rowCount()) return;
+    if (destination < 0 or destination >= rowCount()) return;
+
+    int direction = source < destination ? 1 : -1;
+
+    while(source != destination)
+    {
+        swapRows(source, source + direction);
+        source += direction;
+    }
+
+    // FIXME: Adjust selected cell
+}
+
+void PlotGridView::moveColumn(int source, int destination)
+{
+    if (source == destination)
+        return;
+
+    if (source < 0 or source >= columnCount()) return;
+    if (destination < 0 or destination >= columnCount()) return;
+
+    int direction = source < destination ? 1 : -1;
+
+    while(source != destination)
+    {
+        swapColumns(source, source + direction);
+        source += direction;
+    }
+
+    // FIXME: Adjust selected cell
+}
+
 void PlotGridView::moveSelectedRowDown()
 {
     if (!hasSelectedCell())
@@ -613,6 +651,54 @@ PlotGridView::Cell PlotGridView::findView2(PlotView * view)
 
     return Cell { -1, -1 };
 }
+
+int PlotGridView::rowAt(const QPoint & pos)
+{
+    for (int row = 0; row < rowCount(); ++row)
+    {
+        auto cell_rect = m_grid->cellRect(row+1,0);
+        if (pos.y() >= cell_rect.top() and pos.y() <= cell_rect.bottom())
+        {
+            return row;
+        }
+    }
+
+    return -1;
+}
+
+int PlotGridView::columnAt(const QPoint & pos)
+{
+    for (int col = 0; col < columnCount(); ++col)
+    {
+        auto cell_rect = m_grid->cellRect(0,col+1);
+        if (pos.x() >= cell_rect.left() and pos.x() <= cell_rect.right())
+        {
+            return col;
+        }
+    }
+    return -1;
+}
+
+QRect PlotGridView::rowRect(int row)
+{
+    auto grid_rect = m_grid->contentsRect();
+    auto cell_rect = m_grid->cellRect(row+1,0);
+    QRect rect = grid_rect;
+    rect.moveTop(cell_rect.top());
+    rect.setHeight(cell_rect.height());
+    return rect;
+}
+
+QRect PlotGridView::columnRect(int col)
+{
+    auto grid_rect = m_grid->contentsRect();
+    auto cell_rect = m_grid->cellRect(0,col+1);
+    QRect rect = grid_rect;
+    rect.moveLeft(cell_rect.left());
+    rect.setWidth(cell_rect.width());
+    return rect;
+}
+
 
 void PlotGridView::prepareDrop(PlotView * view, const QPoint & pos)
 {
@@ -851,6 +937,114 @@ void PlotGridView::leaveEvent(QEvent*)
     update();
 }
 
+void PlotGridView::mousePressEvent(QMouseEvent * event)
+{
+    //auto grid_rect = m_grid->contentsRect();
+    auto pos = event->pos();
+    auto range_view = qobject_cast<RangeView*>(childAt(pos));
+    if (!range_view)
+        return;
+
+    if (range_view->orientation() == Qt::Vertical)
+    {
+        int row = rowAt(pos);
+        if (row >= 0)
+        {
+            printf("Dragging row: %d\n", m_dragged_row);
+            m_dragged_row = row;
+            m_dropped_row = -1;
+            m_state = Dragging_Row;
+            return;
+        }
+    }
+    else
+    {
+        int col = columnAt(pos);
+        if (col >= 0)
+        {
+            printf("Dragging column: %d\n", m_dragged_col);
+            m_dragged_col = col;
+            m_dropped_col = -1;
+            m_state = Dragging_Column;
+            return;
+        }
+    }
+}
+
+void PlotGridView::mouseMoveEvent(QMouseEvent * event)
+{
+    if (m_state == Dragging_Row or m_state == Dragging_Column)
+    {
+        if (!m_drag_source_indicator)
+            m_drag_source_indicator = new QRubberBand(QRubberBand::Rectangle, this);
+        if (!m_drag_target_indicator)
+            m_drag_target_indicator = new QRubberBand(QRubberBand::Rectangle, this);
+    }
+
+    if (m_state == Dragging_Row)
+    {
+        m_drag_source_indicator->setGeometry(rowRect(m_dragged_row));
+        m_drag_source_indicator->show();
+
+        int target_row = rowAt(event->pos());
+        m_dropped_row = target_row;
+        printf("Target row: %d\n", target_row);
+        if (target_row >= 0 and target_row != m_dragged_row)
+        {
+
+            m_drag_target_indicator->setGeometry(rowRect(target_row));
+            m_drag_target_indicator->show();
+        }
+        else
+        {
+            m_drag_target_indicator->hide();
+        }
+    }
+    else if (m_state == Dragging_Column)
+    {
+        m_drag_source_indicator->setGeometry(columnRect(m_dragged_col));
+        m_drag_source_indicator->show();
+
+        int target_col = columnAt(event->pos());
+        m_dropped_col = target_col;
+        printf("Target col: %d\n", target_col);
+        if (target_col >= 0 and target_col != m_dragged_col)
+        {
+            m_drag_target_indicator->setGeometry(columnRect(target_col));
+            m_drag_target_indicator->show();
+        }
+        else
+        {
+            m_drag_target_indicator->hide();
+        }
+    }
+}
+
+void PlotGridView::mouseReleaseEvent(QMouseEvent* event)
+{
+    if (m_state == Dragging_Row)
+    {
+        if (m_dropped_row >= 0 and m_dropped_row != m_dragged_row)
+        {
+            moveRow(m_dragged_row, m_dropped_row);
+        }
+    }
+    else if (m_state == Dragging_Column)
+    {
+        if (m_dropped_col >= 0 and m_dropped_col != m_dragged_col)
+        {
+            moveColumn(m_dragged_col, m_dropped_col);
+        }
+    }
+
+    m_state = Default_State;
+
+    if (m_drag_source_indicator)
+        m_drag_source_indicator->hide();
+    if (m_drag_target_indicator)
+        m_drag_target_indicator->hide();
+}
+
 void PlotGridView::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
@@ -1005,6 +1199,12 @@ RangeView::RangeView(Qt::Orientation orientation, PlotRangeController * ctl, QWi
 
     connect(ctl, SIGNAL(changed()),
             this, SLOT(update()));
+}
+
+QSize RangeView::sizeHint() const
+{
+    // FIXME: Screen-relative size.
+    return QSize(16,16);
 }
 
 void RangeView::paintEvent(QPaintEvent*)
