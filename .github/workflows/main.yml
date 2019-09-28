@@ -1,0 +1,27 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: srt32/git-actions@v0.0.3
+      with:
+        args: "git submodule update --init --recursive"
+
+    - name: Install Qt 5
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install qtbase5-dev libsndfile1-dev libhdf5-dev
+
+    - name: Build and test
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        make
+        ./test/run_tests

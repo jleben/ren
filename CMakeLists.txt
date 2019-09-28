@@ -18,8 +18,8 @@ link_directories("/usr/lib/x86_64-linux-gnu/hdf5/serial")
 
 include_directories(${CMAKE_BINARY_DIR})
 
-set(datavis_linked_libs datavis_project Qt5::Widgets hdf5_cpp hdf5 protobuf sndfile pthread)
+set(datavis_linked_libs Qt5::Widgets hdf5_cpp hdf5 sndfile pthread)
 
-add_subdirectory(project)
+#add_subdirectory(project)
 add_subdirectory(app)
 add_subdirectory(test)
