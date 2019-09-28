@@ -32,6 +32,8 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QShortcut>
+#include <QMdiArea>
+#include <QDockWidget>
 
 #include <fstream>
 #include <algorithm>
@@ -72,7 +74,15 @@ MainWindow::MainWindow(QWidget * parent):
     auto layout = new QHBoxLayout(content_view);
     layout->addLayout(tool_layout, 0);
 
-    setCentralWidget(content_view);
+    {
+        QDockWidget *dockWidget = new QDockWidget(tr("Library"), this);
+        dockWidget->setAllowedAreas(Qt::LeftDockWidgetArea |
+                                    Qt::RightDockWidgetArea);
+        dockWidget->setWidget(content_view);
+        addDockWidget(Qt::LeftDockWidgetArea, dockWidget);
+    }
+
+    setCentralWidget(new QMdiArea);
 
     connect(m_lib, &DataLibrary::openFailed,
             this, &MainWindow::onOpenFailed,
@@ -83,14 +93,17 @@ MainWindow::MainWindow(QWidget * parent):
 
     makeMenu();
 
-    setAcceptDrops(true);
+    //setAcceptDrops(true);
 
+    // FIXME: toggle library dock instead:
+#if 0
     {
         auto shortcut = new QShortcut(QString("F2"), this);
         connect(shortcut, &QShortcut::activated,
                 this, &QWidget::raise);
         shortcut->setContext(Qt::ApplicationShortcut);
     }
+#endif
 }
 
 void MainWindow::makeMenu()
@@ -218,6 +231,9 @@ PlotGridView * MainWindow::addPlotView()
             this, &MainWindow::onDatasetDroppedOnPlotView);
     m_plot_views.push_back(view);
 
+    qobject_cast<QMdiArea*>(centralWidget())->addSubWindow(view);
+
+#if 0
     auto * screen = qGuiApp->primaryScreen();
 
     if (screen)
@@ -228,7 +244,7 @@ PlotGridView * MainWindow::addPlotView()
         int yMargin = screenRect.height() * 0.08;
         view->setGeometry(screenRect.adjusted(xMargin, yMargin, -xMargin, -yMargin));
     }
-
+#endif
     view->show();
 
     return view;
