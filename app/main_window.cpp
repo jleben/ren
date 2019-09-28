@@ -223,15 +223,13 @@ PlotGridView * MainWindow::addPlotView()
     if (screen)
     {
         auto screenRect = screen->availableGeometry();
-        int margin = std::min(screenRect.width(), screenRect.height()) * 0.15;
-        //int xMargin = screenRect.width() * 0.15;
-        //int yMargin = screenRect.height() * 0.15;
-        int xMargin = margin;
-        int yMargin = margin;
+        //int margin = std::min(screenRect.width(), screenRect.height()) * 0.15;
+        int xMargin = screenRect.width() * 0.15;
+        int yMargin = screenRect.height() * 0.08;
         view->setGeometry(screenRect.adjusted(xMargin, yMargin, -xMargin, -yMargin));
     }
 
-    view->showMaximized();
+    view->show();
 
     return view;
 }
