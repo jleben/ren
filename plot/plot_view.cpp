@@ -955,7 +955,6 @@ void PlotGridView::mousePressEvent(QMouseEvent * event)
         int row = rowAt(pos);
         if (row >= 0)
         {
-            printf("Dragging row: %d\n", m_dragged_row);
             m_dragged_row = row;
             m_dropped_row = -1;
             m_state = Dragging_Row;
@@ -967,7 +966,6 @@ void PlotGridView::mousePressEvent(QMouseEvent * event)
         int col = columnAt(pos);
         if (col >= 0)
         {
-            printf("Dragging column: %d\n", m_dragged_col);
             m_dragged_col = col;
             m_dropped_col = -1;
             m_state = Dragging_Column;
@@ -1002,7 +1000,6 @@ void PlotGridView::mouseMoveEvent(QMouseEvent * event)
 
         int target_row = rowAt(event->pos());
         m_dropped_row = target_row;
-        printf("Target row: %d\n", target_row);
         if (target_row >= 0 and target_row != m_dragged_row)
         {
 
@@ -1023,7 +1020,6 @@ void PlotGridView::mouseMoveEvent(QMouseEvent * event)
 
         int target_col = columnAt(event->pos());
         m_dropped_col = target_col;
-        printf("Target col: %d\n", target_col);
         if (target_col >= 0 and target_col != m_dragged_col)
         {
             m_drag_target_indicator->setGeometry(columnRect(target_col));
