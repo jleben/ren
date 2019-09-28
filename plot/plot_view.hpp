@@ -5,7 +5,6 @@
 #include <QWidget>
 #include <QSlider>
 #include <QGridLayout>
-#include <QRubberBand>
 #include <list>
 
 namespace datavis {
@@ -114,6 +113,18 @@ private:
     QColor m_foreground_color;
 };
 
+class RectWidget : public QWidget
+{
+public:
+    RectWidget(QWidget * parent = nullptr) : QWidget(parent) {}
+    void setBrush(const QBrush & brush) { m_brush = brush; update(); }
+    void setPen(const QPen & pen) { m_pen = pen; update(); }
+protected:
+    virtual void paintEvent(QPaintEvent*) override;
+private:
+    QBrush m_brush;
+    QPen m_pen;
+};
 
 class PlotGridView : public QWidget
 {
@@ -244,8 +255,8 @@ private:
     int m_dropped_row = -1;
     int m_dragged_col = -1;
     int m_dropped_col = -1;
-    QRubberBand * m_drag_source_indicator = nullptr;
-    QRubberBand * m_drag_target_indicator = nullptr;
+    RectWidget * m_drag_source_indicator = nullptr;
+    RectWidget * m_drag_target_indicator = nullptr;
 
     PlotReticle * m_reticle = nullptr;
 };

@@ -976,14 +976,23 @@ void PlotGridView::mouseMoveEvent(QMouseEvent * event)
     if (m_state == Dragging_Row or m_state == Dragging_Column)
     {
         if (!m_drag_source_indicator)
-            m_drag_source_indicator = new QRubberBand(QRubberBand::Rectangle, this);
+        {
+            m_drag_source_indicator = new RectWidget(this);
+            m_drag_source_indicator->setBrush(QColor(0,0,0,150));
+            m_drag_source_indicator->setPen(Qt::NoPen);
+        }
         if (!m_drag_target_indicator)
-            m_drag_target_indicator = new QRubberBand(QRubberBand::Rectangle, this);
+        {
+            m_drag_target_indicator = new RectWidget(this);
+            m_drag_target_indicator->setBrush(QColor(0,0,0,40));
+            m_drag_target_indicator->setPen(Qt::NoPen);
+        }
     }
 
     if (m_state == Dragging_Row)
     {
         m_drag_source_indicator->setGeometry(rowRect(m_dragged_row));
+        m_drag_source_indicator->raise();
         m_drag_source_indicator->show();
 
         int target_row = rowAt(event->pos());
@@ -993,6 +1002,7 @@ void PlotGridView::mouseMoveEvent(QMouseEvent * event)
         {
 
             m_drag_target_indicator->setGeometry(rowRect(target_row));
+            m_drag_target_indicator->raise();
             m_drag_target_indicator->show();
         }
         else
@@ -1003,6 +1013,7 @@ void PlotGridView::mouseMoveEvent(QMouseEvent * event)
     else if (m_state == Dragging_Column)
     {
         m_drag_source_indicator->setGeometry(columnRect(m_dragged_col));
+        m_drag_source_indicator->raise();
         m_drag_source_indicator->show();
 
         int target_col = columnAt(event->pos());
@@ -1011,6 +1022,7 @@ void PlotGridView::mouseMoveEvent(QMouseEvent * event)
         if (target_col >= 0 and target_col != m_dragged_col)
         {
             m_drag_target_indicator->setGeometry(columnRect(target_col));
+            m_drag_target_indicator->raise();
             m_drag_target_indicator->show();
         }
         else
@@ -1621,7 +1633,13 @@ void PlotView::paintEvent(QPaintEvent*)
     }
 }
 
-
+void RectWidget::paintEvent(QPaintEvent*)
+{
+    QPainter painter(this);
+    painter.setBrush(m_brush);
+    painter.setPen(m_pen);
+    painter.drawRect(rect());
+}
 
 void PlotRangeController::moveTo(double pos)
 {
