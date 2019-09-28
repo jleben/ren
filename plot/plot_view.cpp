@@ -943,7 +943,7 @@ void PlotGridView::mouseMoveEvent(QMouseEvent * event)
         if (!m_drag_source_indicator)
         {
             m_drag_source_indicator = new RectWidget(this);
-            m_drag_source_indicator->setBrush(QColor(20,20,230,150));
+            m_drag_source_indicator->setBrush(QColor(230,20,20,120));
             m_drag_source_indicator->setPen(Qt::NoPen);
         }
         if (!m_drag_target_indicator)
