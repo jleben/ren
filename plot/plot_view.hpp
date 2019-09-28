@@ -62,6 +62,12 @@ public:
 
     void setRangeController(PlotRangeController * ctl, Qt::Orientation);
 
+    void onSelectedPlotChanged(QWidget * selected_plot)
+    {
+        m_is_selected = selected_plot == this;
+        update();
+    }
+
 protected:
     virtual void enterEvent(QEvent*) override;
     virtual void leaveEvent(QEvent*) override;
@@ -88,6 +94,7 @@ private:
     Plot::Range m_x_range_start;
     Plot::Range m_y_range_start;
     QPointF m_mouse_press_plot_point;
+    bool m_is_selected = false;
 };
 
 class PlotReticle : public QWidget
@@ -193,6 +200,7 @@ public:
 signals:
     // QVariant = DroppedDataset
     void datasetDropped(QVariant);
+    void selectedViewChanged(QWidget*);
 
 private:
     enum State

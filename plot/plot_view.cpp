@@ -130,6 +130,9 @@ PlotView * PlotGridView::makeView()
 {
     auto view = new PlotView;
     view->installEventFilter(this);
+    connect(this, &PlotGridView::selectedViewChanged,
+            view, &PlotView::onSelectedPlotChanged);
+
     return view;
 }
 
@@ -154,6 +157,8 @@ void PlotGridView::selectView(PlotView* view)
     {
         m_selected_cell = QPoint(-1, -1);
     }
+
+    emit selectedViewChanged(m_selected_view);
 
     update();
 }
@@ -978,13 +983,13 @@ void PlotGridView::mouseMoveEvent(QMouseEvent * event)
         if (!m_drag_source_indicator)
         {
             m_drag_source_indicator = new RectWidget(this);
-            m_drag_source_indicator->setBrush(QColor(0,0,0,150));
+            m_drag_source_indicator->setBrush(QColor(20,20,230,150));
             m_drag_source_indicator->setPen(Qt::NoPen);
         }
         if (!m_drag_target_indicator)
         {
             m_drag_target_indicator = new RectWidget(this);
-            m_drag_target_indicator->setBrush(QColor(0,0,0,40));
+            m_drag_target_indicator->setBrush(QColor(20,20,230,70));
             m_drag_target_indicator->setPen(Qt::NoPen);
         }
     }
@@ -1060,16 +1065,6 @@ void PlotGridView::mouseReleaseEvent(QMouseEvent* event)
 void PlotGridView::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
-
-    if (m_selected_view)
-    {
-        const auto & cell = m_selected_cell;
-        QPen pen;
-        pen.setWidth(2);
-        pen.setColor(Qt::red);
-        painter.setPen(pen);
-        painter.drawRect(m_grid->cellRect(cell.y()+1, cell.x()+1).adjusted(-1,-1,1,1));
-    }
 
     if (m_drop.cell.row >= 0 and m_drop.cell.column >= 0)
     {
@@ -1519,18 +1514,21 @@ void PlotView::paintEvent(QPaintEvent*)
 
     QPainter painter(this);
 
-    painter.fillRect(rect(), QColor(210,210,210));
+    auto backgroundColor = m_is_selected ? QColor(120,120,120) : QColor(210,210,210);
+    auto textColor = m_is_selected ? QColor(255,255,255) : QColor(0,0,0);
+
+    painter.fillRect(rect(), backgroundColor);
 
     auto plot_rect = plotRect();
+
+    if (!m_plot)
+        return;
 
     // Draw plot frame
 
     painter.fillRect(plot_rect, Qt::white);
 
     auto plot = m_plot;
-
-    if (!plot)
-        return;
 
     // Draw dataset name
 
@@ -1542,7 +1540,7 @@ void PlotView::paintEvent(QPaintEvent*)
         name += QString::fromStdString(m_plot->dataSet()->id());
 
         auto fm = fontMetrics();
-        painter.setPen(QPen());
+        painter.setPen(textColor);
         painter.drawText(QPoint(10, fm.ascent()), name);
     }
 
