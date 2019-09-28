@@ -27,83 +27,6 @@ PlotGridView::PlotGridView(QWidget * parent):
 {
     auto vbox = new QVBoxLayout(this);
 
-    auto toolbox = new QHBoxLayout;
-    vbox->addLayout(toolbox);
-
-    {
-        auto button = new QToolButton;
-        button->setText("+Row");
-        connect(button, &QAbstractButton::clicked,
-                this, &PlotGridView::addRow);
-        toolbox->addWidget(button);
-    }
-
-    {
-        auto button = new QToolButton;
-        button->setText("-Row");
-        connect(button, &QAbstractButton::clicked,
-                this, &PlotGridView::removeSelectedRow);
-        toolbox->addWidget(button);
-    }
-
-    {
-        auto button = new QToolButton;
-        button->setText("Row ^");
-        connect(button, &QAbstractButton::clicked,
-                this, &PlotGridView::moveSelectedRowUp);
-        toolbox->addWidget(button);
-    }
-
-    {
-        auto button = new QToolButton;
-        button->setText("Row V");
-        connect(button, &QAbstractButton::clicked,
-                this, &PlotGridView::moveSelectedRowDown);
-        toolbox->addWidget(button);
-    }
-
-    {
-        auto button = new QToolButton;
-        button->setText("+Col");
-        connect(button, &QAbstractButton::clicked,
-                this, &PlotGridView::addColumn);
-        toolbox->addWidget(button);
-    }
-
-    {
-        auto button = new QToolButton;
-        button->setText("-Col");
-        connect(button, &QAbstractButton::clicked,
-                this, &PlotGridView::removeSelectedColumn);
-        toolbox->addWidget(button);
-    }
-
-    {
-        auto button = new QToolButton;
-        button->setText("Col <");
-        connect(button, &QAbstractButton::clicked,
-                this, &PlotGridView::moveSelectedColumnLeft);
-        toolbox->addWidget(button);
-    }
-
-    {
-        auto button = new QToolButton;
-        button->setText("Col >");
-        connect(button, &QAbstractButton::clicked,
-                this, &PlotGridView::moveSelectedColumnRight);
-        toolbox->addWidget(button);
-    }
-
-    {
-        auto button = new QToolButton;
-        button->setText("-Plot");
-        connect(button, &QAbstractButton::clicked,
-                this, &PlotGridView::removeSelectedPlot);
-        toolbox->addWidget(button);
-    }
-
-    toolbox->addStretch();
-
     m_grid = new QGridLayout;
     vbox->addLayout(m_grid);
 
@@ -117,6 +40,8 @@ PlotGridView::PlotGridView(QWidget * parent):
 
     printState();
 
+    makeContextMenu();
+
     {
         auto shortcut = new QShortcut(QKeySequence::Close, this);
         connect(shortcut, &QShortcut::activated,
@@ -124,6 +49,43 @@ PlotGridView::PlotGridView(QWidget * parent):
     }
 
     //printf("Rows: %d, Columns: %d\n", rowCount(), columnCount());
+}
+
+void PlotGridView::makeContextMenu()
+{
+    auto menu = m_context_menu = new QMenu(this);
+
+    {
+        auto action = menu->addAction("Remove Selected Plot");
+        connect(action, &QAction::triggered,
+                this, &PlotGridView::removeSelectedPlot);
+    }
+
+    menu->addSeparator();
+
+    {
+        auto action = menu->addAction("Add Row");
+        connect(action, &QAction::triggered,
+                this, &PlotGridView::addRow);
+    }
+
+    {
+        auto action = menu->addAction("Remove Row");
+        connect(action, &QAction::triggered,
+                this, &PlotGridView::removeSelectedRow);
+    }
+
+    {
+        auto action = menu->addAction("Add Column");
+        connect(action, &QAction::triggered,
+                this, &PlotGridView::addColumn);
+    }
+
+    {
+        auto action = menu->addAction("Remove Column");
+        connect(action, &QAction::triggered,
+                this, &PlotGridView::removeSelectedColumn);
+    }
 }
 
 PlotView * PlotGridView::makeView()
@@ -1056,6 +1018,11 @@ void PlotGridView::mouseReleaseEvent(QMouseEvent* event)
         m_drag_source_indicator->hide();
     if (m_drag_target_indicator)
         m_drag_target_indicator->hide();
+}
+
+void PlotGridView::contextMenuEvent(QContextMenuEvent *event)
+{
+    m_context_menu->popup(event->globalPos());
 }
 
 void PlotGridView::paintEvent(QPaintEvent*)

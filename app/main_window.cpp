@@ -390,20 +390,6 @@ bool MainWindow::eventFilter(QObject * object, QEvent * event)
     {
         switch(event->type())
         {
-        case QEvent::ContextMenu:
-        {
-            m_selected_plot_view = plot_view;
-
-            auto menuEvent = static_cast<QContextMenuEvent*>(event);
-            if (menuEvent->reason() == QContextMenuEvent::Mouse)
-            {
-                auto plot = plot_view->plotAt(menuEvent->pos());
-                if (plot)
-                    showPlotContextMenu(plot, menuEvent->globalPos());
-            }
-            event->accept();
-            return true;
-        }
         case QEvent::WindowActivate:
         {
             m_selected_plot_view = plot_view;

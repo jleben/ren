@@ -5,6 +5,8 @@
 #include <QWidget>
 #include <QSlider>
 #include <QGridLayout>
+#include <QMenu>
+
 #include <list>
 
 namespace datavis {
@@ -210,6 +212,7 @@ private:
         Dragging_Column
     };
 
+    void makeContextMenu();
     PlotView * viewAtIndex(int index);
     PlotView * viewAtCell(int row, int column);
     PlotView * viewAtPoint(const QPoint & pos);
@@ -234,6 +237,7 @@ private:
     virtual void mousePressEvent(QMouseEvent*) override;
     virtual void mouseMoveEvent(QMouseEvent*) override;
     virtual void mouseReleaseEvent(QMouseEvent*) override;
+    virtual void contextMenuEvent(QContextMenuEvent *event) override;
     virtual void paintEvent(QPaintEvent*) override;
 
     void printState();
@@ -246,6 +250,8 @@ private:
     vector<PlotRangeController*> m_y_range_ctls;
     vector<RangeView*> m_x_range_views;
     vector<RangeView*> m_y_range_views;
+
+    QMenu * m_context_menu = nullptr;
 
     QPoint m_selected_cell;
     PlotView * m_selected_view = nullptr;
