@@ -12,7 +12,6 @@
 #include "../json/json.hpp"
 #include "../json/utils.hpp"
 #include "../utility/error.hpp"
-#include <project/project.pb.h>
 #include <sstream>
 
 #include <QVBoxLayout>
