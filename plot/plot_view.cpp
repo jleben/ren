@@ -815,6 +815,14 @@ bool PlotGridView::eventFilter(QObject * object, QEvent * event)
         }
         break;
     }
+    case QEvent::DragLeave:
+    {
+        // Reset drop info
+        m_drop.cell = {-1, -1};
+        m_drop.offset = {0, 0};
+        update();
+        break;
+    }
     case QEvent::DragMove:
     {
         auto drag_event = static_cast<QDragMoveEvent*>(event);
