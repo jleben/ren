@@ -13,6 +13,8 @@
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QShortcut>
+#include <QGuiApplication>
+#include <QScreen>
 
 #include <algorithm>
 #include <iostream>
@@ -678,8 +680,10 @@ void PlotGridView::prepareDrop(PlotView * view, const QPoint & pos)
 
     auto cellRect = view->rect();
 
-    int ymargin = cellRect.height() * 0.2;
-    int xmargin = cellRect.width() * 0.2;
+    auto screenSize = QGuiApplication::primaryScreen()->size();
+    int maxMargin = std::min(screenSize.width(), screenSize.height()) * 0.05;
+    int ymargin = std::min(maxMargin, int(cellRect.height() * 0.2));
+    int xmargin = std::min(maxMargin, int(cellRect.width() * 0.2));
     if (cellRect.adjusted(xmargin, ymargin, -xmargin, -ymargin).contains(pos))
     {
         return;
