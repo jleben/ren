@@ -730,6 +730,7 @@ void PlotGridView::updateDataRange()
             if (first)
             {
                 total_range = range;
+                first = false;
             }
             else
             {
@@ -758,6 +759,7 @@ void PlotGridView::updateDataRange()
             if (first)
             {
                 total_range = range;
+                first = false;
             }
             else
             {
