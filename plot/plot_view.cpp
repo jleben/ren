@@ -689,30 +689,63 @@ void PlotGridView::prepareDrop(PlotView * view, const QPoint & pos)
         return;
     }
 
-    float rx = float(pos.x()) / cellRect.width();
-    float ry = float(pos.y()) / cellRect.height();
+    enum Edge
+    {
+        No_Edge,
+        Top_Edge,
+        Bottom_Edge,
+        Left_Edge,
+        Right_Edge
+    };
 
-    if (rx < ry)
+    Edge edge = No_Edge;
+    int distance = std::max(cellRect.width(), cellRect.height());
+
+    int d_top = pos.y();
+    int d_bottom = cellRect.height() - pos.y();
+    int d_left = pos.x();
+    int d_right = cellRect.width() - pos.x();
+
+    if (d_top < ymargin and d_top < distance)
     {
-        if (rx < 1 - ry)
-        {
-            m_drop.offset = {0,-1};
-        }
-        else
-        {
-            m_drop.offset = {1,0};
-        }
+        edge = Top_Edge;
+        distance = d_top;
     }
-    else
+
+    if (d_bottom < ymargin and d_bottom < distance)
     {
-        if (rx < 1 - ry)
-        {
-            m_drop.offset = {-1,0};
-        }
-        else
-        {
-            m_drop.offset = {0,1};
-        }
+        edge = Bottom_Edge;
+        distance = d_bottom;
+    }
+
+    if (d_left < xmargin and d_left < distance)
+    {
+        edge = Left_Edge;
+        distance = d_left;
+    }
+
+    if (d_right < xmargin and d_right < distance)
+    {
+        edge = Right_Edge;
+        distance = d_right;
+    }
+
+    switch(edge)
+    {
+    case Top_Edge:
+        m_drop.offset = {-1,0};
+        break;
+    case Bottom_Edge:
+        m_drop.offset = {1,0};
+        break;
+    case Left_Edge:
+        m_drop.offset = {0,-1};
+        break;
+    case Right_Edge:
+        m_drop.offset = {0,1};
+        break;
+    default:
+        break;
     }
 }
 
