@@ -40,6 +40,8 @@ namespace datavis {
 MainWindow::MainWindow(QWidget * parent):
     QMainWindow(parent)
 {
+    setWindowTitle("Ren");
+
     m_lib = new DataLibrary(this);
 
     m_lib_view = new DataLibraryView;
@@ -211,6 +213,7 @@ void MainWindow::plotSelectedObject()
 PlotGridView * MainWindow::addPlotView()
 {
     auto view = new PlotGridView;
+    view->setWindowTitle("Ren - Plot View");
     view->setAcceptDrops(true);
     view->installEventFilter(this);
     connect(view, &PlotGridView::datasetDropped,
