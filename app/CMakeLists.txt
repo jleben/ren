@@ -32,11 +32,10 @@ set(core_src
   ../utility/threads.cpp
 )
 
-add_library(datavis_core STATIC ${core_src})
+add_library(ren_core STATIC ${core_src})
 
-target_link_libraries(datavis_core ${datavis_linked_libs})
+target_link_libraries(ren_core ${ren_linked_libs})
 
-add_executable(datavis ${app_src})
+add_executable(ren ${app_src})
 
-target_link_libraries(datavis datavis_core ${datavis_linked_libs})
-
+target_link_libraries(ren ren_core ${ren_linked_libs})

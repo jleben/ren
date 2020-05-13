@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(stream_viz)
+project(ren)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -18,7 +18,7 @@ link_directories("/usr/lib/x86_64-linux-gnu/hdf5/serial")
 
 include_directories(${CMAKE_BINARY_DIR})
 
-set(datavis_linked_libs Qt5::Widgets hdf5_cpp hdf5 sndfile pthread)
+set(ren_linked_libs Qt5::Widgets hdf5_cpp hdf5 sndfile pthread)
 
 #add_subdirectory(project)
 add_subdirectory(app)

@@ -6,4 +6,4 @@ add_executable(run_tests
     ../testing/testing.cpp
 )
 
-target_link_libraries(run_tests datavis_core ${datavis_linked_libs})
+target_link_libraries(run_tests ren_core ${ren_linked_libs})
