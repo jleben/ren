@@ -1,7 +1,7 @@
-Datavis: Visual data explorer
-##############################
+Ren - Visual data explorer
+##########################
 
-Datavis is an application for visual exploration of numerical data. Rather than creating beautiful visualizations for presentation, its purpose is to **explore data and gain insights**. The goal is to go from data to a basic, straightforward visualization **within seconds**. In addition, alternative, more detailed and interest-specific visualization should be available.
+Ren is an application for visual exploration of numerical data. Rather than creating beautiful visualizations for presentation, its purpose is to **explore data and gain insights**. The goal is to go from data to a basic, straightforward visualization **within seconds**. In addition, alternative, more detailed and interest-specific visualization should be available.
 
 On the more technical side, the goals of this software are:
 
@@ -13,9 +13,7 @@ On the more technical side, the goals of this software are:
 - Update visualization with new data easily.
 - Handle large data sets efficiently.
 
-This project is still in an early stage of development. A lot of work remains to be done to meet these goals. To start with, the application needs a better name :).
-
-Here is a screenshot of Datavis in action - exploring and comparing data streams at different stages of extracting musical sections from audio:
+Here is a screenshot of Ren in action - exploring and comparing data streams at different stages of extracting musical sections from audio:
 
 .. image:: doc/screenshot.png
     :width: 20cm
