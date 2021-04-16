@@ -9,6 +9,8 @@
 #include <atomic>
 #include <functional>
 
+#include <QObject>
+
 namespace datavis {
 
 using std::string;
@@ -27,12 +29,17 @@ public:
 
 using FutureDataset = Reactive::Value<DataSetPtr>;
 
-class DataSource
+class DataSource : public QObject
 {
+    Q_OBJECT
+
 public:
     DataSource(DataLibrary * lib): d_lib(lib) {}
     DataLibrary * library() const { return d_lib; }
     virtual ~DataSource() {}
+
+    virtual void reload();
+
     virtual string path() const = 0;
     virtual string id() const = 0;
 
@@ -40,6 +47,9 @@ public:
     virtual vector<string> dataset_ids() const = 0;
     virtual DataSetInfo dataset_info(const string & id) const = 0;
     virtual FutureDataset dataset(const string & id) = 0;
+
+signals:
+    void datasetAddedOrRemoved();
 
 private:
     DataLibrary * d_lib = nullptr;

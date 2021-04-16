@@ -126,6 +126,11 @@ void MainWindow::makeMenu()
         connect(action, &QAction::triggered,
                 this, &MainWindow::openData);
     }
+    {
+        auto action = fileMenu->addAction("Reload Data");
+        connect(action, &QAction::triggered,
+                this, &MainWindow::reloadDataSource);
+    }
     fileMenu->addSeparator();
     {
         auto action = fileMenu->addAction("Quit");
@@ -184,6 +189,23 @@ void MainWindow::onOpenFailed(const QString & path, const QString & reason)
     }
 
     QMessageBox::warning(this, "Open Failed", message);
+}
+
+void MainWindow::reloadDataSource()
+{
+    auto source = m_lib_view->selectedSource();
+    if (!source)
+        return;
+
+    cerr << "Reloading data source: " << source->path() << endl;
+
+    try {
+        source->reload();
+    } catch (Error & e) {
+        QMessageBox::warning(this, "Reloading Data Source Failed",
+                             QString("Failed to reload data source: ")
+                             + e.what());
+    }
 }
 
 void MainWindow::onSelectedDataChanged()

@@ -15,6 +15,10 @@ using std::string;
 
 class DataSource;
 
+// TODO:
+// Support construction of DataSet
+// without data, only with metadata.
+// Data is filled in by DataSource when loaded/updated.
 class DataSet : public QObject
 {
     Q_OBJECT
@@ -122,8 +126,12 @@ public:
         return point;
     }
 
+    // FIXME: A better interface that ensures this is emitted when data changes.
+    void notifyDataChanged() { emit dataChanged(); }
+
 signals:
     void selectionChanged();
+    void dataChanged();
 
 private:
     void onDimensionFocusChanged();

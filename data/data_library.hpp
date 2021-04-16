@@ -40,6 +40,7 @@ signals:
 
 private:
     void updateDimensions();
+    void onDataSourceChanged();
 
     vector<DataSource*> m_sources;
     unordered_map<string, DimensionPtr> d_dimensions;

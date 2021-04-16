@@ -55,6 +55,9 @@ void DataLibrary::open(const QString & path)
         return;
     }
 
+    connect(source, &DataSource::datasetAddedOrRemoved,
+        this, &DataLibrary::onDataSourceChanged);
+
     m_sources.push_back(source);
 
     updateDimensions();
@@ -113,6 +116,13 @@ DimensionPtr DataLibrary::dimension(const string & name)
         return nullptr;
     else
         return it->second;
+}
+
+void DataLibrary::onDataSourceChanged()
+{
+    updateDimensions();
+
+    emit sourcesChanged();
 }
 
 void DataLibrary::updateDimensions()

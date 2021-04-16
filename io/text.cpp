@@ -9,10 +9,13 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <optional>
 
 using namespace std;
 
 namespace datavis {
+
+using std::optional;
 
 string TextSourceParser::m_possible_delimiters = " \t;:|/\\";
 
@@ -314,6 +317,29 @@ TextPackageSource::TextPackageSource(const string & path, DataLibrary * lib):
     parseDescriptor();
 }
 
+void TextPackageSource::reload()
+{
+    m_member_ids.clear();
+    m_members.clear();
+
+    optional<Error> error;
+
+    try
+    {
+        parseDescriptor();
+    }
+    catch (Error const &e)
+    {
+        error = e;
+    }
+
+    emit datasetAddedOrRemoved();
+
+    if (error) {
+        throw *error;
+    }
+}
+
 vector<string> TextPackageSource::dataset_ids() const
 {
     return m_member_ids;
@@ -461,12 +487,20 @@ void TextPackageSource::parseDescriptor()
 
         auto resources = data.at("resources");
 
+        m_member_ids.clear();
+        auto old_members = std::move(m_members);
+        m_members.clear();
+
         for(auto resource : resources)
         {
             Member member;
             parseResourceDescription(member, resource);
-            m_members[member.info.id] = member;
             m_member_ids.push_back(member.info.id);
+
+            if (old_members.count(member.info.id)) {
+                // TODO: Reuse dataset from before...
+            }
+            m_members[member.info.id] = member;
         }
     }
     catch (json::exception & e)

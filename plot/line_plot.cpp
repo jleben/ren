@@ -32,6 +32,11 @@ void LinePlot::restore(const FutureDataset & dataset, const json & options)
     setDataSet(dataset, dim);
 }
 
+// FIXME: We can't immediately access the DataSource of the dataset,
+// so we could subscribe to added/removed datasets.
+// We could either add DataSource argument,
+// or have data source update pre-existing datasets when reloading data,
+// so here we would subscribed directly to data set.
 void LinePlot::setDataSet(FutureDataset dataset, int dimension)
 {
     // Clear scheduled work

@@ -34,6 +34,7 @@ public:
 
     void openData();
     void openDataFile(const QString & file_path);
+    void reloadDataSource();
 
     void saveProject();
     void saveProjectAs();

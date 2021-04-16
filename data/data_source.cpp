@@ -1,3 +1,14 @@
 #include "data_source.hpp"
 
-// Just so Qt pre-processes the header.
+#include <iostream>
+
+using namespace std;
+
+namespace datavis {
+
+void DataSource::reload()
+{
+    cerr << "This data source does not support reloading." << endl;
+}
+
+}

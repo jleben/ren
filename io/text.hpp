@@ -65,6 +65,8 @@ class TextPackageSource : public DataSource
 public:
     TextPackageSource(const string & path, DataLibrary *);
 
+    void reload() override;
+
     string path() const override { return m_dir_path; }
     string id() const override { return m_name; }
 
