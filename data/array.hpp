@@ -45,10 +45,12 @@ public:
 
     array(size_t size):
         m_size(size),
-        m_data(flat_size(size))
+        m_data(datavis::flat_size(size))
     {}
 
     const size_t & size() const { return m_size; }
+
+    std::size_t flat_size() const { return m_data.size(); }
 
     T & operator()(const index_t & i)
     {

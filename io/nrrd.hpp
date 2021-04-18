@@ -16,12 +16,12 @@ public:
     string id() const override { return m_name; }
 
     virtual int count() const override { return 1; }
-    virtual vector<string> dataset_ids() const override { return {"data"}; }
+    virtual vector<string> dataset_ids() const override;
     virtual DataSetInfo dataset_info(const string & id) const override;
     virtual FutureDataset dataset(const string & id) override;
 
 private:
-    void readInfo();
+    DataSetInfo readInfo();
 
     string m_file_path;
     string m_name;
