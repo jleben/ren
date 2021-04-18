@@ -66,6 +66,11 @@ void HeatMap::setDataSet(FutureDataset dataset, const vector_t & dim)
         printf("HeatMap: Range: %f %f, %f %f\n", xRange().min, xRange().max,
                yRange().min, yRange().max);
 
+        auto x_dim = m_dataset->dimension(d_options.dimensions[0]);
+
+        printf("HeatMap: X map: a (%lu) * %f + %f\n",
+            x_dim.size, x_dim.map.scale, x_dim.map.offset);
+
         printf("HeatMap: Ready.\n");
 
         emit xRangeChanged();
@@ -259,6 +264,8 @@ void HeatMap::PlotData::generate_image()
 
         int c = 255 * v;
 
+        // FIXME: We may get coordinates out of image if
+        // dataset->data() does not agree with dataset->dimension(i).
         image.setPixel(x,y,qRgb(c,c,c));
     }
 
@@ -278,6 +285,10 @@ Plot::Range HeatMap::xRange()
 
     auto x_dim = m_dataset->dimension(d_options.dimensions[0]);
 
+    if (x_dim.size < 1) {
+        return Range(x_dim.map.offset, x_dim.map.offset);
+    }
+
     double margin = 0.5;
     double x_min = - margin;
     double x_max = x_dim.size - 1 + margin;
@@ -293,6 +304,10 @@ Plot::Range HeatMap::yRange()
     }
 
     auto y_dim = m_dataset->dimension(d_options.dimensions[1]);
+
+    if (y_dim.size < 1) {
+        return Range(y_dim.map.offset, y_dim.map.offset);
+    }
 
     double margin = 0.5;
     double y_min = - margin;

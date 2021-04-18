@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <vector>
 #include <array>
+#include <cctype>
 
 using namespace std;
 
@@ -271,6 +272,19 @@ Encoding parseEncoding(string_view text)
     }
 }
 
+Endian parseEndian(string_view text)
+{
+    if (text == "little") {
+        return Endian::Little;
+    }
+    else if (text == "big") {
+        return Endian::Big;
+    }
+    else {
+        throw std::runtime_error("Invalid endianness: " + string(text));
+    }
+}
+
 Centering parseCentering(string_view text)
 {
     std::unordered_map<string_view, Centering> map{
@@ -292,6 +306,7 @@ void parseField(Header &header, const string &name, string_view text)
     try {
         if (name == "dimension") {
             parseNumber(header.dimension.emplace(), text);
+            printf("NRRD: dimension: %d\n", *header.dimension);
         }
         else if (name == "type") {
             header.type = parseType(text);
@@ -299,10 +314,13 @@ void parseField(Header &header, const string &name, string_view text)
         else if (name == "encoding") {
             header.encoding = parseEncoding(text);
         }
+        else if (name == "endian") {
+            header.endian = parseEndian(text);
+        }
         else if (name == "content") {
             header.content = text;
         }
-        else if (name == "datafile") {
+        else if (name == "datafile" or name == "data file") {
             header.dataFile = text;
         }
         else if (name == "lineskip" or name == "line skip") {
@@ -316,6 +334,11 @@ void parseField(Header &header, const string &name, string_view text)
         }
         else if (name == "sizes") {
             parseNumList(header.sizes.emplace(), text);
+            ostringstream out;
+            for (auto &e : *header.sizes) {
+                out << e << " ";
+            }
+            printf("NRRD: sizes: %s\n", out.str().c_str());
         }
         else if (name == "spacings") {
             parseNumList(header.spacings.emplace(), text);
@@ -358,12 +381,13 @@ void parseLine(Header &header, const string &line, std::int32_t lineNumber)
     if (fieldDelimPos != string::npos)
     {
         string name = line.substr(0, fieldDelimPos);
-        string rest = line.substr(fieldDelimPos + 1);
+        string rest = line.substr(fieldDelimPos + 2);
         string_view value(rest);
-        while(!value.empty() && value.back() == ' ') {
+        while(!value.empty() && std::isspace(value.back())) {
             value.remove_suffix(1);
         }
         parseField(header, name, value);
+        return;
     }
 
     auto keyValueDelimPos = line.find(":=");
@@ -460,7 +484,7 @@ void validate_header(Header const &header)
     }
 
     validate_field_present(header.encoding, "encoding");
-    if (*header.encoding != Encoding::Raw || *header.encoding != Encoding::Text) {
+    if (*header.encoding != Encoding::Raw && *header.encoding != Encoding::Text) {
         throw Error("Encoding not supported.");
     }
 
@@ -749,13 +773,15 @@ FutureDataset NrrdSource::dataset(const string &)
         dataset->data(0) = std::move(data);
 
         for (int i = 0; i < dimensions.size(); ++i) {
-            dataset->dimension(i) = dimensions[i];
+            dataset->setDimension(i, dimensions[i]);
         }
-        for (int i = 0; i < dimensions.size(); ++i) {
+        for (int i = 0; i < attributes.size(); ++i) {
             dataset->attribute(i) = attributes[i];
         }
 
-        return Reactive::value(dataset);
+        m_dataset = Reactive::value(dataset);
+
+        return m_dataset;
     }
     catch (std::exception const &e)
     {

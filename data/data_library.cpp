@@ -2,6 +2,7 @@
 #include "../io/hdf5.hpp"
 #include "../io/text.hpp"
 #include "../io/sndfile.hpp"
+#include "../io/nrrd.hpp"
 
 #include <algorithm>
 
@@ -36,6 +37,11 @@ void DataLibrary::open(const QString & path)
         {
             cerr << "Opening data file " << std_path << " as sound." << endl;
             source = new SoundFileSource(std_path, this);
+        }
+        else if (path.endsWith(".nrrd") or path.endsWith(".nhdr"))
+        {
+            cerr << "Opening data file " << std_path << " as NRRD." << endl;
+            source = new NrrdSource(std_path, this);
         }
         else
         {
